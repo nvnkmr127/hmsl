@@ -47,12 +47,13 @@ class Patient extends Model
 
     public function getAgeAttribute()
     {
+        if (!$this->date_of_birth) return '--';
         $dob = Carbon::parse($this->date_of_birth);
         $now = Carbon::now();
         
-        $years = $dob->diffInYears($now);
-        $months = $dob->diffInMonths($now) % 12;
-        $days = $dob->diffInDays($now->copy()->subMonths($months)->subYears($years));
+        $years = (int)$dob->diffInYears($now);
+        $months = (int)$dob->diffInMonths($now) % 12;
+        $days = (int)$dob->diffInDays($now->copy()->subMonths($months)->subYears($years));
 
         if ($years >= 5) {
             return $years . 'y';
