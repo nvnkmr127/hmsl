@@ -18,15 +18,15 @@
             <span style="font-size: 10pt; margin-left: 10px;">(UHID: {{ $consultation->patient->uhid }})</span>
         </div>
         <div style="width: 40%; text-align: right; font-size: 9pt; white-space: nowrap;">
-            VALID: <strong>{{ $consultation->valid_upto->format('d/m/y') }}</strong> | 
-            DATE: <strong>{{ $consultation->consultation_date->format('d/m/y') }}</strong>
+            DATE: <strong>{{ $consultation->consultation_date->format('d/m/y') }}</strong> | 
+            VALID: <strong>{{ $consultation->valid_upto->format('d/m/y') }}</strong>
         </div>
     </div>
 
     {{-- ROW 2: Physicals, Fees, and Status --}}
     <div style="display: flex; justify-content: space-between; align-items: center; font-size: 10pt;">
         <div style="width: 30%;">
-            AGE/SEX: <strong>{{ $consultation->patient->age }} / {{ substr($consultation->patient->gender, 0, 1) }}</strong>
+            AGE/SEX: <strong>{{ $consultation->patient->age }} / {{ $consultation->patient->gender }}</strong>
         </div>
         <div style="width: 35%; text-align: center;">
             WT: <strong>{{ $consultation->weight ?? '--' }} kg</strong> | 
