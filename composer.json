@@ -8,6 +8,7 @@
     "require": {
         "php": ">=8.3",
         "barryvdh/laravel-dompdf": "^3.1",
+        "laravel/fortify": "^1.36",
         "laravel/framework": "^11.31",
         "laravel/sanctum": "^4.3",
         "laravel/tinker": "^2.9",

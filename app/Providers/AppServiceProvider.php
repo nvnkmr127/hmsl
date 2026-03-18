@@ -19,6 +19,25 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        \Illuminate\Support\Facades\Event::listen(
+            \App\Events\Patients\PatientRegistered::class,
+            \App\Listeners\WebhookDispatcher::class
+        );
+        \Illuminate\Support\Facades\Event::listen(
+            \App\Events\IPD\PatientAdmitted::class,
+            \App\Listeners\WebhookDispatcher::class
+        );
+        \Illuminate\Support\Facades\Event::listen(
+            \App\Events\Billing\BillSettled::class,
+            \App\Listeners\WebhookDispatcher::class
+        );
+        \Illuminate\Support\Facades\Event::listen(
+            \App\Events\System\DailySummaryGenerated::class,
+            \App\Listeners\WebhookDispatcher::class
+        );
+        \Illuminate\Support\Facades\Event::listen(
+            \App\Events\OPD\ConsultationCompleted::class,
+            \App\Listeners\WebhookDispatcher::class
+        );
     }
 }
