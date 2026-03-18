@@ -4,7 +4,7 @@
 
 @section('content')
 {{-- 1. Top blank (letterhead area) --}}
-<div style="height: 2.5in;"></div>
+<div style="height: 7cm;"></div>
 
 {{-- 3. Printed section (Condened 2 Rows) --}}
 <div class="content"
