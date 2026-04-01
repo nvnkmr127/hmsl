@@ -141,15 +141,24 @@
                                         </div>
                                     </div>
 
-                                    {{-- Prescription Reference Note --}}
-                                    <div class="p-8 rounded-[2.5rem] bg-gray-900 text-white relative overflow-hidden flex items-center gap-10">
-                                        <div class="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center text-white shrink-0">
-                                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                    {{-- Digital Prescription Entry --}}
+                                    <div class="p-8 rounded-[2.5rem] bg-violet-600 text-white relative overflow-hidden flex items-center justify-between group shadow-2xl shadow-violet-500/20">
+                                        <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-white/10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
+                                        
+                                        <div class="flex items-center gap-10 relative z-10">
+                                            <div class="w-16 h-16 rounded-[1.2rem] bg-white text-violet-600 flex items-center justify-center shadow-xl">
+                                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.673.337a4 4 0 01-2.574.344l-1.474-.411a5 5 0 00-3.578.176l-1.41.632"/></svg>
+                                            </div>
+                                            <div>
+                                                <h4 class="text-xl font-black uppercase tracking-tight mb-1">Electronic Prescription</h4>
+                                                <p class="text-xs font-medium text-white/70 leading-relaxed uppercase tracking-widest">Digital records for pharmacy & history</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h4 class="text-lg font-black uppercase tracking-tight mb-1">Manual Action Required</h4>
-                                            <p class="text-xs font-medium text-white/60 leading-relaxed italic">"Write detailed diagnosis and medications on the printed OP Slip physically. No digital filing needed for this consultation."</p>
-                                        </div>
+
+                                        <button @click="$dispatch('open-prescription', { consultationId: {{ $selectedConsultation->id }} })" 
+                                                class="relative z-10 px-8 py-4 bg-white text-violet-600 rounded-[1.2rem] font-black text-xs uppercase tracking-widest hover:scale-105 transition-transform shadow-xl">
+                                            Add Medications
+                                        </button>
                                     </div>
                                 </div>
                                 <!-- Support Column (1/3) -->

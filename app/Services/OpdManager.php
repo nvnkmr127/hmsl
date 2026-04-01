@@ -15,6 +15,7 @@ class OpdManager
         
         $lastToken = Consultation::where('doctor_id', '=', $doctorId)
             ->whereDate('consultation_date', $date)
+            ->sharedLock() // Using sharedLock or lockForUpdate to prevent race conditions
             ->max('token_number');
             
         return ($lastToken ?: 0) + 1;

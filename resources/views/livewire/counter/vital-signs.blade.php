@@ -53,7 +53,7 @@
                 <button type="button" @click="$dispatch('close-modal', { name: 'vitals-modal' })" class="px-6 py-2.5 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                     Cancel
                 </button>
-                <button type="submit" class="btn-primary px-8 py-2.5">
+                <button type="submit" class="btn btn-primary px-8 py-2.5">
                     Save Vitals
                 </button>
             </div>

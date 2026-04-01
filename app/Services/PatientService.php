@@ -17,19 +17,44 @@ class PatientService
         return $prefix . '-' . date('Y') . '-' . str_pad($nextId, 5, '0', STR_PAD_LEFT);
     }
 
-    public function getAll($search = null)
+    public function getAll($search = null, $filters = [], $sortBy = 'latest')
     {
-        return Patient::query()
-            ->when($search, function($query) use ($search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('first_name', 'like', "%{$search}%")
-                        ->orWhere('last_name', 'like', "%{$search}%")
-                        ->orWhere('uhid', 'like', "%{$search}%")
-                        ->orWhere('phone', 'like', "%{$search}%");
-                });
-            })
-            ->latest()
-            ->paginate(10);
+        $query = Patient::query();
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('uhid', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+
+        if (!empty($filters['gender'])) {
+            $query->where('gender', $filters['gender']);
+        }
+
+        if (!empty($filters['blood_group'])) {
+            $query->where('blood_group', $filters['blood_group']);
+        }
+
+        if ($sortBy === 'alphabetic') {
+            $query->orderBy('first_name');
+        } else {
+            $query->latest();
+        }
+
+        return $query->paginate(10);
+    }
+
+    public function getStats()
+    {
+        return [
+            'total' => Patient::count(),
+            'today' => Patient::whereDate('created_at', now())->count(),
+            'male'  => Patient::where('gender', 'Male')->count(),
+            'female'=> Patient::where('gender', 'Female')->count(),
+        ];
     }
 
     public function create(array $data)

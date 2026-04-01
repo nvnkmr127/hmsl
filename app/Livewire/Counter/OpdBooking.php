@@ -29,6 +29,10 @@ class OpdBooking extends Component
     public $valid_upto;
     public $weight;
     public $temperature;
+    public $bp_systolic;
+    public $bp_diastolic;
+    public $pulse;
+    public $spo2;
     public $fee;
     public $paymentMode = 'Cash';
     public $notes;
@@ -83,6 +87,12 @@ class OpdBooking extends Component
         if ($latestVitals) {
             $this->weight = $latestVitals->weight;
             $this->temperature = $latestVitals->temperature;
+            $this->bp_systolic = $latestVitals->bp_systolic;
+            $this->bp_diastolic = $latestVitals->bp_diastolic;
+            $this->pulse = $latestVitals->pulse;
+            $this->spo2 = $latestVitals->spo2;
+        } else {
+            $this->reset(['weight', 'temperature', 'bp_systolic', 'bp_diastolic', 'pulse', 'spo2']);
         }
 
         $this->dispatch('open-modal', name: 'booking-modal');
@@ -107,6 +117,10 @@ class OpdBooking extends Component
         $this->selectedDoctor = $consultation->doctor_id;
         $this->weight = $consultation->weight;
         $this->temperature = $consultation->temperature;
+        $this->bp_systolic = $consultation->bp_systolic;
+        $this->bp_diastolic = $consultation->bp_diastolic;
+        $this->pulse = $consultation->pulse;
+        $this->spo2 = $consultation->spo2;
         $this->consultation_date = $consultation->consultation_date->format('Y-m-d');
         $this->valid_upto = $consultation->valid_upto ? $consultation->valid_upto->format('Y-m-d') : null;
         $this->fee = $consultation->fee;
@@ -119,12 +133,25 @@ class OpdBooking extends Component
 
     public function cancelBooking($id)
     {
+        $this->authorize('view opd');
         $consultation = Consultation::findOrFail($id);
         $consultation->update(['status' => 'Cancelled']);
         
         $this->dispatch('notify', 
             type: 'warning',
             message: "Token #{$consultation->token_number} has been cancelled."
+        );
+    }
+
+    public function restoreBooking($id)
+    {
+        $this->authorize('view opd');
+        $consultation = Consultation::findOrFail($id);
+        $consultation->update(['status' => 'Pending']);
+        
+        $this->dispatch('notify', 
+            type: 'success',
+            message: "Token #{$consultation->token_number} has been restored."
         );
     }
 
@@ -144,6 +171,10 @@ class OpdBooking extends Component
                 'doctor_id' => $this->selectedDoctor,
                 'weight' => $this->weight,
                 'temperature' => $this->temperature,
+                'bp_systolic' => $this->bp_systolic,
+                'bp_diastolic' => $this->bp_diastolic,
+                'pulse' => $this->pulse,
+                'spo2' => $this->spo2,
                 'fee' => $this->fee,
                 'consultation_date' => $this->consultation_date,
                 'valid_upto' => $this->valid_upto,
@@ -152,15 +183,31 @@ class OpdBooking extends Component
             ]);
             $message = "Appointment updated successfully!";
         } else {
+            // Duplicate booking check (Patient booked for same doctor on same day)
+            $exists = Consultation::where('patient_id', $this->selectedPatient->id)
+                ->where('doctor_id', $this->selectedDoctor)
+                ->whereDate('consultation_date', $this->consultation_date ?: date('Y-m-d'))
+                ->where('status', '!=', 'Cancelled')
+                ->exists();
+
+            if ($exists) {
+                $this->dispatch('notify', type: 'error', message: 'Patient already has an active booking for this doctor on this date.');
+                return;
+            }
+
             $consultation = $manager->bookAppointment([
                 'patient_id' => $this->selectedPatient->id,
                 'doctor_id' => $this->selectedDoctor,
                 'weight' => $this->weight,
                 'temperature' => $this->temperature,
+                'bp_systolic' => $this->bp_systolic,
+                'bp_diastolic' => $this->bp_diastolic,
+                'pulse' => $this->pulse,
+                'spo2' => $this->spo2,
                 'fee' => $this->fee,
                 'consultation_date' => $this->consultation_date,
                 'valid_upto' => $this->valid_upto,
-                'payment_status' => 'Paid', // Assuming payment collected at counter
+                'payment_status' => 'Paid',
                 'payment_method' => $this->paymentMode,
                 'notes' => $this->notes,
             ]);
@@ -172,16 +219,15 @@ class OpdBooking extends Component
             }
         }
 
-        $this->dispatch('notify', 
-            type: 'success',
-            message: $message
-        );
+        $this->dispatch('notify', type: 'success', message: $message);
 
-        $this->reset(['selectedPatient', 'selectedDoctor', 'fee', 'notes', 'showBookingForm', 'isEditing', 'editingId', 'weight', 'temperature', 'paymentMode', 'searchPatient', 'lastConsultationId']);
+        $this->reset(['selectedPatient', 'selectedDoctor', 'fee', 'notes', 'showBookingForm', 'isEditing', 'editingId', 'weight', 'temperature', 'bp_systolic', 'bp_diastolic', 'pulse', 'spo2', 'paymentMode', 'searchPatient', 'lastConsultationId']);
         $this->consultation_date = date('Y-m-d');
         $this->valid_upto = date('Y-m-d', strtotime('+7 days'));
         
-        $this->autoSelectDoctor();
+        if (!$this->selectedDoctor) {
+            $this->autoSelectDoctor();
+        }
 
         $this->dispatch('close-modal', name: 'booking-modal');
         $this->dispatch('booking-completed');
@@ -195,7 +241,10 @@ class OpdBooking extends Component
     public function openPatientForm($phone = null)
     {
         $this->dispatch('notify', type: 'info', message: 'Opening registration form...');
-        $this->dispatch('create-patient', phone: $phone);
+        
+        // Only pass search string as phone if it looks like a phone (all numeric)
+        $validPhone = is_numeric($phone) ? $phone : null;
+        $this->dispatch('create-patient', phone: $validPhone);
     }
 
     public function updatedSearchPatient($value)

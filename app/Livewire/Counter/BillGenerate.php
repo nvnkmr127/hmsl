@@ -96,12 +96,12 @@ class BillGenerate extends Component
             'consultation_id' => $this->consultationId,
             'discount_amount' => $this->discount,
             'tax_amount' => $this->tax,
-            'payment_status' => 'Paid', // Assuming immediate payment for now
+            'payment_status' => 'Paid',
             'payment_method' => $this->paymentMethod,
             'notes' => $this->notes,
         ], $this->items);
 
-        $service->markAsPaid($bill, $this->paymentMethod);
+        // $service->markAsPaid($bill, $this->paymentMethod); // redundant since createBill sets it
 
         $this->dispatch('close-modal', ['name' => 'billing-modal']);
         $this->dispatch('bill-generated', billId: $bill->id);

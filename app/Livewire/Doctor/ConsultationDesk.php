@@ -118,8 +118,12 @@ class ConsultationDesk extends Component
             $this->selectedConsultation->update(['status' => 'Completed']);
         }
 
-        // Find next patient in queue
         $doctor = $this->doctor;
+        if (!$doctor) {
+            $this->dispatch('notify', ['type' => 'error', 'message' => 'No active doctor profile found.']);
+            return;
+        }
+
         $next = Consultation::where('doctor_id', $doctor->id)
             ->whereDate('consultation_date', date('Y-m-d'))
             ->where('status', 'Pending')

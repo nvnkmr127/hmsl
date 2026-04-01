@@ -4,6 +4,12 @@
         subtitle="Manage daily outpatient visits, generate tokens, and monitor real-time queue status."
     >
         <x-slot name="actions">
+            @if($selectedPatient)
+                <a href="{{ route('counter.patients.history', ['id' => $selectedPatient->id]) }}" class="btn btn-ghost text-indigo-600 dark:text-indigo-400">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Back to {{ explode(' ', $selectedPatient->full_name)[0] }}'s Profile
+                </a>
+            @endif
             <button wire:click="openPatientForm" class="btn btn-primary">New Patient</button>
             <a href="{{ route('counter.patients.index') }}" class="btn btn-secondary">Patients</a>
             <a href="{{ route('public.queue') }}" target="_blank" class="btn btn-secondary">Public Display</a>
@@ -108,11 +114,11 @@
                                 wire:model.live.debounce.300ms="searchPatient"
                                 x-ref="searchInput"
                                 id="patient-search-input"
-                                @keydown.enter.prevent="count($patients) ? $wire.selectPatient($patients[0].id) : null"
                                 class="w-full bg-indigo-900/50 border-2 border-indigo-500/20 focus:border-indigo-500 rounded-2xl px-6 py-4 text-white placeholder-indigo-400 outline-none transition-all duration-300 pr-12 text-sm font-bold uppercase tracking-wider"
                             />
                             <div class="absolute right-4 top-1/2 -translate-y-1/2 text-indigo-400 group-hover:text-indigo-200 transition-colors">
-                                <svg class="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2-2v14a2 2 0 002 2z" /></svg>
+                                <svg wire:loading.remove wire:target="searchPatient" class="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2-2v14a2 2 0 002 2z" /></svg>
+                                <svg wire:loading wire:target="searchPatient" class="w-5 h-5 animate-spin text-indigo-200" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                             </div>
                         </div>
 
@@ -215,7 +221,10 @@
                                     <p class="font-black text-gray-900 dark:text-white uppercase tracking-tight text-sm truncate mt-2">
                                         {{ $consult->patient->full_name }}
                                     </p>
-                                    <p class="text-[10px] font-black tracking-widest text-gray-400 uppercase truncate">
+                                    <p class="text-[10px] font-black tracking-widest text-violet-600 dark:text-violet-400 uppercase truncate mt-0.5">
+                                        Dr. {{ $consult->doctor->full_name }}
+                                    </p>
+                                    <p class="text-[10px] font-black tracking-widest text-gray-400 uppercase truncate mt-0.5">
                                         {{ $consult->patient->uhid }} · {{ $consult->patient->gender }} · {{ $consult->patient->age }}
                                     </p>
                                 </div>
@@ -352,11 +361,17 @@
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                                 </button>
 
-                                                <button wire:click="cancelBooking({{ $consult->id }})" 
-                                                        wire:confirm="Permanent cancellation of #{{ $consult->token_number }}?"
-                                                        class="p-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-400 hover:bg-rose-500 hover:text-white transition-all duration-300 shadow-sm" title="Cancel">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
-                                                </button>
+                                                @if($consult->status === 'Cancelled')
+                                                    <button wire:click="restoreBooking({{ $consult->id }})" title="Restore Ticket" class="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all shadow-sm">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                                    </button>
+                                                @else
+                                                    <button wire:click="cancelBooking({{ $consult->id }})" 
+                                                            wire:confirm="Permanent cancellation of #{{ $consult->token_number }}?"
+                                                            class="p-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-400 hover:bg-rose-500 hover:text-white transition-all duration-300 shadow-sm" title="Cancel">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+                                                    </button>
+                                                @endif
                                             @endif
                                         </div>
                                     </td>
@@ -414,13 +429,31 @@
                                 <div class="space-y-2">
                                     <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Wt (kg)</label>
                                     <input type="number" step="0.01" wire:model="weight" x-ref="weightInput" class="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 outline-none transition-all font-black text-gray-900 dark:text-white" placeholder="0.00">
-                                    @error('weight') <span class="text-[10px] text-rose-500 font-bold ml-2">{{ $message }}</span> @enderror
                                 </div>
                                 <div class="space-y-2">
                                     <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Temp (°F)</label>
                                     <input type="number" step="0.1" wire:model="temperature" class="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 outline-none transition-all font-black text-gray-900 dark:text-white" placeholder="98.6">
-                                    @error('temperature') <span class="text-[10px] text-rose-500 font-bold ml-2">{{ $message }}</span> @enderror
                                 </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div class="space-y-2">
+                                        <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">BP (S)</label>
+                                        <input type="text" wire:model="bp_systolic" placeholder="120" class="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 outline-none transition-all font-black text-gray-900 dark:text-white">
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">BP (D)</label>
+                                        <input type="text" wire:model="bp_diastolic" placeholder="80" class="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 outline-none transition-all font-black text-gray-900 dark:text-white">
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Pulse</label>
+                                    <input type="number" wire:model="pulse" placeholder="72" class="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 outline-none transition-all font-black text-gray-900 dark:text-white">
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">SpO2 (%)</label>
+                                <input type="number" wire:model="spo2" placeholder="98" class="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 outline-none transition-all font-black text-gray-900 dark:text-white">
                             </div>
                         </div>
 
@@ -469,7 +502,16 @@
                     @else
                         <input type="hidden" wire:model="selectedDoctor">
                     @endif
-                    <input type="hidden" wire:model="consultation_date">
+                    <div class="grid grid-cols-2 gap-4">
+                         <div class="space-y-2">
+                            <label class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Consultation Date</label>
+                            <input type="date" wire:model="consultation_date" class="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-6 py-4 outline-none transition-all font-bold">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Valid Upto</label>
+                            <input type="date" wire:model="valid_upto" class="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-6 py-4 outline-none transition-all font-bold">
+                        </div>
+                    </div>
 
                     <!-- Final Actions -->
                     <div class="flex flex-col sm:flex-row items-center justify-end gap-3 pt-8 border-t border-gray-100 dark:border-gray-800"
@@ -482,7 +524,7 @@
                         
                         <div class="flex items-center gap-3">
                             <button type="button" wire:click="book(false)" class="px-8 py-4 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-95 transition-all">
-                                Save Only (⇧+↵)
+                                Register Without Printing (⇧+↵)
                             </button>
                             <button type="button" wire:click="book(true)" class="px-10 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-emerald-500/30 hover:scale-[1.02] active:scale-95 transition-all">
                                 Finalize & Print (Ctrl+↵)

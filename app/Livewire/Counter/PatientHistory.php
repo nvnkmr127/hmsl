@@ -17,7 +17,6 @@ use Livewire\WithPagination;
 class PatientHistory extends Component
 {
     use WithPagination;
-
     public $patientId;
     public $patient;
     public string $tab = 'overview';
@@ -26,6 +25,14 @@ class PatientHistory extends Component
     public ?string $dateFrom = null;
     public ?string $dateTo = null;
     public int $perPage = 10;
+
+    protected $queryString = [
+        'tab' => ['except' => 'overview'],
+        'search' => ['except' => ''],
+        'status' => ['except' => null],
+        'dateFrom' => ['except' => null],
+        'dateTo' => ['except' => null],
+    ];
 
     public function mount($id)
     {
@@ -114,6 +121,25 @@ class PatientHistory extends Component
             });
 
             return $this->exportCsv("{$safeName}_billing_{$date}.csv", ['Bill No', 'Date', 'Total', 'Payment Status', 'Payment Method'], $rows);
+        }
+
+        if ($type === 'vitals') {
+            $query = PatientVital::with(['recorder'])->where('patient_id', $id)->orderByDesc('created_at');
+            $query = $this->applyDateFilter($query, 'created_at');
+            
+            $vitals = $query->get();
+            $rows = $vitals->map(function (PatientVital $v) {
+                return [
+                    $v->created_at?->format('Y-m-d H:i'),
+                    $v->temperature,
+                    $v->weight,
+                    $v->bp_systolic . ($v->bp_diastolic ? '/' . $v->bp_diastolic : ''),
+                    $v->spo2,
+                    $v->recorder?->name
+                ];
+            });
+
+            return $this->exportCsv("{$safeName}_vitals_{$date}.csv", ['Date/Time', 'Temp', 'Weight', 'BP', 'Spo2', 'Staff'], $rows);
         }
 
         if ($type === 'visits') {
@@ -324,7 +350,7 @@ class PatientHistory extends Component
         $vaccinationsAll = PatientVaccination::where('patient_id', $id);
 
         $counts = [
-            'visits' => (clone $visitsAll)->count(),
+            'visits' => (clone $visitsAll)->where('status', '!=', 'Cancelled')->count(),
             'bills' => (clone $billsAll)->count(),
             'admissions' => (clone $admissionsAll)->count(),
             'discharges' => (clone $admissionsAll)->whereNotNull('discharge_date')->count(),
@@ -332,15 +358,55 @@ class PatientHistory extends Component
             'labs' => (clone $labOrdersAll)->count(),
             'vitals' => (clone $vitalsAll)->count(),
             'vaccinations' => (clone $vaccinationsAll)->count(),
-            'appointments' => (clone $visitsAll)->whereDate('consultation_date', '>=', now()->toDateString())->count(),
+            'appointments' => (clone $visitsAll)->whereDate('consultation_date', '>=', now()->toDateString())->where('status', '!=', 'Cancelled')->count(),
             'treatments' => (clone $visitsAll)->count() + (clone $admissionsAll)->count() + (clone $prescriptionsAll)->count(),
         ];
 
+        $latestVisits = Consultation::with(['doctor.department'])->where('patient_id', $id)->orderByDesc('consultation_date')->limit(5)->get();
+        $latestBills = Bill::where('patient_id', $id)->orderByDesc('created_at')->limit(5)->get();
+        $latestAdmissions = Admission::with(['bed.ward', 'doctor'])->where('patient_id', $id)->orderByDesc('admission_date')->limit(5)->get();
+        $latestPrescriptions = Prescription::with(['doctor'])->where('patient_id', $id)->orderByDesc('created_at')->limit(5)->get();
+
+        $timeline = collect();
+        foreach ($latestVisits as $v) {
+            $timeline->push((object)[
+                'date' => $v->consultation_date,
+                'type' => 'Visit',
+                'title' => "OP Visit - Token #{$v->token_number}",
+                'meta' => $v->doctor?->full_name,
+                'color' => 'blue',
+                'id' => $v->id,
+                'print_route' => route('counter.opd.print', ['id' => $v->id])
+            ]);
+        }
+        foreach ($latestAdmissions as $a) {
+            $timeline->push((object)[
+                'date' => $a->admission_date,
+                'type' => 'IPD',
+                'title' => "IPD Admission - {$a->admission_number}",
+                'meta' => "Ward: " . ($a->bed?->ward?->name ?? 'N/A'),
+                'color' => 'red',
+                'id' => $a->id
+            ]);
+        }
+        foreach ($latestPrescriptions as $p) {
+            $timeline->push((object)[
+                'date' => $p->created_at,
+                'type' => 'Rx',
+                'title' => "Prescription - {$p->diagnosis}",
+                'meta' => $p->doctor?->full_name,
+                'color' => 'emerald',
+                'id' => $p->id,
+                'print_route' => route('counter.prescriptions.print', ['id' => $p->id])
+            ]);
+        }
+
         $overview = [
-            'latestVisits' => Consultation::with(['doctor.department'])->where('patient_id', $id)->orderByDesc('consultation_date')->limit(5)->get(),
-            'latestBills' => Bill::where('patient_id', $id)->orderByDesc('created_at')->limit(5)->get(),
-            'latestAdmissions' => Admission::with(['bed.ward', 'doctor'])->where('patient_id', $id)->orderByDesc('admission_date')->limit(5)->get(),
-            'latestPrescriptions' => Prescription::with(['doctor'])->where('patient_id', $id)->orderByDesc('created_at')->limit(5)->get(),
+            'latestVisits' => $latestVisits,
+            'latestBills' => $latestBills,
+            'latestAdmissions' => $latestAdmissions,
+            'latestPrescriptions' => $latestPrescriptions,
+            'timeline' => $timeline->sortByDesc('date')->take(6)->toArray()
         ];
 
         $treatmentPreview = [
@@ -500,6 +566,10 @@ class PatientHistory extends Component
         if ($this->tab === 'vitals') {
             $query = PatientVital::with(['consultation.doctor', 'recorder'])->where('patient_id', $id)->orderByDesc('created_at');
             $query = $this->applyDateFilter($query, 'created_at');
+            if ($this->search) {
+                $term = '%' . $this->search . '%';
+                $query->where('notes', 'like', $term);
+            }
             $datasets['vitals'] = $query->paginate($this->perPage);
         }
 
