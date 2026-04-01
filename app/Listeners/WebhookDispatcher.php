@@ -10,7 +10,7 @@ use App\Services\WebhookService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 
-class WebhookDispatcher
+class WebhookDispatcher implements ShouldQueue
 {
     protected $service;
 

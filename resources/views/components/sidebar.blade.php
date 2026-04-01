@@ -21,38 +21,81 @@
 <nav class="flex-1 overflow-y-auto py-6 px-4 space-y-8 custom-scrollbar">
     <!-- Executive -->
     <div>
-        <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] px-3 mb-4">Operations</p>
-        <x-nav-link href="{{ route('dashboard') }}" :active="request()->routeIs('dashboard')" icon="home">Console</x-nav-link>
+        <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] px-3 mb-4">Main</p>
+        <x-nav-link href="{{ route('dashboard') }}" :active="request()->routeIs('dashboard')" icon="home">Dashboard</x-nav-link>
     </div>
 
     <!-- Reception -->
+    @canany(['view patients', 'view opd', 'view ipd', 'view billing'])
     <div>
-        <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] px-3 mb-4">Front Desk</p>
-        <x-nav-link href="{{ route('counter.patients.index') }}" :active="request()->routeIs('counter.patients.*')" icon="users">Registry</x-nav-link>
-        <x-nav-link href="{{ route('counter.opd.index') }}" :active="request()->routeIs('counter.opd.*')" icon="calendar">OPD Desk</x-nav-link>
-        <x-nav-link href="{{ route('counter.ipd.index') }}" :active="request()->routeIs('counter.ipd.*')" icon="bed">IPD Admission</x-nav-link>
-        <x-nav-link href="{{ route('billing.index') }}" :active="request()->routeIs('billing.*')" icon="credit-card">Payments</x-nav-link>
+        <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] px-3 mb-4">Reception</p>
+        @can('view patients')
+        <x-nav-link href="{{ route('counter.patients.index') }}" :active="request()->routeIs('counter.patients.*')" icon="users">Patients</x-nav-link>
+        @endcan
+        @can('view opd')
+        <x-nav-link href="{{ route('counter.opd.index') }}" :active="request()->routeIs('counter.opd.*')" icon="calendar">Outpatient</x-nav-link>
+        @endcan
+        @can('view ipd')
+        <x-nav-link href="{{ route('counter.ipd.index') }}" :active="request()->routeIs('counter.ipd.*')" icon="bed">Inpatient</x-nav-link>
+        @endcan
+        @can('view billing')
+        <x-nav-link href="{{ route('billing.index') }}" :active="request()->routeIs('billing.*')" icon="credit-card">Billing</x-nav-link>
+        @endcan
     </div>
+    @endcanany
 
     <!-- Clinical -->
+    @canany(['edit case sheets', 'view patients', 'view lab', 'view pharmacy', 'admit patients'])
     <div>
         <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] px-3 mb-4">Medical</p>
-        <x-nav-link href="{{ route('doctor.dashboard') }}" :active="request()->routeIs('doctor.dashboard')" icon="stethoscope">Doctor Desk</x-nav-link>
+        @can('edit case sheets')
+        <x-nav-link href="{{ route('doctor.dashboard') }}" :active="request()->routeIs('doctor.dashboard')" icon="stethoscope">Doctor</x-nav-link>
         <x-nav-link href="{{ route('doctor.appointments.index') }}" :active="request()->routeIs('doctor.appointments.*')" icon="calendar">Appointments</x-nav-link>
-        <x-nav-link href="{{ route('doctor.patients.index') }}" :active="request()->routeIs('doctor.patients.*')" icon="users">Patient Records</x-nav-link>
-        <x-nav-link href="{{ route('laboratory.index') }}" :active="request()->routeIs('laboratory.*')" icon="flask">Laboratory</x-nav-link>
+        @endcan
+
+        @can('view patients')
+        <x-nav-link href="{{ route('doctor.patients.index') }}" :active="request()->routeIs('doctor.patients.*')" icon="users">Records</x-nav-link>
+        @endcan
+        
+        @can('view lab')
+        <x-nav-link href="{{ route('laboratory.index') }}" :active="request()->routeIs('laboratory.*')" icon="flask">Lab</x-nav-link>
+        @endcan
+        @can('view pharmacy')
         <x-nav-link href="{{ route('pharmacy.index') }}" :active="request()->routeIs('pharmacy.*')" icon="pill">Pharmacy</x-nav-link>
+        @endcan
+        
+        @can('admit patients')
+        <x-nav-link href="{{ route('discharge.index') }}" :active="request()->routeIs('discharge.*')" icon="logout">Discharges</x-nav-link>
+        @endcan
     </div>
+    @endcanany
+
+    <!-- Reports -->
+    @can('view reports')
+    <div>
+        <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] px-3 mb-4">Reports</p>
+        <x-nav-link href="{{ route('reports.index') }}" :active="request()->routeIs('reports.*')" icon="chart">Reports</x-nav-link>
+    </div>
+    @endcan
 
     <!-- Master Data -->
+    @canany(['manage master data', 'manage users', 'manage inventory', 'manage settings'])
     <div>
-        <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] px-3 mb-4">Governance</p>
-        <x-nav-link href="{{ route('master.doctors.index') }}" :active="request()->routeIs('master.doctors.*')" icon="users">Manage Staff</x-nav-link>
-        <x-nav-link href="{{ route('master.users.index') }}" :active="request()->routeIs('master.users.*')" icon="users">User Accounts</x-nav-link>
-        <x-nav-link href="{{ route('inventory.index') }}" :active="request()->routeIs('inventory.*')" icon="box">Inventory</x-nav-link>
-        <x-nav-link href="{{ route('reports.index') }}" :active="request()->routeIs('reports.*')" icon="chart">Analytics</x-nav-link>
-        <x-nav-link href="{{ route('settings.index') }}" :active="request()->routeIs('settings.*')" icon="settings">System Control</x-nav-link>
+        <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] px-3 mb-4">Admin</p>
+        @can('manage master data')
+        <x-nav-link href="{{ route('master.doctors.index') }}" :active="request()->routeIs('master.doctors.*')" icon="users">Staff</x-nav-link>
+        @endcan
+        @can('manage users')
+        <x-nav-link href="{{ route('master.users.index') }}" :active="request()->routeIs('master.users.*')" icon="users">Users</x-nav-link>
+        @endcan
+        @can('manage inventory')
+        <x-nav-link href="{{ route('inventory.index') }}" :active="request()->routeIs('inventory.*')" icon="box">Stock</x-nav-link>
+        @endcan
+        @can('manage settings')
+        <x-nav-link href="{{ route('settings.index') }}" :active="request()->routeIs('settings.*')" icon="settings">Settings</x-nav-link>
+        @endcan
     </div>
+    @endcanany
 </nav>
 
 <div class="flex-shrink-0 p-4 border-t border-white/5">
@@ -63,7 +106,7 @@
         </div>
         <div class="flex-1 min-w-0">
             <p class="text-xs font-bold text-white truncate uppercase tracking-tight">{{ Auth::user()?->name ?? 'Administrator' }}</p>
-            <p class="text-[9px] font-black text-violet-400 uppercase tracking-widest">Sys Admin</p>
+            <p class="text-[9px] font-black text-violet-400 uppercase tracking-widest">{{ str_replace('_', ' ', Auth::user()?->getRoleNames()->first() ?? 'User') }}</p>
         </div>
         <form method="POST" action="{{ route('logout') }}">
             @csrf

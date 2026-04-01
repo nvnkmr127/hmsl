@@ -16,7 +16,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/medicines', [MedicineController::class, 'index'])->name('medicines.index');
         Route::get('/labs', [LabController::class, 'index'])->name('labs.index');
         Route::get('/wards', [WardController::class, 'index'])->name('wards.index');
-        Route::get('/users', [\App\Http\Controllers\Master\UserController::class, 'index'])->name('users.index');
         Route::get('/', [DepartmentController::class, 'index'])->name('index');
+    });
+
+    Route::group(['prefix' => 'master', 'as' => 'master.'], function () {
+        Route::get('/users', [\App\Http\Controllers\Master\UserController::class, 'index'])
+            ->name('users.index')
+            ->middleware('permission:manage users');
     });
 });

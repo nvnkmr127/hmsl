@@ -69,12 +69,61 @@
 
     {{-- Table --}}
     <div class="glass-card overflow-hidden">
+        <div class="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+            @forelse($bills as $bill)
+                <div class="p-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400 truncate">{{ $bill->bill_number }}</p>
+                            <p class="font-bold text-gray-900 dark:text-white text-sm truncate">{{ $bill->patient->full_name }}</p>
+                            <p class="text-xs text-gray-400 truncate">{{ $bill->patient->uhid }}</p>
+                        </div>
+                        <div class="text-right flex-shrink-0">
+                            <p class="text-sm font-black text-gray-900 dark:text-white">₹{{ number_format($bill->total_amount, 2) }}</p>
+                            <p class="text-[10px] font-black uppercase tracking-widest text-gray-400 mt-1">{{ $bill->payment_method ?? '—' }}</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 flex items-center justify-between gap-3">
+                        <div>
+                            @if($bill->payment_status === 'Paid')
+                                <x-badge color="success">Paid</x-badge>
+                            @elseif($bill->payment_status === 'Unpaid')
+                                <x-badge color="danger">Unpaid</x-badge>
+                            @else
+                                <x-badge color="warning">{{ $bill->payment_status }}</x-badge>
+                            @endif
+                            <p class="text-xs text-gray-400 mt-2">{{ $bill->created_at->format('d M Y') }}</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <a href="{{ route('billing.bills.print', $bill->id) }}"
+                               target="_blank"
+                               class="btn btn-secondary px-3 py-2 text-xs">
+                                Print
+                            </a>
+                            <button
+                               wire:click="sendEmail({{ $bill->id }})"
+                               wire:loading.attr="disabled"
+                               class="btn btn-ghost px-3 py-2 text-xs">
+                                <span wire:loading.remove wire:target="sendEmail({{ $bill->id }})">Email</span>
+                                <span wire:loading wire:target="sendEmail({{ $bill->id }})">...</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="p-8 text-center text-sm font-semibold text-gray-500 dark:text-gray-400">
+                    No bills found.
+                </div>
+            @endforelse
+        </div>
+
+        <div class="hidden md:block">
         <x-table.wrapper>
             <thead>
                 <tr>
                     <x-table.th>Bill No.</x-table.th>
                     <x-table.th>Patient</x-table.th>
-                    <x-table.th>Doctor</x-table.th>
                     <x-table.th class="text-right">Amount</x-table.th>
                     <x-table.th>Method</x-table.th>
                     <x-table.th>Status</x-table.th>
@@ -93,9 +142,6 @@
                         <td class="px-4 py-3">
                             <p class="font-bold text-gray-900 dark:text-white text-sm">{{ $bill->patient->full_name }}</p>
                             <p class="text-xs text-gray-400">{{ $bill->patient->uhid }}</p>
-                        </td>
-                        <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
-                            {{ $bill->consultation?->doctor?->full_name ?? '—' }}
                         </td>
                         <td class="px-4 py-3 text-right font-bold text-gray-900 dark:text-white">
                             ₹{{ number_format($bill->total_amount, 2) }}
@@ -117,7 +163,7 @@
                         </td>
                         <td class="px-4 py-3 text-right">
                             <div class="flex justify-end gap-1">
-                                <a href="{{ route('counter.bills.print', $bill->id) }}"
+                                <a href="{{ route('billing.bills.print', $bill->id) }}"
                                    target="_blank"
                                    class="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200 transition-colors px-3 py-1.5 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20">
                                     Print
@@ -137,6 +183,7 @@
                 @endforelse
             </tbody>
         </x-table.wrapper>
+        </div>
 
         <div class="px-4 py-3 border-t border-gray-100 dark:border-gray-700/50">
             {{ $bills->links() }}

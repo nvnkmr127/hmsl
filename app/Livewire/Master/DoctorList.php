@@ -15,6 +15,7 @@ class DoctorList extends Component
 
     public $search = '';
     public $departmentFilter = '';
+    public $showInactive = false;
 
     #[On('doctor-updated')]
     public function refresh()
@@ -47,6 +48,9 @@ class DoctorList extends Component
     public function render()
     {
         $doctors = Doctor::with('department')
+            ->when(!$this->showInactive, function($query) {
+                $query->where('is_active', true);
+            })
             ->when($this->search, function($query) {
                 $query->where('full_name', 'like', '%' . $this->search . '%')
                       ->orWhere('specialization', 'like', '%' . $this->search . '%');

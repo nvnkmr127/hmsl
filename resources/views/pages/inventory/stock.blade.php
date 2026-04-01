@@ -3,16 +3,11 @@
 @section('title', 'Inventory Stock')
 
 @section('content')
-<div class="section-header">
-    <div>
-        <h1 class="section-title">Inventory Stock</h1>
-        <p class="section-subtitle">View item-wise stock levels and reorder alerts.</p>
-    </div>
-    <div class="flex items-center gap-3">
-        <a href="{{ route('inventory.index') }}" class="btn btn-secondary">Back to Inventory</a>
+<x-page-header title="Inventory Stock" subtitle="View item-wise stock levels and reorder alerts." :back="route('inventory.index')" backLabel="Inventory">
+    <x-slot name="actions">
         <button class="btn btn-primary">Record Movement</button>
-    </div>
-</div>
+    </x-slot>
+</x-page-header>
 
 <div class="glass-card p-6">
     <h3 class="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider mb-3">Current Stock</h3>

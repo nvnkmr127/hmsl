@@ -25,8 +25,8 @@
                 <!-- Physical Details & Contact -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 border-t border-gray-100 dark:border-gray-800">
                     <div>
-                        <x-form.input label="Age (Years)" wire:model="age" name="age" type="number" placeholder="Enter Age" />
-                        @error('age') <p class="text-[10px] text-rose-500 font-black uppercase mt-1">{{ $message }}</p> @enderror
+                        <x-form.input label="Date of Birth" wire:model="date_of_birth" name="date_of_birth" type="date" />
+                        @error('date_of_birth') <p class="text-[10px] text-rose-500 font-black uppercase mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <x-form.select label="Gender" wire:model="gender" name="gender">
@@ -41,6 +41,84 @@
                         <x-form.input label="Mobile Phone" wire:model="phone" name="phone" placeholder="10 Digit Number" />
                         @error('phone') <p class="text-[10px] text-rose-500 font-black uppercase mt-1">{{ $message }}</p> @enderror
                     </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div x-data="{
+                        open: false,
+                        loading: false,
+                        results: [],
+                        controller: null,
+                        async search(q) {
+                            const query = (q || '').trim();
+                            if (query.length < 3) {
+                                this.results = [];
+                                this.open = false;
+                                return;
+                            }
+
+                            if (this.controller) this.controller.abort();
+                            this.controller = new AbortController();
+
+                            this.loading = true;
+                            this.open = true;
+                            try {
+                                const url = new URL('{{ route('counter.address.autocomplete') }}', window.location.origin);
+                                url.searchParams.set('q', query);
+                                const res = await fetch(url.toString(), { signal: this.controller.signal, headers: { 'Accept': 'application/json' } });
+                                if (!res.ok) throw new Error('Request failed');
+                                this.results = await res.json();
+                            } catch (e) {
+                                if (e.name !== 'AbortError') {
+                                    this.results = [];
+                                }
+                            } finally {
+                                this.loading = false;
+                            }
+                        },
+                        select(item) {
+                            $wire.set('address', item.address || '');
+                            $wire.set('city', item.city || '');
+                            $wire.set('state', item.state || '');
+                            $wire.set('pincode', item.pincode || '');
+                            this.open = false;
+                            this.results = [];
+                        },
+                    }" class="relative" @click.away="open = false" @keydown.escape.window="open = false">
+                        <x-form.input
+                            label="Address (From)"
+                            wire:model="address"
+                            name="address"
+                            placeholder="Start typing address..."
+                            x-on:input.debounce.300ms="search($event.target.value)"
+                            autocomplete="off"
+                        />
+                        @error('address') <p class="text-[10px] text-rose-500 font-black uppercase mt-1">{{ $message }}</p> @enderror
+
+                        <div x-show="open" x-transition class="absolute z-50 mt-2 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl overflow-hidden">
+                            <div x-show="loading" class="px-4 py-3 text-sm text-slate-500">Searching...</div>
+                            <template x-for="item in results" :key="item.place_id">
+                                <button type="button" class="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" @click="select(item)">
+                                    <div class="text-sm font-semibold text-slate-800 dark:text-slate-200" x-text="item.label"></div>
+                                    <div class="text-xs text-slate-500 mt-1" x-text="item.subLabel"></div>
+                                </button>
+                            </template>
+                            <div x-show="!loading && results.length === 0" class="px-4 py-3 text-sm text-slate-500">No results</div>
+                        </div>
+                    </div>
+                    <div>
+                        <x-form.input label="Blood Group (Optional)" wire:model="blood_group" name="blood_group" placeholder="A+, O+, ..." />
+                        @error('blood_group') <p class="text-[10px] text-rose-500 font-black uppercase mt-1">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-6 pt-6 border-t border-gray-100 dark:border-gray-800">
+                <p class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Insurance (Optional)</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <x-form.input label="Provider" wire:model="insurance_provider" name="insurance_provider" placeholder="Insurance company" />
+                    <x-form.input label="Policy No" wire:model="insurance_policy" name="insurance_policy" placeholder="Policy number" />
+                    <x-form.input label="Validity" wire:model="insurance_validity" name="insurance_validity" type="date" />
                 </div>
             </div>
 

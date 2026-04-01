@@ -3,7 +3,12 @@
         title="Patient Admission" 
         subtitle="Register a new IPD admission and assign a ward bed facility."
         back="{{ route('counter.ipd.index') }}"
-    />
+    >
+        <x-slot name="actions">
+            <a href="{{ route('counter.ipd.index') }}" class="btn btn-secondary">Admissions</a>
+            <a href="{{ route('discharge.index') }}" class="btn btn-secondary">Discharge</a>
+        </x-slot>
+    </x-page-header>
 
     <x-card>
         <form wire:submit="save" class="space-y-8">
@@ -52,14 +57,17 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <!-- Clinical Assign -->
-                <div class="space-y-6">
                     <p class="section-lbl" style="color:#7c3aed">2. Clinical Assign</p>
-                    <x-form.select label="Consulting Doctor" wire:model="doctorId">
-                        <option value="">Select Doctor...</option>
-                        @foreach($doctors as $doctor)
-                            <option value="{{ $doctor->id }}">Dr. {{ $doctor->full_name }} ({{ $doctor->department?->name ?? 'No Department' }})</option>
-                        @endforeach
-                    </x-form.select>
+                    @if(count($doctors) > 1)
+                        <x-form.select label="Consulting Doctor" wire:model="doctorId">
+                            <option value="">Select Doctor...</option>
+                            @foreach($doctors as $doctor)
+                                <option value="{{ $doctor->id }}">Dr. {{ $doctor->full_name }} ({{ $doctor->department?->name ?? 'No Department' }})</option>
+                            @endforeach
+                        </x-form.select>
+                    @else
+                        <input type="hidden" wire:model="doctorId">
+                    @endif
                     
                     <x-form.input label="Admission Date/Time" type="datetime-local" wire:model="admissionDate" />
                     <x-form.input label="Primary Reason" wire:model="reason" placeholder="e.g. Schedule Surgery, Intensive Care, etc." />

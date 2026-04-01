@@ -1,0 +1,14 @@
+- [x] No broken navigation links for each supported role
+- [x] Dashboard loads for each supported role without 500 errors
+- [x] Patients: list/search page loads; patient history page loads
+- [x] OPD: booking screen loads; token generation flow works; print slip opens
+- [x] Doctor: consultation desk loads; appointment list loads; completion flow works
+- [x] Billing: billing list loads; bill generate screen loads; print view loads
+- [x] IPD: admissions list loads; admission form loads
+- [x] Discharge: discharge list loads; discharge action completes without error
+- [x] Settings: settings index loads; webhook endpoints screen loads; event list includes consultation.completed
+- [x] Master: department/doctor/service/medicine/ward/user screens load (as applicable)
+- [x] Reports: revenue page loads; terminology uses plain language (e.g., “Stats”)
+- [x] Unfinished modules show clear “Coming soon” messaging and do not appear for roles without access
+- [x] `php artisan test` passes
+- [x] `npm run build` passes

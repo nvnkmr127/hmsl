@@ -1,8 +1,14 @@
 <div>
     <x-page-header 
         title="OPD Registration & Token Desk" 
-        subtitle="Manage daily outpatient flow, generate tokens, and monitor real-time queue status."
-    />
+        subtitle="Manage daily outpatient visits, generate tokens, and monitor real-time queue status."
+    >
+        <x-slot name="actions">
+            <button wire:click="openPatientForm" class="btn btn-primary">New Patient</button>
+            <a href="{{ route('counter.patients.index') }}" class="btn btn-secondary">Patients</a>
+            <a href="{{ route('public.queue') }}" target="_blank" class="btn btn-secondary">Public Display</a>
+        </x-slot>
+    </x-page-header>
 
     <livewire:counter.patient-form />
 
@@ -153,7 +159,7 @@
                 <svg class="absolute -right-10 -top-10 w-48 h-48 text-indigo-500/10 rotate-12" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L1 12l11 10 11-10L12 2zm0 18.5L2.5 12 12 3.5l9.5 8.5L12 20.5z"/></svg>
             </div>
 
-            <div class="p-6 rounded-[2.5rem] bg-emerald-600 dark:bg-emerald-900 shadow-2xl relative overflow-hidden group cursor-pointer" onclick="window.open('{{ route('public.queue') }}', '_blank')">
+            <a href="{{ route('public.queue') }}" target="_blank" class="p-6 rounded-[2.5rem] bg-emerald-600 dark:bg-emerald-900 shadow-2xl relative overflow-hidden group cursor-pointer block">
                 <div class="relative z-10 flex items-center justify-between">
                     <div>
                         <h3 class="text-white font-black uppercase tracking-widest text-xs mb-1">Public Display</h3>
@@ -163,7 +169,7 @@
                         <svg class="w-5 h-5 font-black uppercase tracking-widest" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9.75 17L9 21h6l-.75-4M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
 
         <!-- Consultation Monitoring Section -->
@@ -171,7 +177,7 @@
             <div class="bg-white dark:bg-gray-900 rounded-[2.5rem] border border-gray-100 dark:border-gray-800 shadow-xl overflow-hidden">
                 <div class="px-8 py-6 border-b border-gray-50 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/50">
                     <div>
-                        <h2 class="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">Daily Consultation Flow</h2>
+                        <h2 class="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">Daily Consultations</h2>
                         <p class="text-[10px] text-gray-500 dark:text-gray-400 font-black uppercase tracking-widest mt-0.5">Live view for {{ date('D, d M Y') }}</p>
                     </div>
                     <div class="flex items-center gap-2">
@@ -186,16 +192,87 @@
                     </div>
                 </div>
 
-                <div class="overflow-x-auto">
+                <div class="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+                    @forelse($todayConsultations as $consult)
+                        <div class="p-5 {{ $consult->status === 'Cancelled' ? 'opacity-40 grayscale' : '' }}">
+                            <div class="flex items-start justify-between gap-4">
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-black text-indigo-600 dark:text-indigo-400 text-sm">#{{ str_pad($consult->token_number, 2, '0', STR_PAD_LEFT) }}</span>
+                                        @php 
+                                            $statusThemes = [
+                                                'Pending' => ['bg' => 'bg-amber-100 text-amber-600', 'label' => 'Waiting'],
+                                                'Ongoing' => ['bg' => 'bg-indigo-100 text-indigo-600', 'label' => 'Ongoing'],
+                                                'Completed' => ['bg' => 'bg-emerald-100 text-emerald-600', 'label' => 'Done'],
+                                                'Cancelled' => ['bg' => 'bg-rose-100 text-rose-600', 'label' => 'Cancelled'],
+                                            ];
+                                            $theme = $statusThemes[$consult->status] ?? ['bg' => 'bg-gray-100 text-gray-600', 'label' => $consult->status];
+                                        @endphp
+                                        <span class="{{ $theme['bg'] }} px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-[0.1em]">
+                                            {{ $theme['label'] }}
+                                        </span>
+                                    </div>
+                                    <p class="font-black text-gray-900 dark:text-white uppercase tracking-tight text-sm truncate mt-2">
+                                        {{ $consult->patient->full_name }}
+                                    </p>
+                                    <p class="text-[10px] font-black tracking-widest text-gray-400 uppercase truncate">
+                                        {{ $consult->patient->uhid }} · {{ $consult->patient->gender }} · {{ $consult->patient->age }}
+                                    </p>
+                                </div>
+                                <div class="flex-shrink-0 text-right">
+                                    @if($consult->payment_status === 'Paid')
+                                        <span class="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-3 py-1 rounded-lg text-[10px] font-black uppercase">PAID</span>
+                                        <p class="text-[9px] font-bold text-gray-400 mt-1 uppercase">{{ $consult->payment_method }}</p>
+                                    @else
+                                        <span class="bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 px-3 py-1 rounded-lg text-[10px] font-black uppercase">UNPAID</span>
+                                    @endif
+                                </div>
+                            </div>
+
+                            @if($consult->status !== 'Cancelled')
+                                <div class="mt-4 flex flex-wrap gap-2">
+                                    <button @click="$dispatch('record-vitals', { patientId: {{ $consult->patient_id }}, consultationId: {{ $consult->id }} })"
+                                            class="btn btn-secondary px-3 py-2 text-xs">
+                                        Vitals
+                                    </button>
+                                    <a href="{{ route('counter.opd.print', ['id' => $consult->id]) }}" target="_blank"
+                                       class="btn btn-secondary px-3 py-2 text-xs">
+                                        Print
+                                    </a>
+                                    @if($consult->payment_status === 'Paid')
+                                    <button wire:click="$dispatch('generate-bill', {{ $consult->id }})"
+                                            class="btn btn-secondary px-3 py-2 text-xs">
+                                        Bill
+                                    </button>
+                                    @endif
+                                    <button wire:click="editBooking({{ $consult->id }})"
+                                            class="btn btn-secondary px-3 py-2 text-xs">
+                                        Edit
+                                    </button>
+                                    <button wire:click="cancelBooking({{ $consult->id }})"
+                                            wire:confirm="Permanent cancellation of #{{ $consult->token_number }}?"
+                                            class="btn btn-ghost px-3 py-2 text-xs">
+                                        Cancel
+                                    </button>
+                                </div>
+                            @endif
+                        </div>
+                    @empty
+                        <div class="p-10 text-center">
+                            <p class="text-sm font-black uppercase tracking-widest text-gray-400">The queue is currently empty</p>
+                        </div>
+                    @endforelse
+                </div>
+
+                <div class="hidden md:block overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-white dark:bg-gray-900">
                                 <th class="px-8 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 border-b border-gray-50 dark:border-gray-800">Token</th>
-                                <th class="px-8 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 border-b border-gray-50 dark:border-gray-800">Patient Intelligence</th>
-                                <th class="px-8 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 border-b border-gray-50 dark:border-gray-800">Consultant</th>
-                                <th class="px-8 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 border-b border-gray-50 dark:border-gray-800">Phase</th>
-                                <th class="px-8 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 border-b border-gray-50 dark:border-gray-800">Billing</th>
-                                <th class="px-8 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 border-b border-gray-50 dark:border-gray-800 text-right">Ops</th>
+                                <th class="px-8 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 border-b border-gray-50 dark:border-gray-800">Patient</th>
+                                <th class="px-8 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 border-b border-gray-50 dark:border-gray-800 text-center">Status</th>
+                                <th class="px-8 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 border-b border-gray-50 dark:border-gray-800 text-center">Billing</th>
+                                <th class="px-8 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 border-b border-gray-50 dark:border-gray-800 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
@@ -224,12 +301,6 @@
                                                     <span>{{ $consult->patient->gender }} · {{ $consult->patient->age }}</span>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td class="px-8 py-5">
-                                        <div class="flex flex-col">
-                                            <span class="text-sm font-bold text-gray-800 dark:text-gray-200">Dr. {{ $consult->doctor->full_name }}</span>
-                                            <span class="text-[10px] font-black uppercase text-violet-500 dark:text-violet-400 tracking-[0.1em]">{{ $consult->doctor->department->name }}</span>
                                         </div>
                                     </td>
                                     <td class="px-8 py-5 text-center">
@@ -269,6 +340,13 @@
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2-2v4" /></svg>
                                                 </a>
 
+                                                @if($consult->payment_status === 'Paid')
+                                                <button wire:click="$dispatch('generate-bill', {{ $consult->id }})"
+                                                        class="p-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-amber-500 hover:text-white transition-all duration-300 shadow-sm" title="Generate Bill">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                </button>
+                                                @endif
+
                                                 <button wire:click="editBooking({{ $consult->id }})" 
                                                         class="p-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-violet-500 hover:text-white transition-all duration-300 shadow-sm" title="Edit">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
@@ -307,7 +385,7 @@
     </div>
 
     <!-- Modals -->
-    <x-modal name="booking-modal" :title="$isEditing ? 'System: Reschedule Flow' : 'Counter: Token Generation'" width="3xl">
+    <x-modal name="booking-modal" :title="$isEditing ? 'System: Reschedule Visit' : 'Counter: Token Generation'" width="3xl">
         @if($selectedPatient)
             <div class="space-y-8 p-1">
                 <!-- Patient Identity Banner -->
@@ -347,9 +425,9 @@
                         </div>
 
                         <div class="space-y-6">
-                            <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2">
+                                <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2">
                                 <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                                Revenue Desk
+                                Payment
                             </h4>
                             <div class="p-5 rounded-[2rem] bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-100/50 dark:border-amber-900/30 space-y-4">
                                 <div class="flex items-center justify-between">
@@ -361,9 +439,9 @@
                                 </div>
                                 <div class="pt-3 border-t border-amber-100 dark:border-amber-900/50">
                                     <select wire:model="paymentMode" class="w-full bg-white dark:bg-gray-950 border-none rounded-xl px-4 py-2.5 font-bold text-xs outline-none">
-                                        <option value="Cash">💵 Cold Cash</option>
-                                        <option value="UPI">📱 UPI / Scan QR</option>
-                                        <option value="Card">💳 Credit/Debit Card</option>
+                                        <option value="Cash">Cash</option>
+                                        <option value="UPI">UPI</option>
+                                        <option value="Card">Card</option>
                                     </select>
                                 </div>
                                 @error('fee') <p class="text-[10px] text-rose-500 font-black uppercase mt-1 text-right">{{ $message }}</p> @enderror
@@ -377,17 +455,21 @@
                         <textarea wire:model="notes" rows="3" class="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-transparent focus:border-indigo-500 rounded-[2rem] px-6 py-5 outline-none transition-all font-bold placeholder-gray-300 dark:placeholder-gray-700" placeholder="State main complaints or reason for visit..."></textarea>
                     </div>
 
-                    <div class="space-y-3">
-                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2 font-black uppercase">Assign Consultant</label>
-                        <select wire:model.live="selectedDoctor" class="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-6 py-4 outline-none transition-all font-bold">
-                            <option value="">Select Doctor</option>
-                            @foreach($doctors as $doc)
-                                <option value="{{ $doc->id }}">Dr. {{ $doc->full_name }} ({{ $doc->department->name }})</option>
-                            @endforeach
-                        </select>
-                        @error('selectedDoctor') <p class="text-[10px] text-rose-500 font-black uppercase mt-1">{{ $message }}</p> @enderror
-                        <input type="hidden" wire:model="consultation_date">
-                    </div>
+                    @if(count($doctors) > 1)
+                        <div class="space-y-3">
+                            <label class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2 font-black uppercase">Assign Consultant</label>
+                            <select wire:model.live="selectedDoctor" class="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-6 py-4 outline-none transition-all font-bold">
+                                <option value="">Select Doctor</option>
+                                @foreach($doctors as $doc)
+                                    <option value="{{ $doc->id }}">Dr. {{ $doc->full_name }} ({{ $doc->department->name }})</option>
+                                @endforeach
+                            </select>
+                            @error('selectedDoctor') <p class="text-[10px] text-rose-500 font-black uppercase mt-1">{{ $message }}</p> @enderror
+                        </div>
+                    @else
+                        <input type="hidden" wire:model="selectedDoctor">
+                    @endif
+                    <input type="hidden" wire:model="consultation_date">
 
                     <!-- Final Actions -->
                     <div class="flex flex-col sm:flex-row items-center justify-end gap-3 pt-8 border-t border-gray-100 dark:border-gray-800"
@@ -429,6 +511,13 @@
             Livewire.on('print-op-slip', (event) => {
                 console.log('Desk: Printing Slip ID ->', event[0].id);
                 const url = "{{ route('counter.opd.print', ['id' => ':id']) }}".replace(':id', event[0].id);
+                window.open(url, '_blank');
+            });
+
+            Livewire.on('bill-generated', (event) => {
+                const billId = event?.billId ?? event?.[0]?.billId ?? event?.[0]?.bill_id ?? event?.[0];
+                if (!billId) return;
+                const url = "{{ route('billing.bills.print', ['bill' => ':id']) }}".replace(':id', billId);
                 window.open(url, '_blank');
             });
 

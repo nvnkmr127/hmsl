@@ -35,6 +35,12 @@ class IpdAdmissionForm extends Component
     public function mount()
     {
         $this->admissionDate = now()->format('Y-m-d\TH:i');
+        
+        // Auto-select doctor if only one active exists
+        $activeDoctors = Doctor::where('is_active', true)->get();
+        if ($activeDoctors->count() === 1) {
+            $this->doctorId = $activeDoctors->first()->id;
+        }
     }
 
     public function selectPatient($id)
@@ -82,7 +88,7 @@ class IpdAdmissionForm extends Component
 
         return view('livewire.counter.ipd-admission-form', [
             'patients' => $patients,
-            'doctors' => Doctor::all(),
+            'doctors' => Doctor::where('is_active', true)->get(),
             'wards' => Ward::all(),
         ]);
     }

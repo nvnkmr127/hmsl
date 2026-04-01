@@ -46,7 +46,8 @@ class AppointmentManagement extends Component
 
         if ($this->search) {
             $query->whereHas('patient', function($q) {
-                $q->where('full_name', 'like', '%' . $this->search . '%')
+                $q->where('first_name', 'like', '%' . $this->search . '%')
+                  ->orWhere('last_name', 'like', '%' . $this->search . '%')
                   ->orWhere('uhid', 'like', '%' . $this->search . '%');
             });
         }

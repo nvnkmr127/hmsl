@@ -9,6 +9,6 @@
             <p class="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.3em]">Real-Time Updates Tracking Every Consultation</p>
         </div>
 
-        <livewire:public.queue-monitor />
+        <livewire:front.queue-monitor />
     </div>
 @endsection

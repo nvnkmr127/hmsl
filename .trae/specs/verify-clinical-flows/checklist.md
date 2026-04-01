@@ -1,0 +1,15 @@
+- [x] OPD token system: token can be generated and appears in today list
+- [x] OPD token system: token slip print view loads successfully
+- [x] OPD token system: cancel token updates status and UI reflects cancellation
+- [x] Doctor appointments: appointment list loads for doctor role and filters/search work
+- [x] Doctor queue: consultation desk shows pending queue and completion moves item to completed
+- [x] IPD admission: admission can be created and bed becomes unavailable
+- [x] Discharge: discharge action sets status/date/notes and bed becomes available
+- [x] Discharge summary: discharge summary screen exists for discharged admissions
+- [x] Discharge summary: print view (or download) loads and includes patient/admission identifiers
+- [x] Billing: bill can be created with items and totals are correct
+- [x] Receipts: bill receipt/print view loads for permitted roles
+- [x] Permissions: receptionist cannot access doctor-only screens; doctor cannot access admin-only screens unless granted
+- [x] Permissions: accountant can access billing (and reports if enabled) and is denied clinical-only pages
+- [x] `php artisan test` passes (including flow tests)
+- [x] `npm run build` passes

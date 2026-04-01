@@ -1,18 +1,13 @@
 <div>
     <x-page-header title="Doctors Directory" subtitle="Manage hospital medical staff, their specializations and consultation fees.">
         <x-slot name="actions">
-            <button @click="$dispatch('create-doctor')" class="btn btn-primary">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
-                Add Doctor
-            </button>
+            <button @click="$dispatch('create-doctor')" class="btn btn-primary">Add Doctor</button>
         </x-slot>
     </x-page-header>
 
     <x-card :noPad="true">
         <div class="p-5 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950/50">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
                 <div class="md:col-span-2">
                     <x-form.input placeholder="Search by name or specialization..." wire:model.live.debounce.300ms="search" icon="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </div>
@@ -23,6 +18,10 @@
                             <option value="{{ $dept->id }}">{{ $dept->name }}</option>
                         @endforeach
                     </x-form.select>
+                </div>
+                <div class="flex items-center gap-2 pl-2">
+                    <input type="checkbox" id="showInactive" wire:model.live="showInactive" class="rounded border-gray-300 text-violet-600 focus:ring-violet-600">
+                    <label for="showInactive" class="text-xs font-bold text-gray-500 uppercase tracking-widest">Show Inactive</label>
                 </div>
             </div>
         </div>

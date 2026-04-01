@@ -25,6 +25,7 @@ class OpdManager
         return DB::transaction(function () use ($data) {
             $data['consultation_date'] = $data['consultation_date'] ?: date('Y-m-d');
             $data['token_number'] = $this->generateToken($data['doctor_id'], $data['consultation_date']);
+            $data['valid_upto'] = $data['valid_upto'] ?? date('Y-m-d', strtotime($data['consultation_date'] . ' +7 days'));
             
             // Auto-fetch fee from doctor profile if not provided
             if (!isset($data['fee'])) {

@@ -46,4 +46,9 @@ class Admission extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
+    public function getWardNameAttribute()
+    {
+        return optional(optional($this->bed)->ward)->name ?? 'N/A';
+    }
 }

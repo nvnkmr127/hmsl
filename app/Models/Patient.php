@@ -4,11 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Carbon\Carbon;
 
 class Patient extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'uhid',
@@ -38,6 +39,7 @@ class Patient extends Model
     protected $casts = [
         'date_of_birth' => 'date',
         'is_active' => 'boolean',
+        'insurance_validity' => 'date',
     ];
 
     public function getFullNameAttribute()

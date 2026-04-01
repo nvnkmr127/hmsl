@@ -13,8 +13,6 @@ class PatientForm extends Component
     public $isEditing = false;
     public $patientId;
 
-    public $age;
-
     #[Validate('required|string|max:255')]
     public $first_name;
 
@@ -30,13 +28,20 @@ class PatientForm extends Component
     #[Validate('required|in:Male,Female,Other')]
     public $gender;
 
+    #[Validate('required|date|before_or_equal:today')]
     public $date_of_birth;
 
     #[Validate('required|string|max:15')]
     public $phone;
 
-    #[Validate('nullable|email|max:255')]
-    public $email;
+    #[Validate('nullable|string|max:255')]
+    public $insurance_provider;
+
+    #[Validate('nullable|string|max:255')]
+    public $insurance_policy;
+
+    #[Validate('nullable|date')]
+    public $insurance_validity;
 
     #[Validate('nullable|string|max:10')]
     public $blood_group;
@@ -93,7 +98,6 @@ class PatientForm extends Component
         $this->gender = $patient->gender;
         $this->date_of_birth = $patient->date_of_birth ? $patient->date_of_birth->format('Y-m-d') : null;
         $this->phone = $patient->phone;
-        $this->email = $patient->email;
         $this->blood_group = $patient->blood_group;
         $this->address = $patient->address;
         $this->city = $patient->city;
@@ -103,7 +107,9 @@ class PatientForm extends Component
         $this->emergency_contact_phone = $patient->emergency_contact_phone;
         $this->marital_status = $patient->marital_status;
         $this->is_active = $patient->is_active;
-        $this->age = $patient->age;
+        $this->insurance_provider = $patient->insurance_provider;
+        $this->insurance_policy = $patient->insurance_policy;
+        $this->insurance_validity = $patient->insurance_validity ? $patient->insurance_validity->format('Y-m-d') : null;
 
         $this->dispatch('open-modal', name: 'patient-modal');
     }
@@ -118,8 +124,8 @@ class PatientForm extends Component
             'father_name' => $this->father_name,
             'mother_name' => $this->mother_name,
             'gender' => $this->gender,
+            'date_of_birth' => $this->date_of_birth,
             'phone' => $this->phone,
-            'email' => $this->email,
             'blood_group' => $this->blood_group,
             'address' => $this->address,
             'city' => $this->city,
@@ -129,15 +135,10 @@ class PatientForm extends Component
             'emergency_contact_phone' => $this->emergency_contact_phone,
             'marital_status' => $this->marital_status,
             'is_active' => $this->is_active,
+            'insurance_provider' => $this->insurance_provider,
+            'insurance_policy' => $this->insurance_policy,
+            'insurance_validity' => $this->insurance_validity,
         ];
-
-        if ($this->age) {
-            $data['date_of_birth'] = date('Y-m-d', strtotime("-$this->age years"));
-        } elseif ($this->date_of_birth) {
-            $data['date_of_birth'] = $this->date_of_birth;
-        } else {
-            $data['date_of_birth'] = now()->subYears(5)->format('Y-m-d'); // Default if empty
-        }
 
         if ($this->isEditing) {
             $patient = Patient::findOrFail($this->patientId);

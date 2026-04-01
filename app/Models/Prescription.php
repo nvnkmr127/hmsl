@@ -19,11 +19,16 @@ class Prescription extends Model
         'advice',
         'follow_up_date',
         'medicines',
+        'is_dispensed',
+        'dispensed_at',
+        'dispensed_by',
     ];
 
     protected $casts = [
         'medicines'       => 'array',
         'follow_up_date'  => 'date',
+        'is_dispensed'    => 'boolean',
+        'dispensed_at'    => 'datetime',
     ];
 
     public function consultation()

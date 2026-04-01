@@ -28,6 +28,7 @@ class WebhookEndpoints extends Component
         'admission.created' => 'IPD Admission',
         'invoice.paid' => 'Invoice Paid',
         'daily.summary' => 'System: Daily Summary',
+        'consultation.completed' => 'OPD Consultation Completed',
     ];
 
     public function mount()

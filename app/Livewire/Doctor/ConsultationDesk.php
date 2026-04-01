@@ -66,13 +66,13 @@ class ConsultationDesk extends Component
             ]);
         }
 
-        $admissions = \App\Models\Admission::where('patient_id', $id)->get();
+        $admissions = \App\Models\Admission::with('bed.ward')->where('patient_id', $id)->get();
         foreach ($admissions as $a) {
             $timeline->push((object)[
                 'date' => $a->admission_date,
                 'type' => 'Admission',
                 'title' => 'In-Patient Admission',
-                'meta' => "Ward: {$a->ward_name}",
+                'meta' => "Ward: " . (optional(optional($a->bed)->ward)->name ?? 'N/A'),
                 'color' => 'red'
             ]);
         }

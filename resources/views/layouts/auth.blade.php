@@ -43,7 +43,7 @@
                 Hospital Management<br><span style="color:#7c3aed">Intelligence Suite</span>
             </h2>
             <p class="text-slate-400 text-sm leading-relaxed max-w-xs">
-                Unified platform for clinical operations, billing, analytics, and patient lifecycle management.
+                Unified platform for clinical operations, billing, stats, and patient lifecycle management.
             </p>
 
             <!-- Stats -->

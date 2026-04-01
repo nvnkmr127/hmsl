@@ -22,6 +22,39 @@
             </div>
         </div>
 
+        <div class="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+            @forelse($patients as $patient)
+                <div class="p-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="text-xs font-black text-gray-400 uppercase tracking-widest">{{ $patient->uhid }}</p>
+                            <p class="text-sm font-black text-gray-900 dark:text-white truncate mt-1">{{ $patient->full_name }}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ $patient->gender }} · {{ $patient->age }} Years</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ $patient->phone }}</p>
+                        </div>
+                        <div class="flex-shrink-0 flex flex-col gap-2">
+                            <a href="{{ route('counter.patients.history', $patient->id) }}" class="btn btn-secondary px-3 py-2 text-xs">History</a>
+                            @can('view opd')
+                            <a href="{{ route('counter.opd.index', ['patient_id' => $patient->id]) }}" class="btn btn-ghost px-3 py-2 text-xs">OP Token</a>
+                            @endcan
+                        </div>
+                    </div>
+
+                    <div class="mt-3 flex items-center justify-end gap-2">
+                        <button @click="$dispatch('edit-patient', { id: {{ $patient->id }} })" class="btn btn-ghost px-3 py-2 text-xs">Edit</button>
+                        <button wire:click="deletePatient({{ $patient->id }})"
+                                wire:confirm="Are you sure you want to delete this patient record?"
+                                class="btn btn-ghost px-3 py-2 text-xs text-red-500">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            @empty
+                <div class="p-8 text-center text-sm font-semibold text-gray-500 dark:text-gray-400">No patients found.</div>
+            @endforelse
+        </div>
+
+        <div class="hidden md:block">
         <x-table.wrapper>
             <thead>
                 <tr>
@@ -99,6 +132,7 @@
                 @endforelse
             </tbody>
         </x-table.wrapper>
+        </div>
 
         @if($patients->hasPages())
             <div class="p-5 border-t border-gray-100 dark:border-gray-800">

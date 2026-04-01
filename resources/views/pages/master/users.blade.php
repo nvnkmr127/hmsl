@@ -3,12 +3,11 @@
 @section('title', 'User Management')
 
 @section('content')
-<div class="section-header">
-    <div>
-        <h1 class="section-title">User Management</h1>
-        <p class="section-subtitle">Manage hospital staff access, roles, and permissions.</p>
-    </div>
-</div>
+<x-page-header title="User Management" subtitle="Manage hospital staff access, roles, and permissions.">
+    <x-slot name="actions">
+        <button class="btn btn-primary" @click="$dispatch('create-user')">Add New User</button>
+    </x-slot>
+</x-page-header>
 
 <div class="space-y-6">
     <livewire:master.user-list />

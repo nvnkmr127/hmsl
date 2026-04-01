@@ -21,10 +21,12 @@ class PatientService
     {
         return Patient::query()
             ->when($search, function($query) use ($search) {
-                $query->where('first_name', 'like', "%{$search}%")
-                      ->orWhere('last_name', 'like', "%{$search}%")
-                      ->orWhere('uhid', 'like', "%{$search}%")
-                      ->orWhere('phone', 'like', "%{$search}%");
+                $query->where(function ($q) use ($search) {
+                    $q->where('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%")
+                        ->orWhere('uhid', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%");
+                });
             })
             ->latest()
             ->paginate(10);

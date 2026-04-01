@@ -2,7 +2,7 @@
     <!-- Filter Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-gray-800 p-6 rounded-[2.5rem] border border-gray-100 dark:border-gray-700/50 shadow-sm">
         <div>
-            <h2 class="text-xl font-black text-gray-800 dark:text-white uppercase tracking-tight">Revenue Analytics</h2>
+            <h2 class="text-xl font-black text-gray-800 dark:text-white uppercase tracking-tight">Revenue Stats</h2>
             <p class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-1">Financial performance across departments</p>
         </div>
         <div class="flex items-center space-x-3">

@@ -30,6 +30,8 @@ class RolePermissionSeeder extends Seeder
             'view lab', 'collect samples', 'enter lab results',
             // Billing
             'view billing', 'create invoices', 'manage payments',
+            // Reports
+            'view reports',
             // Settings & Master Data
             'manage settings', 'manage master data', 'manage users'
         ];
@@ -63,7 +65,7 @@ class RolePermissionSeeder extends Seeder
             ],
             
             'accountant' => [
-                'view billing', 'manage payments'
+                'view billing', 'manage payments', 'view reports'
             ]
         ];
 

@@ -48,6 +48,11 @@ class OpdBooking extends Component
             $this->selectPatient($patient_id);
         }
 
+        $this->autoSelectDoctor();
+    }
+
+    private function autoSelectDoctor()
+    {
         $user = auth()->user();
         if ($user->hasRole('doctor_owner') || $user->hasRole('doctor')) {
             $doctor = Doctor::where('user_id', $user->id)->first();
@@ -175,6 +180,9 @@ class OpdBooking extends Component
         $this->reset(['selectedPatient', 'selectedDoctor', 'fee', 'notes', 'showBookingForm', 'isEditing', 'editingId', 'weight', 'temperature', 'paymentMode', 'searchPatient', 'lastConsultationId']);
         $this->consultation_date = date('Y-m-d');
         $this->valid_upto = date('Y-m-d', strtotime('+7 days'));
+        
+        $this->autoSelectDoctor();
+
         $this->dispatch('close-modal', name: 'booking-modal');
         $this->dispatch('booking-completed');
     }

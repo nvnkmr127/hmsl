@@ -71,8 +71,9 @@
                  class="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl overflow-hidden z-50">
                 <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
                     <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ Auth::user()?->name ?? 'Administrator' }}</p>
-                    <p class="text-xs font-medium text-gray-500 mt-0.5">System Administrator</p>
+                    <p class="text-xs font-medium text-gray-500 mt-0.5 capitalize">{{ str_replace('_', ' ', Auth::user()?->getRoleNames()->first() ?? 'User') }}</p>
                 </div>
+                @can('manage settings')
                 <a href="{{ route('settings.index') }}"
                    class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                     <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -80,6 +81,7 @@
                     </svg>
                     Settings
                 </a>
+                @endcan
                 <div class="border-t border-gray-100 dark:border-gray-800">
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf

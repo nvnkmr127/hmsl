@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Counter\PatientController;
 use App\Http\Controllers\Counter\OpdController;
+use App\Http\Controllers\Counter\AddressAutocompleteController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->group(function () {
@@ -12,6 +13,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/patients/{id}/history', function($id) {
                 return view('pages.counter.history', ['id' => $id]);
             })->name('patients.history');
+            Route::get('/address-autocomplete', AddressAutocompleteController::class)->name('address.autocomplete')->middleware('throttle:30,1');
         });
         
         // OPD

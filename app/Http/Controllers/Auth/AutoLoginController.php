@@ -11,6 +11,10 @@ class AutoLoginController extends Controller
 {
     public function login(Request $request)
     {
+        if (!app()->isLocal()) {
+            abort(403, 'Auto-login is only available in the local environment.');
+        }
+
         $role = $request->query('role');
         
         $emailMap = [

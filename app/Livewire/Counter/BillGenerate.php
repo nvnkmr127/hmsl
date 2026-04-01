@@ -4,6 +4,7 @@ namespace App\Livewire\Counter;
 
 use App\Models\Consultation;
 use App\Models\Bill;
+use App\Models\Patient;
 use App\Services\BillingService;
 use Livewire\Component;
 use Livewire\Attributes\On;
@@ -37,6 +38,26 @@ class BillGenerate extends Component
             ]
         ];
         
+        $this->discount = 0;
+        $this->tax = 0;
+        $this->paymentMethod = 'Cash';
+        $this->notes = '';
+
+        $this->dispatch('open-modal', ['name' => 'billing-modal']);
+    }
+
+    #[On('generate-bill-for-patient')]
+    public function openBillingModalForPatient($patientId)
+    {
+        $this->consultationId = null;
+        $patient = Patient::findOrFail($patientId);
+
+        $this->patientId = $patient->id;
+        $this->patientName = $patient->full_name;
+
+        $this->items = [
+            ['name' => 'Service', 'type' => 'Other', 'quantity' => 1, 'unit_price' => 0],
+        ];
         $this->discount = 0;
         $this->tax = 0;
         $this->paymentMethod = 'Cash';
@@ -83,7 +104,7 @@ class BillGenerate extends Component
         $service->markAsPaid($bill, $this->paymentMethod);
 
         $this->dispatch('close-modal', ['name' => 'billing-modal']);
-        $this->dispatch('bill-generated');
+        $this->dispatch('bill-generated', billId: $bill->id);
         $this->dispatch('notify', ['type' => 'success', 'message' => 'Bill generated and settled successfully!']);
     }
 

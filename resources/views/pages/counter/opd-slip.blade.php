@@ -19,7 +19,7 @@
         </div>
         <div style="width: 40%; text-align: right; font-size: 9pt; white-space: nowrap;">
             DATE: <strong>{{ $consultation->consultation_date->format('d/m/y') }}</strong> | 
-            VALID: <strong>{{ $consultation->valid_upto->format('d/m/y') }}</strong>
+            VALID: <strong>{{ $consultation->valid_upto?->format('d/m/y') ?? '—' }}</strong>
         </div>
     </div>
 
