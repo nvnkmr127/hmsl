@@ -1,7 +1,8 @@
 <div>
     <x-page-header title="Hospital Services" subtitle="Manage billable procedures, diagnostic tests, and clinical medical services.">
         <x-slot name="actions">
-            <button @click="$dispatch('create-service')" class="btn btn-primary">
+            <button wire:click="$dispatch('create-service')" class="btn btn-primary">
+
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
@@ -12,9 +13,9 @@
 
     <x-card :noPad="true">
         <div class="p-5 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950/50">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
                 <div class="md:col-span-2">
-                    <x-form.input placeholder="Search services..." wire:model.live.debounce.300ms="search" icon="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    <x-form.input placeholder="Search name, code..." wire:model.live.debounce.300ms="search" icon="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </div>
                 <div class="md:col-span-2">
                     <x-form.select wire:model.live="categoryFilter" name="category_filter">
@@ -24,14 +25,23 @@
                         @endforeach
                     </x-form.select>
                 </div>
+                <div class="md:col-span-2">
+                    <x-form.select wire:model.live="departmentFilter" name="department_filter">
+                        <option value="">All Departments</option>
+                        @foreach($departments as $dept)
+                            <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                        @endforeach
+                    </x-form.select>
+                </div>
             </div>
         </div>
 
         <x-table.wrapper>
             <thead>
                 <tr>
+                    <x-table.th>Code</x-table.th>
                     <x-table.th>Service Name</x-table.th>
-                    <x-table.th>Category</x-table.th>
+                    <x-table.th>Category / Dept</x-table.th>
                     <x-table.th>Base Price</x-table.th>
                     <x-table.th>Status</x-table.th>
                     <x-table.th class="text-right">Actions</x-table.th>
@@ -41,13 +51,23 @@
                 @forelse($services as $service)
                     <tr>
                         <td>
+                            <span class="text-[10px] font-black font-mono text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-lg">
+                                {{ $service->code ?: 'N/A' }}
+                            </span>
+                        </td>
+                        <td>
                             <span class="font-bold text-gray-900 dark:text-white uppercase tracking-tight">{{ $service->name }}</span>
                             @if($service->description)
                                 <p class="text-[10px] text-gray-400 italic line-clamp-1 mt-0.5">{{ $service->description }}</p>
                             @endif
                         </td>
                         <td>
-                            <x-badge color="violet">{{ $service->category }}</x-badge>
+                            <div class="flex flex-col gap-1">
+                                <x-badge color="violet">{{ $service->category }}</x-badge>
+                                @if($service->department)
+                                    <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest">{{ $service->department->name }}</span>
+                                @endif
+                            </div>
                         </td>
                         <td>
                             <span class="text-sm font-black text-gray-900 dark:text-white">₹{{ number_format($service->price, 2) }}</span>
@@ -57,6 +77,7 @@
                                 {{ $service->is_active ? 'Active' : 'Inactive' }}
                             </x-badge>
                         </td>
+
                         <td>
                             <div class="flex items-center justify-end gap-1">
                                 <button wire:click="toggleActive({{ $service->id }})" 
@@ -65,7 +86,8 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
                                     </svg>
                                 </button>
-                                <button @click="$dispatch('edit-service', { id: {{ $service->id }} })" 
+                                <button wire:click="$dispatch('edit-service', { id: {{ $service->id }} })" 
+
                                         class="btn btn-ghost px-2 py-2 text-violet-600" title="Edit">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />

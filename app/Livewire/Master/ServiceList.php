@@ -14,6 +14,8 @@ class ServiceList extends Component
 
     public $search = '';
     public $categoryFilter = '';
+    public $departmentFilter = '';
+
 
     #[On('service-updated')]
     public function refresh()
@@ -47,12 +49,21 @@ class ServiceList extends Component
     {
         $services = Service::query()
             ->when($this->search, function($query) {
-                $query->where('name', 'like', '%' . $this->search . '%')
+                $query->where(function($q) {
+                    $q->where('name', 'like', '%' . $this->search . '%')
+                      ->orWhere('code', 'like', '%' . $this->search . '%')
                       ->orWhere('category', 'like', '%' . $this->search . '%');
+                });
             })
+
             ->when($this->categoryFilter, function($query) {
                 $query->where('category', $this->categoryFilter);
             })
+            ->when($this->departmentFilter, function($query) {
+                $query->where('department_id', $this->departmentFilter);
+            })
+            ->with('department')
+
             ->latest()
             ->paginate(10);
 
@@ -60,7 +71,9 @@ class ServiceList extends Component
 
         return view('livewire.master.service-list', [
             'services' => $services,
-            'categories' => $categories
+            'categories' => $categories,
+            'departments' => \App\Models\Department::where('is_active', true)->get()
         ]);
+
     }
 }

@@ -9,7 +9,8 @@ class Ward extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'type', 'daily_charge', 'capacity', 'is_active'];
+    protected $fillable = ['code', 'name', 'type', 'daily_charge', 'capacity', 'is_active'];
+
 
     public function beds()
     {

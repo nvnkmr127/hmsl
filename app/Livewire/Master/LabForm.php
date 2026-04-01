@@ -13,7 +13,11 @@ class LabForm extends Component
     public $isEditing = false;
     public $testId;
 
+    #[Validate('nullable|string|max:50')]
+    public $code;
+
     #[Validate('required|string|max:255')]
+
     public $name;
 
     #[Validate('required|string|max:100')]
@@ -60,11 +64,13 @@ class LabForm extends Component
         $this->testId = $id;
         
         $test = LabTest::with('parameters')->findOrFail($id);
+        $this->code = $test->code;
         $this->name = $test->name;
         $this->category = $test->category;
         $this->price = $test->price;
         $this->description = $test->description;
         $this->is_active = $test->is_active;
+
         
         $this->parameters = $test->parameters->map(fn($p) => [
             'name' => $p->name,
@@ -72,16 +78,17 @@ class LabForm extends Component
             'reference_range' => $p->reference_range
         ])->toArray();
 
-        $this->dispatch('open-modal', ['name' => 'lab-modal']);
+        $this->dispatch('open-modal', name: 'lab-modal');
     }
 
     #[On('create-lab-test')]
     public function create()
     {
-        $this->reset(['name', 'category', 'price', 'description', 'is_active', 'parameters', 'testId', 'isEditing']);
+        $this->reset(['code', 'name', 'category', 'price', 'description', 'is_active', 'parameters', 'testId', 'isEditing']);
+
         $this->resetValidation();
         $this->addParameter(); // Start with one parameter field
-        $this->dispatch('open-modal', ['name' => 'lab-modal']);
+        $this->dispatch('open-modal', name: 'lab-modal');
     }
 
     public function save(LabManager $manager)
@@ -89,12 +96,14 @@ class LabForm extends Component
         $this->validate();
 
         $testData = [
+            'code' => $this->code,
             'name' => $this->name,
             'category' => $this->category,
             'price' => $this->price,
             'description' => $this->description,
             'is_active' => $this->is_active,
         ];
+
 
         if ($this->isEditing) {
             $test = LabTest::findOrFail($this->testId);
@@ -103,7 +112,7 @@ class LabForm extends Component
             $manager->createTest($testData, $this->parameters);
         }
 
-        $this->dispatch('close-modal', ['name' => 'lab-modal']);
+        $this->dispatch('close-modal', name: 'lab-modal');
         $this->dispatch('lab-updated');
         
         $this->dispatch('notify', [

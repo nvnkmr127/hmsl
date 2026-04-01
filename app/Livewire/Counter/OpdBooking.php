@@ -29,10 +29,6 @@ class OpdBooking extends Component
     public $valid_upto;
     public $weight;
     public $temperature;
-    public $bp_systolic;
-    public $bp_diastolic;
-    public $pulse;
-    public $spo2;
     public $fee;
     public $paymentMode = 'Cash';
     public $notes;
@@ -45,8 +41,10 @@ class OpdBooking extends Component
 
     public function mount($patient_id = null)
     {
+        $validityDays = \App\Models\Setting::get('opd_validity_days', 7);
         $this->consultation_date = date('Y-m-d');
-        $this->valid_upto = date('Y-m-d', strtotime('+7 days'));
+        $this->valid_upto = date('Y-m-d', strtotime("+{$validityDays} days"));
+
         
         if ($patient_id) {
             $this->selectPatient($patient_id);
@@ -62,14 +60,15 @@ class OpdBooking extends Component
             $doctor = Doctor::where('user_id', $user->id)->first();
             if ($doctor) {
                 $this->selectedDoctor = $doctor->id;
-                $this->fee = $doctor->consultation_fee;
+                $this->fee = $doctor->consultation_fee ?: \App\Models\Setting::get('consultation_fee_default', 500);
+
             }
         } else {
-            // Force select if only one doctor exists
-            $doctors = Doctor::where('is_active', true)->get();
-            if ($doctors->count() === 1) {
-                $this->selectedDoctor = $doctors->first()->id;
-                $this->fee = $doctors->first()->consultation_fee;
+            $doctor = Doctor::where('is_active', true)->first();
+            if ($doctor) {
+                $this->selectedDoctor = $doctor->id;
+                $this->fee = $doctor->consultation_fee ?: \App\Models\Setting::get('consultation_fee_default', 500);
+
             }
         }
     }
@@ -87,12 +86,8 @@ class OpdBooking extends Component
         if ($latestVitals) {
             $this->weight = $latestVitals->weight;
             $this->temperature = $latestVitals->temperature;
-            $this->bp_systolic = $latestVitals->bp_systolic;
-            $this->bp_diastolic = $latestVitals->bp_diastolic;
-            $this->pulse = $latestVitals->pulse;
-            $this->spo2 = $latestVitals->spo2;
         } else {
-            $this->reset(['weight', 'temperature', 'bp_systolic', 'bp_diastolic', 'pulse', 'spo2']);
+            $this->reset(['weight', 'temperature']);
         }
 
         $this->dispatch('open-modal', name: 'booking-modal');
@@ -117,12 +112,9 @@ class OpdBooking extends Component
         $this->selectedDoctor = $consultation->doctor_id;
         $this->weight = $consultation->weight;
         $this->temperature = $consultation->temperature;
-        $this->bp_systolic = $consultation->bp_systolic;
-        $this->bp_diastolic = $consultation->bp_diastolic;
-        $this->pulse = $consultation->pulse;
-        $this->spo2 = $consultation->spo2;
-        $this->consultation_date = $consultation->consultation_date->format('Y-m-d');
-        $this->valid_upto = $consultation->valid_upto ? $consultation->valid_upto->format('Y-m-d') : null;
+        $this->consultation_date = \Carbon\Carbon::parse($consultation->consultation_date)->format('Y-m-d');
+        $this->valid_upto = $consultation->valid_upto ? \Carbon\Carbon::parse($consultation->valid_upto)->format('Y-m-d') : null;
+
         $this->fee = $consultation->fee;
         $this->paymentMode = $consultation->payment_method;
         $this->notes = $consultation->notes;
@@ -161,9 +153,13 @@ class OpdBooking extends Component
         $this->validate([
             'selectedPatient' => 'required',
             'selectedDoctor' => 'required|exists:doctors,id',
-            'fee' => 'required|numeric|min:0',
             'consultation_date' => 'required|date',
+            'fee' => 'required|numeric|min:0',
+            'weight' => 'nullable|numeric|min:0|max:500',
+            'temperature' => 'nullable|numeric|min:70|max:120',
+            'paymentMode' => 'required|in:Cash,UPI,Card',
         ]);
+
 
         if ($this->isEditing) {
             $consultation = Consultation::findOrFail($this->editingId);
@@ -171,14 +167,7 @@ class OpdBooking extends Component
                 'doctor_id' => $this->selectedDoctor,
                 'weight' => $this->weight,
                 'temperature' => $this->temperature,
-                'bp_systolic' => $this->bp_systolic,
-                'bp_diastolic' => $this->bp_diastolic,
-                'pulse' => $this->pulse,
-                'spo2' => $this->spo2,
                 'fee' => $this->fee,
-                'consultation_date' => $this->consultation_date,
-                'valid_upto' => $this->valid_upto,
-                'payment_method' => $this->paymentMode,
                 'notes' => $this->notes,
             ]);
             $message = "Appointment updated successfully!";
@@ -200,14 +189,11 @@ class OpdBooking extends Component
                 'doctor_id' => $this->selectedDoctor,
                 'weight' => $this->weight,
                 'temperature' => $this->temperature,
-                'bp_systolic' => $this->bp_systolic,
-                'bp_diastolic' => $this->bp_diastolic,
-                'pulse' => $this->pulse,
-                'spo2' => $this->spo2,
                 'fee' => $this->fee,
-                'consultation_date' => $this->consultation_date,
-                'valid_upto' => $this->valid_upto,
+                'consultation_date' => $this->consultation_date ?: date('Y-m-d'),
+                'valid_upto' => $this->valid_upto ?: date('Y-m-d', strtotime('+' . \App\Models\Setting::get('opd_validity_days', 7) . ' days')),
                 'payment_status' => 'Paid',
+
                 'payment_method' => $this->paymentMode,
                 'notes' => $this->notes,
             ]);
@@ -221,13 +207,13 @@ class OpdBooking extends Component
 
         $this->dispatch('notify', type: 'success', message: $message);
 
-        $this->reset(['selectedPatient', 'selectedDoctor', 'fee', 'notes', 'showBookingForm', 'isEditing', 'editingId', 'weight', 'temperature', 'bp_systolic', 'bp_diastolic', 'pulse', 'spo2', 'paymentMode', 'searchPatient', 'lastConsultationId']);
+        $this->reset(['selectedPatient', 'fee', 'notes', 'showBookingForm', 'isEditing', 'editingId', 'weight', 'temperature', 'paymentMode', 'searchPatient', 'lastConsultationId']);
+        $validityDays = \App\Models\Setting::get('opd_validity_days', 7);
         $this->consultation_date = date('Y-m-d');
-        $this->valid_upto = date('Y-m-d', strtotime('+7 days'));
+        $this->valid_upto = date('Y-m-d', strtotime("+{$validityDays} days"));
+
         
-        if (!$this->selectedDoctor) {
-            $this->autoSelectDoctor();
-        }
+        $this->autoSelectDoctor();
 
         $this->dispatch('close-modal', name: 'booking-modal');
         $this->dispatch('booking-completed');

@@ -52,9 +52,13 @@ class DoctorList extends Component
                 $query->where('is_active', true);
             })
             ->when($this->search, function($query) {
-                $query->where('full_name', 'like', '%' . $this->search . '%')
+                $query->where(function($q) {
+                    $q->where('full_name', 'like', '%' . $this->search . '%')
+                      ->orWhere('doctor_code', 'like', '%' . $this->search . '%')
                       ->orWhere('specialization', 'like', '%' . $this->search . '%');
+                });
             })
+
             ->when($this->departmentFilter, function($query) {
                 $query->where('department_id', $this->departmentFilter);
             })

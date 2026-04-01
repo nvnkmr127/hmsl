@@ -1,7 +1,10 @@
 <div>
     <x-modal name="service-modal" :title="$isEditing ? 'Edit Service' : 'Configure New Service'" width="lg">
         <form wire:submit="save" class="space-y-6">
-            <x-form.input label="Service Name" wire:model="name" name="name" placeholder="e.g. ECG - 12 Lead" />
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <x-form.input label="Service Code" wire:model="code" name="code" placeholder="e.g. SRV-001" />
+                <x-form.input label="Service Name" wire:model="name" name="name" placeholder="e.g. ECG - 12 Lead" />
+            </div>
             
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <x-form.select label="Service Category" wire:model="category" name="category">
@@ -14,14 +17,23 @@
                     <option value="OTHERS">Others</option>
                 </x-form.select>
 
+                <x-form.select label="Department" wire:model="department_id" name="department_id">
+                    <option value="">General (No Department)</option>
+                    @foreach($departments as $dept)
+                        <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                    @endforeach
+                </x-form.select>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <x-form.input label="Base Price (₹)" wire:model="price" name="price" type="number" step="1" />
+                <div class="flex items-end pb-3">
+                    <x-form.checkbox label="Active / Available" wire:model="is_active" name="is_active" />
+                </div>
             </div>
             
-            <x-form.textarea label="Service Description" wire:model="description" name="description" placeholder="Notes or instructions for billing..." rows="3" />
+            <x-form.textarea label="Service Description" wire:model="description" name="description" placeholder="Notes or instructions for billing..." rows="2" />
 
-            <div class="py-2">
-                <x-form.checkbox label="Active / Available for Billing" wire:model="is_active" name="is_active" />
-            </div>
 
             <div class="flex justify-end gap-3 pt-6 border-t border-gray-100 dark:border-gray-800">
                 <button type="button" @click="$dispatch('close-modal', { name: 'service-modal' })" 

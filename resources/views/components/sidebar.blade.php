@@ -82,15 +82,26 @@
     @canany(['manage master data', 'manage users', 'manage inventory', 'manage settings'])
     <div>
         <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] px-3 mb-4">Admin</p>
+        
         @can('manage master data')
-        <x-nav-link href="{{ route('master.doctors.index') }}" :active="request()->routeIs('master.doctors.*')" icon="users">Staff</x-nav-link>
+        <x-nav-link href="{{ route('master.doctors.index') }}" :active="request()->routeIs('master.doctors.*')" icon="users">Doctors</x-nav-link>
+        <x-nav-link href="{{ route('master.departments.index') }}" :active="request()->routeIs('master.departments.*')" icon="home">Departments</x-nav-link>
+        <x-nav-link href="{{ route('master.wards.index') }}" :active="request()->routeIs('master.wards.*')" icon="bed">Wards & Beds</x-nav-link>
+        <x-nav-link href="{{ route('master.inventory-categories.index') }}" :active="request()->routeIs('master.inventory-categories.index')" icon="box">Cat. & Master</x-nav-link>
+        <x-nav-link href="{{ route('master.services.index') }}" :active="request()->routeIs('master.services.*')" icon="credit-card">Services</x-nav-link>
+        <x-nav-link href="{{ route('master.medicines.index') }}" :active="request()->routeIs('master.medicines.*')" icon="pill">Medicines</x-nav-link>
+        <x-nav-link href="{{ route('master.labs.index') }}" :active="request()->routeIs('master.labs.*')" icon="beaker">Lab Tests</x-nav-link>
         @endcan
+
+
         @can('manage users')
         <x-nav-link href="{{ route('master.users.index') }}" :active="request()->routeIs('master.users.*')" icon="users">Users</x-nav-link>
         @endcan
+        
         @can('manage inventory')
         <x-nav-link href="{{ route('inventory.index') }}" :active="request()->routeIs('inventory.*')" icon="box">Stock</x-nav-link>
         @endcan
+        
         @can('manage settings')
         <x-nav-link href="{{ route('settings.index') }}" :active="request()->routeIs('settings.*')" icon="settings">Settings</x-nav-link>
         @endcan

@@ -9,5 +9,11 @@ class Service extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'category', 'price', 'description', 'is_active'];
+    protected $fillable = ['code', 'name', 'category', 'department_id', 'price', 'description', 'is_active'];
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+
 }

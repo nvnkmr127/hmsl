@@ -1,7 +1,8 @@
 <div>
     <x-page-header title="Departments" subtitle="Manage hospital departments like OPD, ICU, Radiology, etc.">
         <x-slot name="actions">
-            <button @click="$dispatch('create-department')" class="btn btn-primary">
+            <button wire:click="$dispatch('create-department')" class="btn btn-primary">
+
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
@@ -20,6 +21,7 @@
         <x-table.wrapper>
             <thead>
                 <tr>
+                    <x-table.th>Code</x-table.th>
                     <x-table.th>Name</x-table.th>
                     <x-table.th>Description</x-table.th>
                     <x-table.th>Status</x-table.th>
@@ -29,6 +31,12 @@
             <tbody>
                 @forelse($departments as $dept)
                     <tr>
+                        <td>
+                            <span class="text-[10px] font-black font-mono text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-lg">
+                                {{ $dept->code ?: 'N/A' }}
+                            </span>
+                        </td>
+
                         <td>
                             <span class="font-bold text-gray-900 dark:text-white">{{ $dept->name }}</span>
                         </td>
@@ -48,7 +56,8 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
                                     </svg>
                                 </button>
-                                <button @click="$dispatch('edit-department', { id: {{ $dept->id }} })" 
+                                <button wire:click="$dispatch('edit-department', { id: {{ $dept->id }} })" 
+
                                         class="btn btn-ghost px-2 py-2 text-violet-600" title="Edit">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />

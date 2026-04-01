@@ -44,9 +44,13 @@ class DepartmentList extends Component
 
     public function render()
     {
-        $departments = Department::where('name', 'like', '%' . $this->search . '%')
+        $departments = Department::where(function($query) {
+                $query->where('name', 'like', '%' . $this->search . '%')
+                      ->orWhere('code', 'like', '%' . $this->search . '%');
+            })
             ->latest()
             ->paginate(10);
+
 
         return view('livewire.master.department-list', [
             'departments' => $departments

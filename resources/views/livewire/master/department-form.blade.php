@@ -1,7 +1,11 @@
 <div>
     <x-modal name="department-modal" :title="$isEditing ? 'Edit Department' : 'Add New Department'" width="lg">
         <form wire:submit="save" class="space-y-6">
-            <x-form.input label="Department Name" wire:model="name" name="name" placeholder="e.g. Cardiology" />
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <x-form.input label="Department Code" wire:model="code" name="code" placeholder="e.g. CARD" />
+                <x-form.input label="Department Name" wire:model="name" name="name" placeholder="e.g. Cardiology" />
+            </div>
+
             
             <x-form.textarea label="Description" wire:model="description" name="description" placeholder="Brief details about functions or ward types..." rows="3" />
 

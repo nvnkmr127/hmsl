@@ -16,6 +16,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/medicines', [MedicineController::class, 'index'])->name('medicines.index');
         Route::get('/labs', [LabController::class, 'index'])->name('labs.index');
         Route::get('/wards', [WardController::class, 'index'])->name('wards.index');
+        Route::get('/beds', [\App\Http\Controllers\Master\BedController::class, 'index'])->name('beds.index');
+        Route::get('/inventory-categories', fn() => view('pages.master.inventory-categories'))->name('inventory-categories.index');
+
+
         Route::get('/', [DepartmentController::class, 'index'])->name('index');
     });
 

@@ -78,4 +78,6 @@
             {{ $users->links() }}
         </div>
     </div>
+
+    <livewire:master.user-form />
 </div>

@@ -6,8 +6,10 @@
                 <!-- Branding and Classification -->
                 <div class="space-y-5">
                     <p class="section-lbl" style="color:#7c3aed">Classification</p>
+                    <x-form.input label="Medicine Code (HNS/SKU)" wire:model="code" name="code" placeholder="e.g. MED-001" />
                     <x-form.input label="Brand Name" wire:model="name" name="name" placeholder="e.g. Paracetamol" />
                     <x-form.input label="Generic Formula" wire:model="generic_name" name="generic_name" placeholder="e.g. Acetaminophen" />
+
                     
                     <div class="grid grid-cols-2 gap-4">
                         <x-form.select label="Dosage Form" wire:model="category" name="category">

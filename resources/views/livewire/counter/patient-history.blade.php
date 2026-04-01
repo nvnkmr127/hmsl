@@ -779,6 +779,7 @@
         </x-card>
     @endif
 
+    @if($tab === 'vitals')
         <x-card title="Vital Logs">
             <x-slot:action>
                 <button wire:click="export('vitals')" wire:loading.attr="disabled" class="btn btn-secondary">

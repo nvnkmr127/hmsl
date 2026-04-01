@@ -50,8 +50,10 @@ class MedicineList extends Component
             ->when($this->search, function($query) {
                 $query->where(function($q) {
                     $q->where('name', 'like', '%' . $this->search . '%')
-                      ->orWhere('generic_name', 'like', '%' . $this->search . '%');
+                      ->orWhere('generic_name', 'like', '%' . $this->search . '%')
+                      ->orWhere('code', 'like', '%' . $this->search . '%');
                 });
+
             })
             ->when($this->categoryFilter, function($query) {
                 $query->where('category', $this->categoryFilter);

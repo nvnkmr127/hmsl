@@ -15,7 +15,11 @@ class DoctorForm extends Component
     public $isEditing = false;
     public $doctorId;
 
+    #[Validate('nullable|string|max:50')]
+    public $doctor_code;
+
     #[Validate('required|string|max:255')]
+
     public $full_name;
 
     #[Validate('required|exists:departments,id')]
@@ -57,6 +61,7 @@ class DoctorForm extends Component
         $this->doctorId = $id;
         
         $doctor = Doctor::findOrFail($id);
+        $this->doctor_code = $doctor->doctor_code;
         $this->full_name = $doctor->full_name;
         $this->department_id = $doctor->department_id;
         $this->specialization = $doctor->specialization;
@@ -69,16 +74,20 @@ class DoctorForm extends Component
         $this->is_active = $doctor->is_active;
         $this->user_id = $doctor->user_id;
 
-        $this->dispatch('open-modal', ['name' => 'doctor-modal']);
+
+        $this->dispatch('open-modal', name: 'doctor-modal');
+
     }
 
     #[On('create-doctor')]
     public function create()
     {
-        $this->reset(['full_name', 'department_id', 'specialization', 'qualification', 'phone', 'email', 'registration_number', 'biography', 'is_active', 'doctorId', 'isEditing', 'user_id']);
+        $this->reset(['doctor_code', 'full_name', 'department_id', 'specialization', 'qualification', 'phone', 'email', 'registration_number', 'biography', 'is_active', 'doctorId', 'isEditing', 'user_id']);
+
         $this->consultation_fee = \App\Models\Setting::get('consultation_fee_default', 500);
         $this->resetValidation();
-        $this->dispatch('open-modal', ['name' => 'doctor-modal']);
+        $this->dispatch('open-modal', name: 'doctor-modal');
+
     }
 
     public function save(DoctorService $service)
@@ -86,6 +95,7 @@ class DoctorForm extends Component
         $this->validate();
 
         $data = [
+            'doctor_code' => $this->doctor_code,
             'full_name' => $this->full_name,
             'department_id' => $this->department_id,
             'specialization' => $this->specialization,
@@ -99,6 +109,7 @@ class DoctorForm extends Component
             'user_id' => $this->user_id,
         ];
 
+
         if ($this->isEditing) {
             $doctor = Doctor::findOrFail($this->doctorId);
             $service->update($doctor, $data);
@@ -106,7 +117,8 @@ class DoctorForm extends Component
             $service->create($data);
         }
 
-        $this->dispatch('close-modal', ['name' => 'doctor-modal']);
+        $this->dispatch('close-modal', name: 'doctor-modal');
+
         $this->dispatch('doctor-updated');
         
         $this->dispatch('notify', [

@@ -22,7 +22,7 @@ class UserForm extends Component
     {
         $this->reset(['name', 'email', 'password', 'role', 'userId', 'isEditing']);
         $this->resetValidation();
-        $this->dispatch('open-modal', ['name' => 'user-modal']);
+        $this->dispatch('open-modal', name: 'user-modal');
     }
 
     #[On('edit-user')]
@@ -37,7 +37,7 @@ class UserForm extends Component
         $this->email = $user->email;
         $this->role = $user->roles->first()?->name;
 
-        $this->dispatch('open-modal', ['name' => 'user-modal']);
+        $this->dispatch('open-modal', name: 'user-modal');
     }
 
     public function save()
@@ -80,7 +80,7 @@ class UserForm extends Component
             $message = 'User created successfully!';
         }
 
-        $this->dispatch('close-modal', ['name' => 'user-modal']);
+        $this->dispatch('close-modal', name: 'user-modal');
         $this->dispatch('user-saved');
         $this->dispatch('notify', ['type' => 'success', 'message' => $message]);
     }

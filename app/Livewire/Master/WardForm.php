@@ -13,7 +13,11 @@ class WardForm extends Component
     public $isEditing = false;
     public $wardId;
 
+    #[Validate('nullable|string|max:50')]
+    public $code;
+
     #[Validate('required|string|max:255')]
+
     public $name;
 
     #[Validate('required|string|max:100')]
@@ -34,21 +38,24 @@ class WardForm extends Component
         $this->wardId = $id;
         
         $ward = Ward::findOrFail($id);
+        $this->code = $ward->code;
         $this->name = $ward->name;
         $this->type = $ward->type;
         $this->daily_charge = $ward->daily_charge;
         $this->capacity = $ward->capacity;
         $this->is_active = $ward->is_active;
 
-        $this->dispatch('open-modal', ['name' => 'ward-modal']);
+
+        $this->dispatch('open-modal', name: 'ward-modal');
     }
 
     #[On('create-ward')]
     public function create()
     {
-        $this->reset(['name', 'type', 'daily_charge', 'capacity', 'is_active', 'wardId', 'isEditing']);
+        $this->reset(['code', 'name', 'type', 'daily_charge', 'capacity', 'is_active', 'wardId', 'isEditing']);
+
         $this->resetValidation();
-        $this->dispatch('open-modal', ['name' => 'ward-modal']);
+        $this->dispatch('open-modal', name: 'ward-modal');
     }
 
     public function save(WardManager $manager)
@@ -56,12 +63,14 @@ class WardForm extends Component
         $this->validate();
 
         $data = [
+            'code' => $this->code,
             'name' => $this->name,
             'type' => $this->type,
             'daily_charge' => $this->daily_charge,
             'capacity' => $this->capacity,
             'is_active' => $this->is_active,
         ];
+
 
         if ($this->isEditing) {
             $ward = Ward::findOrFail($this->wardId);
@@ -70,7 +79,7 @@ class WardForm extends Component
             $manager->createWard($data);
         }
 
-        $this->dispatch('close-modal', ['name' => 'ward-modal']);
+        $this->dispatch('close-modal', name: 'ward-modal');
         $this->dispatch('ward-updated');
         
         $this->dispatch('notify', [

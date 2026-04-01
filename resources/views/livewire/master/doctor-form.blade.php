@@ -6,7 +6,11 @@
                 <!-- Personal Info -->
                 <div class="space-y-5">
                     <p class="section-lbl" style="color:#7c3aed">Professional Profile</p>
-                    <x-form.input label="Full Name" wire:model="full_name" name="full_name" placeholder="Dr. John Doe" />
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <x-form.input label="Doctor Code" wire:model="doctor_code" name="doctor_code" placeholder="DOC-001" />
+                        <x-form.input label="Full Name" wire:model="full_name" name="full_name" placeholder="Dr. John Doe" />
+                    </div>
+
                     
                     <x-form.select label="Medical Department" wire:model="department_id" name="department_id">
                         <option value="">Select Department</option>

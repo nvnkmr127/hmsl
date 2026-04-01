@@ -13,7 +13,11 @@ class MedicineForm extends Component
     public $isEditing = false;
     public $medicineId;
 
+    #[Validate('nullable|string|max:50')]
+    public $code;
+
     #[Validate('required|string|max:255')]
+
     public $name;
 
     #[Validate('nullable|string|max:255')]
@@ -52,6 +56,7 @@ class MedicineForm extends Component
         $this->medicineId = $id;
         
         $medicine = Medicine::findOrFail($id);
+        $this->code = $medicine->code;
         $this->name = $medicine->name;
         $this->generic_name = $medicine->generic_name;
         $this->category = $medicine->category;
@@ -61,18 +66,21 @@ class MedicineForm extends Component
         $this->selling_price = $medicine->selling_price;
         $this->stock_quantity = $medicine->stock_quantity;
         $this->min_stock_level = $medicine->min_stock_level;
-        $this->expire_date = $medicine->expire_date?->format('Y-m-d');
+        $this->expire_date = $medicine->expire_date ? \Carbon\Carbon::parse($medicine->expire_date)->format('Y-m-d') : null;
+
         $this->is_active = $medicine->is_active;
 
-        $this->dispatch('open-modal', ['name' => 'medicine-modal']);
+
+        $this->dispatch('open-modal', name: 'medicine-modal');
     }
 
     #[On('create-medicine')]
     public function create()
     {
-        $this->reset(['name', 'generic_name', 'category', 'strength', 'manufacturer', 'buying_price', 'selling_price', 'stock_quantity', 'min_stock_level', 'expire_date', 'is_active', 'medicineId', 'isEditing']);
+        $this->reset(['code', 'name', 'generic_name', 'category', 'strength', 'manufacturer', 'buying_price', 'selling_price', 'stock_quantity', 'min_stock_level', 'expire_date', 'is_active', 'medicineId', 'isEditing']);
+
         $this->resetValidation();
-        $this->dispatch('open-modal', ['name' => 'medicine-modal']);
+        $this->dispatch('open-modal', name: 'medicine-modal');
     }
 
     public function save(MedicineManager $manager)
@@ -80,6 +88,7 @@ class MedicineForm extends Component
         $this->validate();
 
         $data = [
+            'code' => $this->code,
             'name' => $this->name,
             'generic_name' => $this->generic_name,
             'category' => $this->category,
@@ -93,6 +102,7 @@ class MedicineForm extends Component
             'is_active' => $this->is_active,
         ];
 
+
         if ($this->isEditing) {
             $medicine = Medicine::findOrFail($this->medicineId);
             $manager->update($medicine, $data);
@@ -100,7 +110,7 @@ class MedicineForm extends Component
             $manager->create($data);
         }
 
-        $this->dispatch('close-modal', ['name' => 'medicine-modal']);
+        $this->dispatch('close-modal', name: 'medicine-modal');
         $this->dispatch('medicine-updated');
         
         $this->dispatch('notify', [

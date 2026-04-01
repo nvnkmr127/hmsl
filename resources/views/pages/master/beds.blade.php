@@ -1,12 +1,11 @@
 @extends('layouts.app')
 
-@section('title', 'Laboratory Tests')
+@section('title', 'Hosptial Beds')
 
 @section('content')
     <div class="space-y-6">
-        
         <x-master-nav />
 
-        <livewire:master.lab-list />
+        <livewire:master.bed-list />
     </div>
 @endsection

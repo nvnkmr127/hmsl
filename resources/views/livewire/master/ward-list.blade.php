@@ -1,7 +1,8 @@
 <div>
     <x-page-header title="Hospital Wards & Beds" subtitle="Manage inpatient facilities, assignment types, and monitor real-time bed availability.">
         <x-slot name="actions">
-            <button @click="$dispatch('create-ward')" class="btn btn-primary">
+            <button wire:click="$dispatch('create-ward')" class="btn btn-primary">
+
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
@@ -20,6 +21,7 @@
         <x-table.wrapper>
             <thead>
                 <tr>
+                    <x-table.th>Code</x-table.th>
                     <x-table.th>Ward Name / Wing</x-table.th>
                     <x-table.th>Facility Type</x-table.th>
                     <x-table.th>Capacity</x-table.th>
@@ -31,6 +33,12 @@
             <tbody>
                 @forelse($wards as $ward)
                     <tr>
+                        <td>
+                            <span class="text-[10px] font-black font-mono text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-lg">
+                                {{ $ward->code ?: 'N/A' }}
+                            </span>
+                        </td>
+
                         <td>
                             <span class="font-bold text-gray-900 dark:text-white uppercase tracking-tight">{{ $ward->name }}</span>
                         </td>
@@ -58,7 +66,7 @@
                         </td>
                         <td>
                             <div class="flex items-center justify-end gap-1">
-                                <button @click="$dispatch('edit-ward', { id: {{ $ward->id }} })" 
+                                <button wire:click="$dispatch('edit-ward', { id: {{ $ward->id }} })" 
                                         class="btn btn-ghost px-2 py-2 text-violet-600" title="Edit">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />

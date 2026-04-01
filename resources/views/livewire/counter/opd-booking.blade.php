@@ -125,28 +125,29 @@
                         @if(count($patients))
                             <div class="mt-4 space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                                 @foreach($patients as $p)
-                                    <div class="group/item flex items-center justify-between p-4 bg-indigo-900/40 hover:bg-indigo-50 rounded-3xl border border-indigo-500/10 transition-all duration-300 cursor-pointer"
+                                    <div class="group/item flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 hover:border-indigo-500/30 transition-all duration-300 cursor-pointer shadow-sm"
                                          wire:click="selectPatient({{ $p->id }})">
                                         <div class="flex items-center gap-4">
-                                            <div class="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center group-hover/item:bg-white/20 transition-colors">
-                                                <span class="text-lg font-black text-white">{{ strtoupper(substr($p->first_name, 0, 1)) }}</span>
+                                            <div class="w-12 h-12 rounded-2xl bg-indigo-500/20 flex items-center justify-center border border-indigo-500/20 group-hover/item:bg-indigo-500 group-hover/item:scale-110 transition-all duration-500">
+                                                <span class="text-lg font-black text-indigo-400 group-hover/item:text-white">{{ strtoupper(substr($p->first_name, 0, 1)) }}</span>
                                             </div>
                                             <div class="flex flex-col">
-                                                <span class="font-black text-sm uppercase tracking-tight text-white">{{ $p->full_name }}</span>
+                                                <span class="font-black text-sm uppercase tracking-tight text-white group-hover/item:text-indigo-300 transition-colors">{{ $p->full_name }}</span>
                                                 <div class="flex items-center gap-2">
-                                                    <span class="text-[10px] text-indigo-300 group-hover/item:text-white/80 font-bold">{{ $p->uhid }}</span>
-                                                    <span class="w-1 h-1 rounded-full bg-indigo-500 group-hover/item:bg-white/50"></span>
-                                                    <span class="text-[10px] text-emerald-400 group-hover/item:text-white font-black">{{ $p->phone }}</span>
+                                                    <span class="text-[10px] text-indigo-300/60 group-hover/item:text-white/60 font-bold tracking-widest">{{ $p->uhid }}</span>
+                                                    <span class="w-0.5 h-0.5 rounded-full bg-indigo-500/30"></span>
+                                                    <span class="text-[10px] text-emerald-400 group-hover/item:text-emerald-300 font-black tracking-widest">{{ $p->phone }}</span>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="w-8 h-8 rounded-xl bg-white/10 opacity-0 group-hover/item:opacity-100 flex items-center justify-center transition-all">
-                                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7" /></svg>
+                                        <div class="w-8 h-8 rounded-xl bg-white/5 group-hover/item:bg-indigo-500 flex items-center justify-center transition-all duration-300">
+                                            <svg class="w-4 h-4 text-white/20 group-hover/item:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7" /></svg>
                                         </div>
                                     </div>
                                 @endforeach
                             </div>
                         @elseif(strlen($searchPatient) >= 3)
+
                             <div class="mt-6 p-8 text-center bg-indigo-900/40 rounded-[2rem] border-2 border-dashed border-indigo-500/20">
                                 <div class="w-16 h-16 bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <svg class="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
@@ -402,132 +403,122 @@
     <!-- Modals -->
     <x-modal name="booking-modal" :title="$isEditing ? 'System: Reschedule Visit' : 'Counter: Token Generation'" width="3xl">
         @if($selectedPatient)
-            <div class="space-y-8 p-1">
+            <div class="space-y-6 p-1">
                 <!-- Patient Identity Banner -->
                 <div class="flex items-center gap-6 p-6 rounded-[2.5rem] bg-indigo-50/50 dark:bg-indigo-950/20 border-2 border-indigo-100/50 dark:border-indigo-900/30 shadow-inner group transition-all">
                     <div class="w-16 h-16 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black text-2xl shadow-xl shadow-indigo-500/30 group-hover:scale-105 transition-transform duration-500">
                         {{ strtoupper(substr($selectedPatient->first_name, 0, 1)) }}
                     </div>
                     <div class="flex flex-col">
-                        <span class="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">{{ $selectedPatient->full_name }}</span>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">{{ $selectedPatient->full_name }}</span>
+                            <x-badge color="indigo">{{ $selectedPatient->uhid }}</x-badge>
+                        </div>
                         <div class="flex items-center gap-2 mt-1">
-                            <span class="px-2.5 py-0.5 rounded-lg bg-white dark:bg-gray-950 text-[10px] font-black text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900 uppercase tracking-widest">{{ $selectedPatient->uhid }}</span>
                             <span class="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">{{ $selectedPatient->age }} · {{ $selectedPatient->gender }} · {{ $selectedPatient->phone }}</span>
                         </div>
                     </div>
                 </div>
 
-                <form class="space-y-8" x-data="{}" x-init="$nextTick(() => $refs.weightInput.focus())">
-                    <!-- Quick Vitals & Core Info -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="space-y-6">
+                <form class="space-y-6" wire:submit.prevent="book" x-data="{}" x-init="$nextTick(() => $refs.weightInput.focus())">
+
+                    <!-- Core Booking Info -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                                Assignment Details
+                            </h4>
+                            
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Consulting Doctor</label>
+                                <select wire:model.live="selectedDoctor" class="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 outline-none transition-all font-bold text-gray-900 dark:text-white appearance-none">
+                                    <option value="">Select Doctor</option>
+                                    @foreach($doctors as $doc)
+                                        <option value="{{ $doc->id }}">Dr. {{ $doc->full_name }} ({{ $doc->department?->name }})</option>
+                                    @endforeach
+                                </select>
+                                @error('selectedDoctor') <span class="text-[10px] font-bold text-rose-500 ml-1">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Appointment Date</label>
+                                <input type="date" wire:model.live="consultation_date" class="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 outline-none transition-all font-bold text-gray-900 dark:text-white">
+                                <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest ml-1">Validity until {{ \Carbon\Carbon::parse($valid_upto)->format('D, d M' ) }}</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
                             <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                Clinical Vitals
+                                Basic Vitals
                             </h4>
-                            <div class="grid grid-cols-2 gap-4">
+                            <div class="grid grid-cols-2 gap-4 text-xs font-bold text-gray-600">
                                 <div class="space-y-2">
                                     <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Wt (kg)</label>
-                                    <input type="number" step="0.01" wire:model="weight" x-ref="weightInput" class="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 outline-none transition-all font-black text-gray-900 dark:text-white" placeholder="0.00">
+                                    <input type="number" step="0.1" wire:model="weight" x-ref="weightInput" class="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 outline-none transition-all font-black text-gray-900 dark:text-white" placeholder="0.0">
                                 </div>
+
                                 <div class="space-y-2">
                                     <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Temp (°F)</label>
-                                    <input type="number" step="0.1" wire:model="temperature" class="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 outline-none transition-all font-black text-gray-900 dark:text-white" placeholder="98.6">
+                                    <x-form.input type="number" step="0.1" wire:model="temperature" placeholder="98.6" />
                                 </div>
                             </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div class="grid grid-cols-2 gap-2">
-                                    <div class="space-y-2">
-                                        <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">BP (S)</label>
-                                        <input type="text" wire:model="bp_systolic" placeholder="120" class="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 outline-none transition-all font-black text-gray-900 dark:text-white">
-                                    </div>
-                                    <div class="space-y-2">
-                                        <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">BP (D)</label>
-                                        <input type="text" wire:model="bp_diastolic" placeholder="80" class="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 outline-none transition-all font-black text-gray-900 dark:text-white">
-                                    </div>
-                                </div>
-                                <div class="space-y-2">
-                                    <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Pulse</label>
-                                    <input type="number" wire:model="pulse" placeholder="72" class="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 outline-none transition-all font-black text-gray-900 dark:text-white">
-                                </div>
-                            </div>
-                            <div class="space-y-2">
-                                <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">SpO2 (%)</label>
-                                <input type="number" wire:model="spo2" placeholder="98" class="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 outline-none transition-all font-black text-gray-900 dark:text-white">
-                            </div>
-                        </div>
 
-                        <div class="space-y-6">
-                                <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2">
-                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                                Payment
-                            </h4>
-                            <div class="p-5 rounded-[2rem] bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-100/50 dark:border-amber-900/30 space-y-4">
-                                <div class="flex items-center justify-between">
-                                    <label class="text-[10px] font-black text-amber-600 uppercase tracking-widest">Consult Fee</label>
-                                    <div class="flex items-center gap-1">
-                                        <span class="text-xs font-black text-amber-600">₹</span>
-                                        <input type="number" wire:model="fee" class="w-24 bg-transparent border-none p-0 text-xl font-black text-amber-700 dark:text-amber-500 outline-none ring-0 focus:ring-0 text-right">
+                            <div class="p-5 mt-2 rounded-[2rem] bg-indigo-600 text-white shadow-xl shadow-indigo-500/20 relative overflow-hidden group">
+                                <div class="relative z-10">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <label class="text-[10px] font-black text-indigo-200 uppercase tracking-widest">Consultation Fee</label>
+                                        <div class="px-2 py-1 bg-white/20 rounded-lg text-[9px] font-black uppercase tracking-tighter">Automatic</div>
+                                    </div>
+                                    <div class="flex items-end gap-2">
+                                        <span class="text-lg font-black opacity-60 pb-1">₹</span>
+                                        <input type="number" wire:model="fee" class="w-32 bg-transparent border-none p-0 text-3xl font-black focus:ring-0 outline-none text-white transition-all">
+                                    </div>
+                                    
+                                    <div class="mt-4 pt-4 border-t border-white/10">
+                                        <select wire:model="paymentMode" class="w-full bg-white/10 hover:bg-white/20 border-none rounded-xl px-4 py-2 font-black text-[10px] uppercase tracking-widest text-white outline-none transition-all">
+                                            <option class="text-gray-900" value="Cash">Settlement: Cash</option>
+                                            <option class="text-gray-900" value="UPI">Settlement: UPI</option>
+                                            <option class="text-gray-900" value="Card">Settlement: Card</option>
+                                        </select>
                                     </div>
                                 </div>
-                                <div class="pt-3 border-t border-amber-100 dark:border-amber-900/50">
-                                    <select wire:model="paymentMode" class="w-full bg-white dark:bg-gray-950 border-none rounded-xl px-4 py-2.5 font-bold text-xs outline-none">
-                                        <option value="Cash">Cash</option>
-                                        <option value="UPI">UPI</option>
-                                        <option value="Card">Card</option>
-                                    </select>
-                                </div>
-                                @error('fee') <p class="text-[10px] text-rose-500 font-black uppercase mt-1 text-right">{{ $message }}</p> @enderror
+                                <svg class="absolute -right-8 -bottom-8 w-32 h-32 text-white/10 rotate-12" fill="currentColor" viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Symptoms -->
+                    <!-- Clinical Presentation -->
                     <div class="space-y-3">
-                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Symptoms & Quick Observation</label>
-                        <textarea wire:model="notes" rows="3" class="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-transparent focus:border-indigo-500 rounded-[2rem] px-6 py-5 outline-none transition-all font-bold placeholder-gray-300 dark:placeholder-gray-700" placeholder="State main complaints or reason for visit..."></textarea>
+                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2 flex items-center gap-2">
+                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                             Symptom Manifestation / Notes
+                        </label>
+                        <textarea wire:model="notes" rows="3" class="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-transparent focus:border-indigo-500 rounded-[2rem] px-6 py-5 outline-none transition-all font-bold placeholder-gray-300 dark:placeholder-gray-700" placeholder="State main complaints (Fever, Headache, etc...)"></textarea>
                     </div>
 
-                    @if(count($doctors) > 1)
-                        <div class="space-y-3">
-                            <label class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2 font-black uppercase">Assign Consultant</label>
-                            <select wire:model.live="selectedDoctor" class="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-6 py-4 outline-none transition-all font-bold">
-                                <option value="">Select Doctor</option>
-                                @foreach($doctors as $doc)
-                                    <option value="{{ $doc->id }}">Dr. {{ $doc->full_name }} ({{ $doc->department->name }})</option>
-                                @endforeach
-                            </select>
-                            @error('selectedDoctor') <p class="text-[10px] text-rose-500 font-black uppercase mt-1">{{ $message }}</p> @enderror
-                        </div>
-                    @else
-                        <input type="hidden" wire:model="selectedDoctor">
-                    @endif
-                    <div class="grid grid-cols-2 gap-4">
-                         <div class="space-y-2">
-                            <label class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Consultation Date</label>
-                            <input type="date" wire:model="consultation_date" class="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-6 py-4 outline-none transition-all font-bold">
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Valid Upto</label>
-                            <input type="date" wire:model="valid_upto" class="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-6 py-4 outline-none transition-all font-bold">
-                        </div>
-                    </div>
-
-                    <!-- Final Actions -->
-                    <div class="flex flex-col sm:flex-row items-center justify-end gap-3 pt-8 border-t border-gray-100 dark:border-gray-800"
-                         x-on:keydown.window.ctrl.enter.prevent="$wire.book(true)"
-                         x-on:keydown.window.shift.enter.prevent="$wire.book(false)">
+                    <!-- Action Interface -->
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 border-t border-gray-100 dark:border-gray-800">
                         <button type="button" @click="$dispatch('close-modal', { name: 'booking-modal' })" 
                                 class="px-8 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                            Discard
+                            Discard Entry
                         </button>
                         
-                        <div class="flex items-center gap-3">
-                            <button type="button" wire:click="book(false)" class="px-8 py-4 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-95 transition-all">
-                                Register Without Printing (⇧+↵)
+                        <div class="flex items-center gap-3 w-full sm:w-auto">
+                            <button type="button" 
+                                    wire:click="book(false)" 
+                                    wire:loading.attr="disabled"
+                                    class="flex-1 sm:flex-auto px-8 py-4 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all disabled:opacity-50">
+                                <span wire:loading.remove wire:target="book(false)">Register Only</span>
+                                <span wire:loading wire:target="book(false)">Processing...</span>
                             </button>
-                            <button type="button" wire:click="book(true)" class="px-10 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-emerald-500/30 hover:scale-[1.02] active:scale-95 transition-all">
-                                Finalize & Print (Ctrl+↵)
+                            <button type="button" 
+                                    wire:click="book(true)" 
+                                    wire:loading.attr="disabled"
+                                    class="flex-1 sm:flex-auto px-10 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-500/30 transition-all disabled:opacity-50">
+                                <span wire:loading.remove wire:target="book(true)">Generate Token & Print</span>
+                                <span wire:loading wire:target="book(true)">Finalizing...</span>
                             </button>
                         </div>
                     </div>
@@ -535,6 +526,7 @@
             </div>
         @endif
     </x-modal>
+
 
     <livewire:counter.vital-signs />
     <livewire:counter.bill-generate />

@@ -3,7 +3,11 @@
         <form wire:submit="save" class="space-y-6">
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <x-form.input label="Ward Code" wire:model="code" name="code" placeholder="e.g. ICU-A" />
                 <x-form.input label="Ward / Wing Name" wire:model="name" name="name" placeholder="e.g. ICU Wing A" />
+            </div>
+
+
                 
                 <x-form.select label="Ward Classification" wire:model="type" name="type">
                     <option value="">Select Category</option>

@@ -29,8 +29,12 @@ class SystemPreferences extends Component
     #[Validate('required|string|max:20')]
     public $invoice_prefix;
 
+    #[Validate('required|integer|min:0')]
+    public $opd_validity_days;
+
     #[Validate('required|numeric|min:0')]
     public $consultation_fee_default;
+
 
     public function mount(SettingsService $settings)
     {
@@ -43,7 +47,9 @@ class SystemPreferences extends Component
         $this->financial_year_start = $data['financial_year_start'] ?? '04-01';
         $this->uhid_prefix = $data['uhid_prefix'] ?? 'HMS-';
         $this->invoice_prefix = $data['invoice_prefix'] ?? 'INV-';
+        $this->opd_validity_days = $data['opd_validity_days'] ?? '7';
         $this->consultation_fee_default = $data['consultation_fee_default'] ?? '500';
+
     }
 
     public function save(SettingsService $settings)
@@ -58,7 +64,9 @@ class SystemPreferences extends Component
             'financial_year_start' => $this->financial_year_start,
             'uhid_prefix' => $this->uhid_prefix,
             'invoice_prefix' => $this->invoice_prefix,
+            'opd_validity_days' => $this->opd_validity_days,
             'consultation_fee_default' => $this->consultation_fee_default,
+
         ];
 
         $settings->updateGroup('system', $data);

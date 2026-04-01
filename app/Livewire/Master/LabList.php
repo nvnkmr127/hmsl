@@ -48,8 +48,10 @@ class LabList extends Component
         $labTests = LabTest::withCount('parameters')
             ->when($this->search, function($query) {
                 $query->where('name', 'like', '%' . $this->search . '%')
+                      ->orWhere('code', 'like', '%' . $this->search . '%')
                       ->orWhere('category', 'like', '%' . $this->search . '%');
             })
+
             ->when($this->categoryFilter, function($query) {
                 $query->where('category', $this->categoryFilter);
             })

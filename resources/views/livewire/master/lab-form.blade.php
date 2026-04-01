@@ -5,7 +5,9 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div class="md:col-span-2 space-y-5">
                     <p class="section-lbl" style="color:#7c3aed">Basic details</p>
+                    <x-form.input label="Internal Code (e.g. CBC01)" wire:model="code" name="code" placeholder="e.g. CBC01" />
                     <x-form.input label="Test Name" wire:model="name" name="name" placeholder="e.g. Complete Blood Count (CBC)" />
+
                     <x-form.textarea label="Clinical Notes / Preparation" wire:model="description" name="description" placeholder="Any special instructions for the patient..." rows="3" />
                 </div>
                 <div class="space-y-5">

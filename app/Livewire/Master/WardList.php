@@ -39,8 +39,10 @@ class WardList extends Component
             }])
             ->when($this->search, function($query) {
                 $query->where('name', 'like', '%' . $this->search . '%')
+                      ->orWhere('code', 'like', '%' . $this->search . '%')
                       ->orWhere('type', 'like', '%' . $this->search . '%');
             })
+
             ->latest()
             ->paginate(10);
 

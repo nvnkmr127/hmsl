@@ -10,6 +10,7 @@ class Medicine extends Model
     use HasFactory;
 
     protected $fillable = [
+        'code',
         'name',
         'generic_name',
         'category',
@@ -21,6 +22,7 @@ class Medicine extends Model
         'min_stock_level',
         'expire_date',
         'is_active',
+
     ];
 
     protected $casts = [

@@ -1,7 +1,8 @@
 <div>
     <x-page-header title="Doctors Directory" subtitle="Manage hospital medical staff, their specializations and consultation fees.">
         <x-slot name="actions">
-            <button @click="$dispatch('create-doctor')" class="btn btn-primary">Add Doctor</button>
+            <button wire:click="$dispatch('create-doctor')" class="btn btn-primary">Add Doctor</button>
+
         </x-slot>
     </x-page-header>
 
@@ -46,9 +47,13 @@
                                     {{ substr($doctor->full_name, 0, 2) }}
                                 </div>
                                 <div class="min-w-0">
-                                    <p class="font-bold text-gray-900 dark:text-white truncate">{{ $doctor->full_name }}</p>
+                                    <div class="flex items-center gap-2">
+                                        <p class="font-bold text-gray-900 dark:text-white truncate">{{ $doctor->full_name }}</p>
+                                        <span class="text-[10px] font-black text-gray-400 font-mono italic">#{{ $doctor->doctor_code ?: 'N/A' }}</span>
+                                    </div>
                                     <p class="text-[10px] text-violet-600 dark:text-violet-400 font-bold uppercase tracking-widest truncate">{{ $doctor->department?->name ?? 'No Department' }}</p>
                                 </div>
+
                             </div>
                         </td>
                         <td>
@@ -71,8 +76,9 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
                                     </svg>
                                 </button>
-                                <button @click="$dispatch('edit-doctor', { id: {{ $doctor->id }} })" 
+                                <button wire:click="$dispatch('edit-doctor', { id: {{ $doctor->id }} })" 
                                         class="btn btn-ghost px-2 py-2 text-violet-600" title="Edit Info">
+
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                     </svg>

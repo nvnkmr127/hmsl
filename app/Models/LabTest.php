@@ -9,7 +9,8 @@ class LabTest extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'category', 'price', 'description', 'is_active'];
+    protected $fillable = ['code', 'name', 'category', 'price', 'description', 'is_active'];
+
 
     public function parameters()
     {
