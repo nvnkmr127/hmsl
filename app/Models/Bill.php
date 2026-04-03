@@ -50,4 +50,12 @@ class Bill extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
+    /**
+     * Get the total amount in words.
+     */
+    public function getAmountInWordsAttribute()
+    {
+        return \Illuminate\Support\Number::spell((float) $this->total_amount);
+    }
 }

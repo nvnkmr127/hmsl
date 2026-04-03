@@ -21,7 +21,7 @@ class BillController extends Controller
      */
     public function print(Bill $bill)
     {
-        $bill->load(['patient', 'items', 'consultation.doctor.department']);
+        $bill->load(['patient', 'items', 'consultation.doctor.department', 'creator']);
         return view('pages.counter.bill-print', compact('bill'));
     }
 }

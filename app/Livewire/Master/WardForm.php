@@ -3,7 +3,7 @@
 namespace App\Livewire\Master;
 
 use App\Models\Ward;
-use App\Services\WardManager;
+use App\Services\WardService;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
@@ -58,7 +58,7 @@ class WardForm extends Component
         $this->dispatch('open-modal', name: 'ward-modal');
     }
 
-    public function save(WardManager $manager)
+    public function save(WardService $manager)
     {
         $this->validate();
 

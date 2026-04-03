@@ -4,7 +4,7 @@ namespace App\Livewire\Master;
 
 use App\Models\Ward;
 use App\Models\Bed;
-use App\Services\WardManager;
+use App\Services\WardService;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -21,7 +21,7 @@ class WardList extends Component
         $this->resetPage();
     }
 
-    public function deleteWard($id, WardManager $manager)
+    public function deleteWard($id, WardService $manager)
     {
         $ward = Ward::findOrFail($id);
         $manager->deleteWard($ward);

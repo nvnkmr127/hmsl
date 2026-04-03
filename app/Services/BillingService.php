@@ -24,6 +24,8 @@ class BillingService
         return DB::transaction(function () use ($data, $items) {
             $data['bill_number'] = $this->generateBillNumber();
             $data['created_by'] = Auth::id();
+            $data['discount_amount'] = $data['discount_amount'] ?? 0;
+            $data['tax_amount'] = $data['tax_amount'] ?? 0;
             
             $bill = Bill::create($data);
             

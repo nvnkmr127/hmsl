@@ -102,7 +102,7 @@ class OpdService
                 $this->billingService->createBill([
                     'patient_id' => $consultation->patient_id,
                     'consultation_id' => $consultation->id,
-                    'discount_amount' => $consultation->discount_amount,
+                    'discount_amount' => $consultation->discount_amount ?? 0,
                     'tax_amount' => 0,
                     'payment_status' => 'Paid',
                     'payment_method' => $consultation->payment_method ?? 'Cash',
