@@ -5,22 +5,28 @@ namespace App\Livewire\Counter;
 use App\Models\Patient;
 use App\Models\Doctor;
 use App\Models\Consultation;
-use App\Services\OpdManager;
+use App\Services\OpdService;
 use Livewire\Component;
 use Livewire\Attributes\Validate;
 use Livewire\WithPagination;
 
 use Livewire\Attributes\On;
+use Livewire\Attributes\Computed;
 
 class OpdBooking extends Component
 {
     use WithPagination;
 
     #[On('patient-registered')]
-    public function handlePatientRegistered($id)
+    public function handlePatientRegistered($id = null)
     {
-        $this->selectPatient($id);
+        // Handle both named array ['id' => 1] and direct argument 1
+        $patientId = is_array($id) ? ($id['id'] ?? null) : $id;
+        if ($patientId) {
+            $this->selectPatient($patientId);
+        }
     }
+
 
     public $searchPatient = '';
     public $selectedPatient;
@@ -31,7 +37,9 @@ class OpdBooking extends Component
     public $temperature;
     public $fee;
     public $paymentMode = 'Cash';
+    public $selectedService;
     public $notes;
+
     
     public $isEditing = false;
     public $editingId;
@@ -39,11 +47,10 @@ class OpdBooking extends Component
 
     public $showBookingForm = false;
 
-    public function mount($patient_id = null)
+    public function mount($patient_id = null, OpdService $service)
     {
-        $validityDays = \App\Models\Setting::get('opd_validity_days', 7);
-        $this->consultation_date = date('Y-m-d');
-        $this->valid_upto = date('Y-m-d', strtotime("+{$validityDays} days"));
+        $this->consultation_date = now()->toDateString();
+        $this->valid_upto = $service->getValidityDate($this->consultation_date);
 
         
         if ($patient_id) {
@@ -75,7 +82,8 @@ class OpdBooking extends Component
 
     public function selectPatient($id)
     {
-        $this->dispatch('notify', type: 'info', message: 'Initiating booking...');
+        $this->dispatch('notify', ['type' => 'info', 'message' => 'Initiating booking...']);
+
         $this->selectedPatient = Patient::findOrFail($id);
         $this->showBookingForm = true;
         $this->isEditing = false;
@@ -93,9 +101,19 @@ class OpdBooking extends Component
         $this->dispatch('open-modal', name: 'booking-modal');
     }
 
+    public function updatedSelectedService($id)
+    {
+        if ($id) {
+            $service = \App\Models\Service::find($id);
+            if ($service) {
+                $this->fee = $service->price;
+            }
+        }
+    }
+
     public function updatedSelectedDoctor($id)
     {
-        if ($id && !$this->isEditing) {
+        if ($id && !$this->isEditing && !$this->selectedService) {
             $doctor = Doctor::find($id);
             if ($doctor) {
                 $this->fee = $doctor->consultation_fee;
@@ -103,13 +121,16 @@ class OpdBooking extends Component
         }
     }
 
+
     public function editBooking($id)
     {
         $consultation = Consultation::with('patient')->findOrFail($id);
         $this->editingId = $id;
         $this->isEditing = true;
         $this->selectedPatient = $consultation->patient;
+        $this->selectedService = $consultation->service_id;
         $this->selectedDoctor = $consultation->doctor_id;
+
         $this->weight = $consultation->weight;
         $this->temperature = $consultation->temperature;
         $this->consultation_date = \Carbon\Carbon::parse($consultation->consultation_date)->format('Y-m-d');
@@ -129,10 +150,11 @@ class OpdBooking extends Component
         $consultation = Consultation::findOrFail($id);
         $consultation->update(['status' => 'Cancelled']);
         
-        $this->dispatch('notify', 
-            type: 'warning',
-            message: "Token #{$consultation->token_number} has been cancelled."
-        );
+        $this->dispatch('notify', [
+            'type' => 'warning',
+            'message' => "Token #{$consultation->token_number} has been cancelled."
+        ]);
+
     }
 
     public function restoreBooking($id)
@@ -141,18 +163,19 @@ class OpdBooking extends Component
         $consultation = Consultation::findOrFail($id);
         $consultation->update(['status' => 'Pending']);
         
-        $this->dispatch('notify', 
-            type: 'success',
-            message: "Token #{$consultation->token_number} has been restored."
-        );
+        $this->dispatch('notify', [
+            'type' => 'success',
+            'message' => "Token #{$consultation->token_number} has been restored."
+        ]);
+
     }
 
-    public function book($shouldPrint = true)
+    public function book(OpdService $service, $shouldPrint = true)
     {
-        $manager = app(OpdManager::class);
         $this->validate([
             'selectedPatient' => 'required',
-            'selectedDoctor' => 'required|exists:doctors,id',
+            'selectedService' => 'required|exists:services,id',
+            'selectedDoctor' => 'nullable|exists:doctors,id',
             'consultation_date' => 'required|date',
             'fee' => 'required|numeric|min:0',
             'weight' => 'nullable|numeric|min:0|max:500',
@@ -160,10 +183,10 @@ class OpdBooking extends Component
             'paymentMode' => 'required|in:Cash,UPI,Card',
         ]);
 
-
         if ($this->isEditing) {
             $consultation = Consultation::findOrFail($this->editingId);
             $consultation->update([
+                'service_id' => $this->selectedService,
                 'doctor_id' => $this->selectedDoctor,
                 'weight' => $this->weight,
                 'temperature' => $this->temperature,
@@ -172,31 +195,25 @@ class OpdBooking extends Component
             ]);
             $message = "Appointment updated successfully!";
         } else {
-            // Duplicate booking check (Patient booked for same doctor on same day)
-            $exists = Consultation::where('patient_id', $this->selectedPatient->id)
-                ->where('doctor_id', $this->selectedDoctor)
-                ->whereDate('consultation_date', $this->consultation_date ?: date('Y-m-d'))
-                ->where('status', '!=', 'Cancelled')
-                ->exists();
-
-            if ($exists) {
-                $this->dispatch('notify', type: 'error', message: 'Patient already has an active booking for this doctor on this date.');
+            try {
+                $consultation = $service->bookAppointment([
+                    'patient_id' => $this->selectedPatient->id,
+                    'service_id' => $this->selectedService,
+                    'doctor_id' => $this->selectedDoctor,
+                    'weight' => $this->weight,
+                    'temperature' => $this->temperature,
+                    'fee' => $this->fee,
+                    'consultation_date' => $this->consultation_date,
+                    'valid_upto' => $this->valid_upto,
+                    'payment_status' => 'Paid',
+                    'payment_method' => $this->paymentMode,
+                    'notes' => $this->notes,
+                ]);
+            } catch (\Exception $e) {
+                $this->dispatch('notify', ['type' => 'error', 'message' => $e->getMessage()]);
                 return;
             }
-
-            $consultation = $manager->bookAppointment([
-                'patient_id' => $this->selectedPatient->id,
-                'doctor_id' => $this->selectedDoctor,
-                'weight' => $this->weight,
-                'temperature' => $this->temperature,
-                'fee' => $this->fee,
-                'consultation_date' => $this->consultation_date ?: date('Y-m-d'),
-                'valid_upto' => $this->valid_upto ?: date('Y-m-d', strtotime('+' . \App\Models\Setting::get('opd_validity_days', 7) . ' days')),
-                'payment_status' => 'Paid',
-
-                'payment_method' => $this->paymentMode,
-                'notes' => $this->notes,
-            ]);
+            
             $message = "Token #{$consultation->token_number} generated for {$this->selectedPatient->full_name}!";
             $this->lastConsultationId = $consultation->id;
             
@@ -205,9 +222,11 @@ class OpdBooking extends Component
             }
         }
 
-        $this->dispatch('notify', type: 'success', message: $message);
+        $this->dispatch('notify', ['type' => 'success', 'message' => $message]);
 
-        $this->reset(['selectedPatient', 'fee', 'notes', 'showBookingForm', 'isEditing', 'editingId', 'weight', 'temperature', 'paymentMode', 'searchPatient', 'lastConsultationId']);
+
+        $this->reset(['selectedPatient', 'selectedService', 'selectedDoctor', 'fee', 'notes', 'showBookingForm', 'isEditing', 'editingId', 'weight', 'temperature', 'paymentMode', 'searchPatient', 'lastConsultationId']);
+
         $validityDays = \App\Models\Setting::get('opd_validity_days', 7);
         $this->consultation_date = date('Y-m-d');
         $this->valid_upto = date('Y-m-d', strtotime("+{$validityDays} days"));
@@ -226,7 +245,8 @@ class OpdBooking extends Component
 
     public function openPatientForm($phone = null)
     {
-        $this->dispatch('notify', type: 'info', message: 'Opening registration form...');
+        $this->dispatch('notify', ['type' => 'info', 'message' => 'Opening registration form...']);
+
         
         // Only pass search string as phone if it looks like a phone (all numeric)
         $validPhone = is_numeric($phone) ? $phone : null;
@@ -244,45 +264,57 @@ class OpdBooking extends Component
         }
     }
 
-    public function render()
+    #[Computed]
+    public function todayConsultationsQuery()
+    {
+        return Consultation::with(['patient', 'service', 'doctor.user', 'bill', 'patient.vitals' => fn($q) => $q->latest()->limit(1)])
+            ->whereDate('consultation_date', now()->toDateString())
+            ->when($this->selectedDoctor && !$this->showBookingForm, fn($query) => $query->where('doctor_id', $this->selectedDoctor));
+    }
+
+    #[Computed]
+    public function stats()
+    {
+        $stats = $this->todayConsultationsQuery()
+            ->selectRaw('
+                COUNT(*) as total,
+                SUM(CASE WHEN status = "Pending" THEN 1 ELSE 0 END) as pending,
+                SUM(CASE WHEN status = "Completed" THEN 1 ELSE 0 END) as completed,
+                SUM(CASE WHEN status = "Cancelled" THEN 1 ELSE 0 END) as cancelled,
+                SUM(CASE WHEN payment_status = "Paid" THEN fee ELSE 0 END) as revenue
+            ')
+            ->first();
+        
+        return [
+            'total' => (int) $stats->total,
+            'pending' => (int) $stats->pending,
+            'completed' => (int) $stats->completed,
+            'cancelled' => (int) $stats->cancelled,
+            'revenue' => (float) $stats->revenue,
+        ];
+    }
+
+    public function render(OpdService $service)
     {
         $patients = [];
         if (strlen($this->searchPatient) >= 3) {
-            $patients = Patient::query()
-                ->with(['consultations' => function($q) {
-                    $q->latest()->limit(1);
-                }])
-                ->where(function($q) {
-                    $q->where('phone', 'like', "%{$this->searchPatient}%")
-                      ->orWhere('uhid', 'like', "%{$this->searchPatient}%")
-                      ->orWhere('first_name', 'like', "%{$this->searchPatient}%");
-                })
+            $patients = Patient::search($this->searchPatient)
+                ->with(['consultations' => fn($q) => $q->latest()->limit(1)])
                 ->limit(5)
                 ->get();
         }
 
-        $doctors = Doctor::query()->with(['department', 'user'])->where('is_active', true)->get();
+        $doctors = Doctor::active()->with(['department', 'user'])->get();
+        $services = \App\Models\Service::where('is_active', true)->where('category', 'OPD')->get();
         
-        $todayConsultationsQuery = Consultation::with(['patient', 'doctor.user', 'patient.vitals' => function($query) {
-                $query->latest()->limit(1);
-            }])
-            ->whereDate('consultation_date', date('Y-m-d'))
-            ->when($this->selectedDoctor && !$this->showBookingForm, fn($query) => $query->where('doctor_id', $this->selectedDoctor));
-
-        $stats = [
-            'total' => (clone $todayConsultationsQuery)->count(),
-            'pending' => (clone $todayConsultationsQuery)->where('status', 'Pending')->count(),
-            'completed' => (clone $todayConsultationsQuery)->where('status', 'Completed')->count(),
-            'cancelled' => (clone $todayConsultationsQuery)->where('status', 'Cancelled')->count(),
-        ];
-
-        $todayConsultations = $todayConsultationsQuery->latest()->paginate(10);
+        $todayConsultations = $this->todayConsultationsQuery->latest()->paginate(10);
 
         return view('livewire.counter.opd-booking', [
             'patients' => $patients,
             'doctors' => $doctors,
+            'services' => $services,
             'todayConsultations' => $todayConsultations,
-            'stats' => $stats
+            'stats' => $this->stats
         ]);
     }
 }

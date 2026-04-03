@@ -38,7 +38,7 @@ class LaboratoryOrders extends Component
                 $this->results[$p->id] = '';
             }
 
-            $this->dispatch('open-modal', ['name' => 'results-modal']);
+            $this->dispatch('open-modal', name: 'results-modal');
         } catch (Throwable $e) {
             report($e);
             $this->dispatch('notify', [
@@ -90,7 +90,7 @@ class LaboratoryOrders extends Component
                 'technician_id' => auth()->id()
             ]);
 
-            $this->dispatch('close-modal', ['name' => 'results-modal']);
+            $this->dispatch('close-modal', name: 'results-modal');
             $this->dispatch('notify', [
                 'type' => 'success',
                 'message' => 'Lab results recorded successfully!'

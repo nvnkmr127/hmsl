@@ -50,7 +50,7 @@
                                 </td>
                                 <td class="hidden md:table-cell">
                                     <p class="text-xs font-semibold text-gray-700 dark:text-gray-300">{{ $o->labTest?->name ?? 'Unknown Test' }}</p>
-                                    <p class="text-[10px] text-gray-500">{{ $o->created_at->format('d M, Y H:i') }}</p>
+                                    <p class="text-tiny text-gray-500">{{ $o->created_at->format('d M, Y H:i') }}</p>
                                 </td>
                                 <td class="hidden lg:table-cell">
                                     <p class="text-xs font-semibold text-gray-700 dark:text-gray-300">{{ $o->doctor?->full_name ?? 'Unassigned' }}</p>
@@ -111,7 +111,7 @@
                             </div>
                             <div>
                                 <p class="text-sm font-bold text-gray-900 dark:text-white">{{ $selectedOrder->labTest?->name ?? 'Unknown Test' }}</p>
-                                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ $selectedOrder->patient?->full_name ?? 'Unknown Patient' }} ({{ $selectedOrder->patient?->uhid ?? 'N/A' }})</p>
+                                <p class="text-tiny font-black text-gray-400 uppercase tracking-widest">{{ $selectedOrder->patient?->full_name ?? 'Unknown Patient' }} ({{ $selectedOrder->patient?->uhid ?? 'N/A' }})</p>
                             </div>
                         </div>
                     </div>
@@ -121,7 +121,7 @@
                             <div class="grid grid-cols-3 items-center gap-4">
                                 <div class="col-span-1">
                                     <p class="text-xs font-bold text-gray-700 dark:text-gray-300">{{ $p->name }}</p>
-                                    <p class="text-[10px] text-gray-400">Range: {{ $p->reference_range }} {{ $p->unit }}</p>
+                                    <p class="text-tiny text-gray-400">Range: {{ $p->reference_range }} {{ $p->unit }}</p>
                                 </div>
                                 <div class="col-span-2">
                                     <x-form.input wire:model="results.{{ $p->id }}" placeholder="Value ({{ $p->unit }})" />

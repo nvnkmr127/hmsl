@@ -18,8 +18,8 @@ class BillingFindToken extends Component
         }
 
         $this->dispatch('generate-bill', $consultationId);
-        $this->dispatch('close-modal', ['name' => 'billing-find-token-modal']);
-        $this->dispatch('close-modal', ['name' => 'billing-create-modal']);
+        $this->dispatch('close-modal', name: 'billing-find-token-modal');
+        $this->dispatch('close-modal', name: 'billing-create-modal');
     }
 
     public function render()

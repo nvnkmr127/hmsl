@@ -42,23 +42,22 @@
                     <tr>
                         <td>
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-xs shadow-sm"
-                                     style="background:#7c3aed">
+                                <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-xs shadow-sm bg-indigo-600">
                                     {{ substr($doctor->full_name, 0, 2) }}
                                 </div>
                                 <div class="min-w-0">
                                     <div class="flex items-center gap-2">
                                         <p class="font-bold text-gray-900 dark:text-white truncate">{{ $doctor->full_name }}</p>
-                                        <span class="text-[10px] font-black text-gray-400 font-mono italic">#{{ $doctor->doctor_code ?: 'N/A' }}</span>
+                                        <span class="text-tiny font-black text-gray-400 font-mono italic">#{{ $doctor->doctor_code ?: 'N/A' }}</span>
                                     </div>
-                                    <p class="text-[10px] text-violet-600 dark:text-violet-400 font-bold uppercase tracking-widest truncate">{{ $doctor->department?->name ?? 'No Department' }}</p>
+                                    <p class="text-tiny text-violet-600 dark:text-violet-400 font-bold uppercase tracking-widest truncate">{{ $doctor->department?->name ?? 'No Department' }}</p>
                                 </div>
 
                             </div>
                         </td>
                         <td>
                             <p class="text-xs font-semibold text-gray-700 dark:text-gray-300">{{ $doctor->specialization }}</p>
-                            <p class="text-[10px] text-gray-500 italic">{{ $doctor->qualification }}</p>
+                            <p class="text-tiny text-gray-500 italic">{{ $doctor->qualification }}</p>
                         </td>
                         <td>
                             <span class="text-sm font-black text-gray-900 dark:text-white">₹{{ number_format($doctor->consultation_fee) }}</span>

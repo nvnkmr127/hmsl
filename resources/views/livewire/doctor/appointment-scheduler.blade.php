@@ -23,7 +23,7 @@
             @else
                 <div class="p-4 rounded-2xl bg-violet-50 dark:bg-violet-900/10 border border-violet-100 dark:border-violet-800 flex items-center justify-between">
                     <div>
-                        <p class="text-[10px] font-black text-violet-600 dark:text-violet-400 uppercase tracking-[0.2em] mb-1">Selected Patient</p>
+                        <p class="text-tiny font-black text-violet-600 dark:text-violet-400 uppercase tracking-[0.2em] mb-1">Selected Patient</p>
                         <p class="text-sm font-bold text-gray-900 dark:text-white">{{ $selectedPatient->full_name }}</p>
                     </div>
                     <button wire:click="$set('selectedPatient', null)" class="text-xs font-bold text-red-500 hover:underline">Change</button>

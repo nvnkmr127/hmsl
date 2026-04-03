@@ -46,16 +46,25 @@ class VitalSigns extends Component
     public $notes;
 
     #[On('record-vitals')]
-    public function openRecordModal($patientId, $consultationId = null)
+    public function openRecordModal($data = null)
     {
+        if (!$data) return;
         $this->reset(['weight', 'height', 'temperature', 'pulse', 'bp_systolic', 'bp_diastolic', 'resp_rate', 'spo2', 'blood_sugar', 'notes']);
-        $this->patientId = $patientId;
-        $this->consultationId = $consultationId;
+
         
-        $patient = Patient::findOrFail($patientId);
+        if (is_array($data)) {
+            $this->patientId = $data['patientId'] ?? null;
+            $this->consultationId = $data['consultationId'] ?? null;
+        } else {
+            $this->patientId = $data;
+        }
+        
+        $patient = Patient::findOrFail($this->patientId);
         $this->patientName = $patient->full_name;
 
-        $this->dispatch('open-modal', ['name' => 'vitals-modal']);
+
+        $this->dispatch('open-modal', name: 'vitals-modal');
+
     }
 
     public function save(VitalService $service)
@@ -66,7 +75,8 @@ class VitalSigns extends Component
 
         $service->record($data);
 
-        $this->dispatch('close-modal', ['name' => 'vitals-modal']);
+        $this->dispatch('close-modal', name: 'vitals-modal');
+
         $this->dispatch('vitals-recorded');
         $this->dispatch('notify', [
             'type' => 'success',

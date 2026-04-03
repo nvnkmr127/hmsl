@@ -56,7 +56,7 @@
                                         </div>
                                         <div class="min-w-0">
                                             <p class="font-bold text-gray-900 dark:text-white truncate">{{ $i->name }}</p>
-                                            <p class="text-[10px] text-violet-600 dark:text-violet-400 font-bold uppercase tracking-widest truncate">{{ $i->sku }}</p>
+                                            <p class="text-tiny text-violet-600 dark:text-violet-400 font-bold uppercase tracking-widest truncate">{{ $i->sku }}</p>
                                         </div>
                                     </div>
                                 </td>

@@ -25,6 +25,32 @@ class Doctor extends Model
         'is_active',
     ];
 
+    protected $casts = [
+        'consultation_fee' => 'decimal:2',
+        'is_active' => 'boolean',
+    ];
+
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeSearch($query, $term)
+    {
+        return $query->where(function ($q) use ($term) {
+            $q->where('full_name', 'like', "%{$term}%")
+              ->orWhere('doctor_code', 'like', "%{$term}%")
+              ->orWhere('specialization', 'like', "%{$term}%")
+              ->orWhere('phone', 'like', "%{$term}%");
+        });
+    }
+
+    public function scopeInDepartment($query, $departmentId)
+    {
+        return $query->when($departmentId, fn($q) => $q->where('department_id', $departmentId));
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

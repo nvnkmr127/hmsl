@@ -10,23 +10,17 @@ use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
+    protected $statsService;
+
+    public function __construct(\App\Services\StatsService $statsService)
+    {
+        $this->statsService = $statsService;
+    }
+
     public function index(Request $request)
     {
         $user = $request->user();
-
-        $today = now()->toDateString();
-        $doctor = Doctor::where('user_id', $user->id)->first();
-
-        $metrics = [
-            'opdToday' => Consultation::whereDate('consultation_date', $today)->count(),
-            'opdPendingToday' => Consultation::whereDate('consultation_date', $today)->where('status', 'Pending')->count(),
-            'ipdAdmitted' => Admission::where('status', 'Admitted')->count(),
-            'billsToday' => Bill::whereDate('created_at', $today)->count(),
-            'revenueToday' => Bill::whereDate('created_at', $today)->where('payment_status', 'Paid')->sum('total_amount'),
-            'doctorPendingToday' => $doctor
-                ? Consultation::whereDate('consultation_date', $today)->where('doctor_id', $doctor->id)->where('status', 'Pending')->count()
-                : 0,
-        ];
+        $metrics = $this->statsService->getDashboardMetrics($user->id);
 
         if ($user->hasRole('receptionist')) {
             return view('pages.dashboard.reception', compact('metrics'));
@@ -46,6 +40,10 @@ class DashboardController extends Controller
 
         if ($user->hasRole('pharmacist')) {
             return view('pages.dashboard.pharmacy', compact('metrics'));
+        }
+
+        if ($user->hasRole('doctor_owner')) {
+            return view('pages.dashboard.admin', compact('metrics'));
         }
 
         return view('pages.dashboard.admin', compact('metrics'));

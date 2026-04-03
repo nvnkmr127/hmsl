@@ -14,6 +14,22 @@ export default {
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
+            colors: {
+                'violet': {
+                    DEFAULT: '#7c3aed',
+                    'dk': '#6d28d9',
+                    'lt': '#ede9fe',
+                },
+                'navy': '#111827',
+            },
+            fontSize: {
+                'tiny': '10px',
+                'dense': '9px',
+            },
+            borderRadius: {
+                'mega': '2.5rem',
+                'ultra': '2rem',
+            },
         },
     },
     plugins: [],

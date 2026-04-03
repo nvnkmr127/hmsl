@@ -38,7 +38,7 @@ class PharmacyStock extends Component
         $this->selectedMedicineId = $id;
         $this->adjustmentQuantity = null;
         $this->adjustmentNotes = '';
-        $this->dispatch('open-modal', ['name' => 'stock-adjustment-modal']);
+        $this->dispatch('open-modal', name: 'stock-adjustment-modal');
     }
 
     public function submitAdjustment(MedicineManager $manager)
@@ -62,7 +62,7 @@ class PharmacyStock extends Component
 
             $manager->updateStock($medicine, $this->adjustmentQuantity);
 
-            $this->dispatch('close-modal', ['name' => 'stock-adjustment-modal']);
+            $this->dispatch('close-modal', name: 'stock-adjustment-modal');
             $this->dispatch('notify', [
                 'type' => 'success',
                 'message' => 'Stock updated successfully!'

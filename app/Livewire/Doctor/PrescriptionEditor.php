@@ -45,7 +45,7 @@ class PrescriptionEditor extends Component
             $this->medicines = [];
         }
 
-        $this->dispatch('open-modal', ['name' => 'prescription-modal']);
+        $this->dispatch('open-modal', name: 'prescription-modal');
     }
 
     public function addMedicine()
@@ -97,7 +97,7 @@ class PrescriptionEditor extends Component
             $msg = 'Prescription saved successfully.';
         }
 
-        $this->dispatch('close-modal', ['name' => 'prescription-modal']);
+        $this->dispatch('close-modal', name: 'prescription-modal');
         $this->dispatch('prescription-saved', $this->consultationId);
         $this->dispatch('notify', ['type' => 'success', 'message' => $msg]);
 

@@ -9,6 +9,6 @@
     </div>
     <div class="min-w-0">
         <p class="font-bold text-gray-900 dark:text-white truncate">{{ $patient?->full_name ?? 'Unknown Patient' }}</p>
-        <p class="text-[10px] text-violet-600 dark:text-violet-400 font-bold uppercase tracking-widest truncate">{{ $subtitle ?? ($patient?->uhid ?? 'N/A') }}</p>
+        <p class="text-tiny text-violet-600 dark:text-violet-400 font-bold uppercase tracking-widest truncate">{{ $subtitle ?? ($patient?->uhid ?? 'N/A') }}</p>
     </div>
 </div>

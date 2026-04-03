@@ -4,7 +4,7 @@ namespace App\Livewire\Doctor;
 
 use App\Models\Consultation;
 use App\Models\Doctor;
-use App\Services\OpdManager;
+use App\Services\OpdService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -17,6 +17,7 @@ class ConsultationDesk extends Component
     public $billStats = [];
     public $alerts = [];
     public $loadingSupport = false;
+    public $discount = 0;
 
     public function getDoctorProperty(): ?Doctor
     {
@@ -33,6 +34,7 @@ class ConsultationDesk extends Component
         }
         
         $this->selectedConsultation = $consultation;
+        $this->discount = $consultation->discount_amount;
         $this->fetchCoreClinicalData($consultation);
         
         // Signal that core data is ready, now load support data
@@ -110,6 +112,14 @@ class ConsultationDesk extends Component
         }
         
         $this->loadingSupport = false;
+    }
+
+    public function updatedDiscount($value)
+    {
+        if ($this->selectedConsultation) {
+            $this->selectedConsultation->update(['discount_amount' => $value]);
+            $this->dispatch('notify', ['type' => 'success', 'message' => 'Discount updated.']);
+        }
     }
 
     public function completeAndNext()

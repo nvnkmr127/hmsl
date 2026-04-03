@@ -30,7 +30,7 @@
                         </span>
                         <input type="file" wire:model="logo" class="hidden">
                     </label>
-                    <p class="text-[10px] text-gray-400 mt-2 font-bold uppercase tracking-widest">JPG, PNG, GIF Max 2MB</p>
+                    <p class="text-tiny text-gray-400 mt-2 font-bold uppercase tracking-widest">JPG, PNG, GIF Max 2MB</p>
                 </div>
             </div>
 

@@ -46,7 +46,7 @@
                         <td>
                             <div class="flex flex-col">
                                 <span class="text-sm font-bold text-gray-900 dark:text-white uppercase">{{ $bed->ward->name }}</span>
-                                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ $bed->ward->type }}</span>
+                                <span class="text-tiny font-black text-gray-400 uppercase tracking-widest">{{ $bed->ward->type }}</span>
                             </div>
                         </td>
                         <td>

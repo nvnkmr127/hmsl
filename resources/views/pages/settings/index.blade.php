@@ -16,6 +16,12 @@
             <a href="{{ route('settings.invoice') }}" class="px-6 py-3 rounded-2xl text-sm font-bold uppercase tracking-widest transition-all {{ request()->routeIs('settings.invoice') ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700/50' }}">
                 Invoice & Print
             </a>
+            <a href="{{ route('settings.webhooks.index') }}" class="px-6 py-3 rounded-2xl text-sm font-bold uppercase tracking-widest transition-all {{ request()->routeIs('settings.webhooks.*') ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700/50' }}">
+                Webhooks
+            </a>
+            <a href="{{ route('settings.api-tokens.index') }}" class="px-6 py-3 rounded-2xl text-sm font-bold uppercase tracking-widest transition-all {{ request()->routeIs('settings.api-tokens.*') ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700/50' }}">
+                API Tokens
+            </a>
         </div>
 
         <livewire:settings.hospital-settings />

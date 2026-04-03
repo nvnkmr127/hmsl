@@ -32,7 +32,7 @@
                 @forelse($departments as $dept)
                     <tr>
                         <td>
-                            <span class="text-[10px] font-black font-mono text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-lg">
+                            <span class="text-tiny font-black font-mono text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-lg">
                                 {{ $dept->code ?: 'N/A' }}
                             </span>
                         </td>

@@ -41,19 +41,10 @@ require __DIR__.'/modules/laboratory.php';
 require __DIR__.'/modules/inventory.php';
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('/discharge', fn() => view('pages.discharge.index'))->name('discharge.index')->middleware('permission:admit patients');
-    Route::get('/discharge/{admission}', function (Admission $admission) {
-        $admission->load(['patient', 'doctor', 'bed.ward']);
-        return view('pages.discharge.summary', compact('admission'));
-    })->whereNumber('admission')->name('discharge.summary')->middleware('permission:admit patients');
-    Route::get('/discharge/{admission}/print', function (Admission $admission) {
-        $admission->load(['patient', 'doctor', 'bed.ward']);
-        return view('pages.discharge.summary-print', compact('admission'));
-    })->whereNumber('admission')->name('discharge.print')->middleware('permission:admit patients');
+    Route::get('/discharge', [App\Http\Controllers\DischargeController::class, 'index'])->name('discharge.index')->middleware('permission:admit patients');
+    Route::get('/discharge/{admission}', [App\Http\Controllers\DischargeController::class, 'show'])->whereNumber('admission')->name('discharge.summary')->middleware('permission:admit patients');
+    Route::get('/discharge/{admission}/print', [App\Http\Controllers\DischargeController::class, 'print'])->whereNumber('admission')->name('discharge.print')->middleware('permission:admit patients');
 
-    Route::get('/billing', fn() => view('pages.billing.index'))->name('billing.index')->middleware('permission:view billing');
-    Route::get('/billing/bills/{bill}/print', function (Bill $bill) {
-        $bill->load(['patient', 'items', 'consultation.doctor.department']);
-        return view('pages.counter.bill-print', compact('bill'));
-    })->whereNumber('bill')->name('billing.bills.print')->middleware('permission:view billing');
+    Route::get('/billing', [App\Http\Controllers\Counter\BillController::class, 'index'])->name('billing.index')->middleware('permission:view billing');
+    Route::get('/billing/bills/{bill}/print', [App\Http\Controllers\Counter\BillController::class, 'print'])->whereNumber('bill')->name('billing.bills.print')->middleware('permission:view billing');
 });

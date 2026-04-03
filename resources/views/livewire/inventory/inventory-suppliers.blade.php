@@ -13,7 +13,7 @@
             <x-card title="Search & Quick Info">
                 <div class="space-y-4">
                     <x-form.input placeholder="Search suppliers..." wire:model.live.debounce.300ms="search" icon="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    <p class="text-[10px] text-gray-400 font-medium italic">Active suppliers are eligible for purchase orders and inventory transactions.</p>
+                    <p class="text-tiny text-gray-400 font-medium italic">Active suppliers are eligible for purchase orders and inventory transactions.</p>
                 </div>
             </x-card>
         </div>
@@ -39,7 +39,7 @@
                                         </div>
                                         <div>
                                             <p class="font-bold text-gray-900 dark:text-white uppercase tracking-tight">{{ $s->name }}</p>
-                                            <p class="text-[10px] text-violet-600 font-bold uppercase tracking-widest">{{ $s->email ?? 'NO EMAIL' }}</p>
+                                            <p class="text-tiny text-violet-600 font-bold uppercase tracking-widest">{{ $s->email ?? 'NO EMAIL' }}</p>
                                         </div>
                                     </div>
                                 </td>

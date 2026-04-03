@@ -5,7 +5,7 @@ namespace App\Livewire\Doctor;
 use App\Models\Patient;
 use App\Models\Doctor;
 use App\Models\Consultation;
-use App\Services\OpdManager;
+use App\Services\OpdService;
 use Livewire\Component;
 use Livewire\Attributes\On;
 use Illuminate\Support\Facades\Auth;
@@ -22,7 +22,7 @@ class AppointmentScheduler extends Component
     {
         $this->reset(['searchPatient', 'selectedPatient', 'notes']);
         $this->consultation_date = date('Y-m-d');
-        $this->dispatch('open-modal', ['name' => 'appointment-modal']);
+        $this->dispatch('open-modal', name: 'appointment-modal');
     }
 
     public function selectPatient($id)
@@ -31,7 +31,7 @@ class AppointmentScheduler extends Component
         $this->searchPatient = '';
     }
 
-    public function schedule(OpdManager $manager)
+    public function schedule(OpdService $manager)
     {
         $this->validate([
             'selectedPatient' => 'required',
@@ -58,7 +58,7 @@ class AppointmentScheduler extends Component
             'message' => "Appointment scheduled! Token #{$consultation->token_number}"
         ]);
 
-        $this->dispatch('close-modal', ['name' => 'appointment-modal']);
+        $this->dispatch('close-modal', name: 'appointment-modal');
         $this->dispatch('appointment-scheduled');
     }
 

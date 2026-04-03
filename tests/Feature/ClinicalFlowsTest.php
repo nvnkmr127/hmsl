@@ -12,7 +12,7 @@ use App\Models\User;
 use App\Models\Ward;
 use App\Services\BillingService;
 use App\Services\IpdManager;
-use App\Services\OpdManager;
+use App\Services\OpdService;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -70,7 +70,7 @@ class ClinicalFlowsTest extends TestCase
         $doctor = $this->makeDoctor();
         $patient = $this->makePatient('UHID-OPD-0001');
 
-        $manager = app(OpdManager::class);
+        $manager = app(OpdService::class);
         $consultation = $manager->bookAppointment([
             'patient_id' => $patient->id,
             'doctor_id' => $doctor->id,
@@ -94,7 +94,7 @@ class ClinicalFlowsTest extends TestCase
         $doctor = $this->makeDoctor();
         $patient = $this->makePatient('UHID-OPD-0002');
 
-        $manager = app(OpdManager::class);
+        $manager = app(OpdService::class);
         $consultation = $manager->bookAppointment([
             'patient_id' => $patient->id,
             'doctor_id' => $doctor->id,
@@ -125,7 +125,7 @@ class ClinicalFlowsTest extends TestCase
         ]);
 
         $patient = $this->makePatient('UHID-OPD-0003');
-        $manager = app(OpdManager::class);
+        $manager = app(OpdService::class);
         $consultation = $manager->bookAppointment([
             'patient_id' => $patient->id,
             'doctor_id' => $doctor->id,

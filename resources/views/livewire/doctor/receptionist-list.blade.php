@@ -10,11 +10,11 @@
                 </div>
                 <div class="flex-1 min-w-0">
                     <p class="text-sm font-bold text-gray-900 dark:text-white truncate">{{ $staff->name }}</p>
-                    <p class="text-[10px] font-medium text-gray-400 uppercase tracking-widest">{{ $staff->email }}</p>
+                    <p class="text-tiny font-medium text-gray-400 uppercase tracking-widest">{{ $staff->email }}</p>
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span class="text-[10px] font-bold text-gray-400 uppercase">Available</span>
+                    <span class="text-tiny font-bold text-gray-400 uppercase">Available</span>
                 </div>
             </div>
         @empty

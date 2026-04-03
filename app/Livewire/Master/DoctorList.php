@@ -48,20 +48,9 @@ class DoctorList extends Component
     public function render()
     {
         $doctors = Doctor::with('department')
-            ->when(!$this->showInactive, function($query) {
-                $query->where('is_active', true);
-            })
-            ->when($this->search, function($query) {
-                $query->where(function($q) {
-                    $q->where('full_name', 'like', '%' . $this->search . '%')
-                      ->orWhere('doctor_code', 'like', '%' . $this->search . '%')
-                      ->orWhere('specialization', 'like', '%' . $this->search . '%');
-                });
-            })
-
-            ->when($this->departmentFilter, function($query) {
-                $query->where('department_id', $this->departmentFilter);
-            })
+            ->when(!$this->showInactive, fn($q) => $q->active())
+            ->when($this->search, fn($q) => $q->search($this->search))
+            ->inDepartment($this->departmentFilter)
             ->latest()
             ->paginate(10);
 

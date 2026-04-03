@@ -1,6 +1,6 @@
 <div>
     @if(!$doctor)
-        <div class="p-10 text-center rounded-[2.5rem] bg-gray-50/50 dark:bg-gray-950/20 border-2 border-dashed border-gray-200 dark:border-gray-800">
+        <div class="p-10 text-center rounded-mega bg-gray-50/50 dark:bg-gray-950/20 border-2 border-dashed border-gray-200 dark:border-gray-800">
             <div class="mx-auto w-20 h-20 bg-violet-100 dark:bg-violet-900/30 rounded-3xl flex items-center justify-center text-violet-600 mb-6">
                 <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -25,7 +25,7 @@
                                 class="w-full text-left p-5 transition-all relative group {{ $selectedConsultation && $selectedConsultation->id == $item->id ? 'bg-violet-600' : 'hover:bg-violet-50 dark:hover:bg-violet-900/10' }}"
                             >
                                 <div class="flex justify-between items-start mb-1">
-                                    <span class="text-[10px] font-black uppercase tracking-widest {{ $selectedConsultation && $selectedConsultation->id == $item->id ? 'text-violet-200' : 'text-gray-400' }}">
+                                    <span class="text-tiny font-black uppercase tracking-widest {{ $selectedConsultation && $selectedConsultation->id == $item->id ? 'text-violet-200' : 'text-gray-400' }}">
                                         Token #{{ str_pad($item->token_number, 2, '0', STR_PAD_LEFT) }}
                                     </span>
                                     <span class="text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter {{ $item->status === 'Ongoing' ? 'bg-sky-500 text-white' : 'bg-gray-200 text-gray-500' }}">
@@ -36,24 +36,24 @@
                                     {{ $item->patient->full_name }}
                                 </h4>
                                 <div class="flex items-center gap-2 mt-1">
-                                    <span class="text-[10px] font-bold uppercase {{ $selectedConsultation && $selectedConsultation->id == $item->id ? 'text-violet-200/70' : 'text-gray-400' }}">
+                                    <span class="text-tiny font-bold uppercase {{ $selectedConsultation && $selectedConsultation->id == $item->id ? 'text-violet-200/70' : 'text-gray-400' }}">
                                         {{ $item->patient->age }} | {{ $item->patient->gender }}
                                     </span>
                                 </div>
                             </button>
                         @empty
                             <div class="p-10 text-center opacity-40">
-                                <p class="text-[10px] font-black uppercase tracking-widest italic">Queue is empty</p>
+                                <p class="text-tiny font-black uppercase tracking-widest italic">Queue is empty</p>
                             </div>
                         @endforelse
 
                         @if($completed->count())
                             <div class="p-4 bg-gray-50 dark:bg-gray-950 border-y border-gray-100 dark:border-gray-800">
-                                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Recently Completed</p>
+                                <p class="text-tiny font-black text-gray-400 uppercase tracking-widest">Recently Completed</p>
                             </div>
                             @foreach($completed as $c)
                                 <div class="p-4 opacity-50 grayscale">
-                                    <p class="text-[9px] font-bold text-gray-400 tracking-tighter uppercase">Token #{{ $c->token_number }}</p>
+                                    <p class="text-dense font-bold text-gray-400 tracking-tighter uppercase">Token #{{ $c->token_number }}</p>
                                     <p class="text-xs font-bold text-gray-900 dark:text-white uppercase">{{ $c->patient->full_name }}</p>
                                 </div>
                             @endforeach
@@ -65,7 +65,7 @@
             <!-- Right Side: Selected Patient Details -->
             <div class="lg:col-span-3">
                 @if($selectedConsultation)
-                    <div class="h-full flex flex-col bg-slate-50/50 dark:bg-gray-900/10 rounded-[2.5rem] border border-gray-100 dark:border-gray-800 shadow-xl overflow-hidden animate-in fade-in slide-in-from-right-4 duration-500">
+                    <div class="h-full flex flex-col bg-slate-50/50 dark:bg-gray-900/10 rounded-mega border border-gray-100 dark:border-gray-800 shadow-xl overflow-hidden animate-in fade-in slide-in-from-right-4 duration-500">
                         
                         <!-- Top Bar: Quick Actions & Profile -->
                         <div class="p-8 bg-white dark:bg-gray-950 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
@@ -76,9 +76,9 @@
                                 <div>
                                     <h2 class="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tight leading-none mb-1">{{ $selectedConsultation->patient->full_name }}</h2>
                                     <div class="flex items-center gap-4">
-                                        <span class="text-[10px] font-black text-violet-600 uppercase tracking-[0.2em]">{{ $selectedConsultation->patient->age }} | {{ $selectedConsultation->patient->gender }}</span>
+                                        <span class="text-tiny font-black text-violet-600 uppercase tracking-[0.2em]">{{ $selectedConsultation->patient->age }} | {{ $selectedConsultation->patient->gender }}</span>
                                         <span class="w-1 h-1 rounded-full bg-gray-300"></span>
-                                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ $selectedConsultation->patient->uhid }}</span>
+                                        <span class="text-tiny font-black text-gray-400 uppercase tracking-widest">{{ $selectedConsultation->patient->uhid }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -96,25 +96,31 @@
                                 <div class="xl:col-span-2 space-y-8">
                                     
                                     {{-- B. Current Visit (OP Details) --}}
-                                    <div class="grid grid-cols-3 gap-6">
-                                        <div class="p-6 bg-white dark:bg-gray-950 rounded-[2rem] border border-gray-100 dark:border-gray-800 shadow-sm">
-                                            <p class="text-[9px] font-black text-orange-500 uppercase tracking-widest mb-2">Weight</p>
+                                    <div class="grid grid-cols-4 gap-6">
+                                        <div class="p-6 bg-white dark:bg-gray-950 rounded-ultra border border-gray-100 dark:border-gray-800 shadow-sm">
+                                            <p class="text-dense font-black text-orange-500 uppercase tracking-widest mb-2">Weight</p>
                                             <div class="flex items-baseline gap-1">
                                                 <span class="text-3xl font-black text-gray-900 dark:text-white">{{ $selectedConsultation->weight ?? '--' }}</span>
-                                                <span class="text-[10px] font-bold text-gray-400 uppercase">kg</span>
+                                                <span class="text-tiny font-bold text-gray-400 uppercase">kg</span>
                                             </div>
                                         </div>
-                                        <div class="p-6 bg-white dark:bg-gray-950 rounded-[2rem] border border-gray-100 dark:border-gray-800 shadow-sm">
-                                            <p class="text-[9px] font-black text-blue-500 uppercase tracking-widest mb-2">Temperature</p>
+                                        <div class="p-6 bg-white dark:bg-gray-950 rounded-ultra border border-gray-100 dark:border-gray-800 shadow-sm">
+                                            <p class="text-dense font-black text-blue-500 uppercase tracking-widest mb-2">Temperature</p>
                                             <div class="flex items-baseline gap-1">
                                                 <span class="text-3xl font-black text-gray-900 dark:text-white">{{ $selectedConsultation->temperature ?? '--' }}</span>
-                                                <span class="text-[10px] font-bold text-gray-400 uppercase">°F</span>
+                                                <span class="text-tiny font-bold text-gray-400 uppercase">°F</span>
                                             </div>
                                         </div>
-                                        <div class="p-6 bg-white dark:bg-gray-950 rounded-[2rem] border border-gray-100 dark:border-gray-800 shadow-sm">
-                                            <p class="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-2">Token</p>
+                                        <div class="p-6 bg-white dark:bg-gray-950 rounded-ultra border border-gray-100 dark:border-gray-800 shadow-sm">
+                                            <p class="text-dense font-black text-emerald-500 uppercase tracking-widest mb-2">Token</p>
                                             <div class="flex items-baseline gap-1">
                                                 <span class="text-3xl font-black text-gray-900 dark:text-white">#{{ $selectedConsultation->token_number }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="p-6 bg-white dark:bg-gray-950 rounded-ultra border border-violet-200 dark:border-violet-900/50 shadow-lg shadow-violet-500/5">
+                                            <p class="text-dense font-black text-violet-600 uppercase tracking-widest mb-2">Discount (₹)</p>
+                                            <div class="flex items-baseline gap-1">
+                                                <input type="number" wire:model.live.debounce.500ms="discount" class="w-full bg-transparent border-0 p-0 text-3xl font-black text-violet-600 focus:ring-0 placeholder-violet-200" placeholder="0.00">
                                             </div>
                                         </div>
                                     </div>
@@ -130,11 +136,11 @@
                                                     </div>
                                                     <div class="flex-1 ml-12 py-3 px-6 bg-white/50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800 hover:border-violet-200 transition-colors">
                                                         <div class="flex items-center gap-3 mb-1">
-                                                            <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest">{{ $event->date->format('d M, Y') }}</span>
-                                                            <span class="text-[9px] font-black text-{{ $event->color }}-600 uppercase tracking-widest">{{ $event->type }}</span>
+                                                            <span class="text-dense font-black text-gray-400 uppercase tracking-widest">{{ $event->date->format('d M, Y') }}</span>
+                                                            <span class="text-dense font-black text-{{ $event->color }}-600 uppercase tracking-widest">{{ $event->type }}</span>
                                                         </div>
                                                         <h4 class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight leading-none">{{ $event->title }}</h4>
-                                                        <p class="text-[10px] text-gray-500 font-medium mt-1 truncate italic">"{{ $event->meta }}"</p>
+                                                        <p class="text-tiny text-gray-500 font-medium mt-1 truncate italic">"{{ $event->meta }}"</p>
                                                     </div>
                                                 </div>
                                             @endforeach
@@ -142,7 +148,7 @@
                                     </div>
 
                                     {{-- Digital Prescription Entry --}}
-                                    <div class="p-8 rounded-[2.5rem] bg-violet-600 text-white relative overflow-hidden flex items-center justify-between group shadow-2xl shadow-violet-500/20">
+                                    <div class="p-8 rounded-mega bg-violet-600 text-white relative overflow-hidden flex items-center justify-between group shadow-2xl shadow-violet-500/20">
                                         <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-white/10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
                                         
                                         <div class="flex items-center gap-10 relative z-10">
@@ -168,12 +174,12 @@
                                     @if(count($alerts))
                                         <div class="space-y-3">
                                             @foreach($alerts as $alert)
-                                                <div class="p-5 rounded-[2rem] bg-{{ $alert['type'] }}-50 dark:bg-{{ $alert['type'] }}-900/10 border border-{{ $alert['type'] }}-100 dark:border-{{ $alert['type'] }}-800/30 flex items-start gap-4">
+                                                <div class="p-5 rounded-ultra bg-{{ $alert['type'] }}-50 dark:bg-{{ $alert['type'] }}-900/10 border border-{{ $alert['type'] }}-100 dark:border-{{ $alert['type'] }}-800/30 flex items-start gap-4">
                                                     <div class="w-10 h-10 rounded-2xl bg-{{ $alert['type'] }}-500 flex items-center justify-center text-white shrink-0 shadow-lg shadow-{{ $alert['type'] }}-500/20">
                                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                                                     </div>
                                                     <div>
-                                                        <p class="text-[9px] font-black text-{{ $alert['type'] }}-600 uppercase tracking-widest mb-0.5">{{ $alert['label'] }}</p>
+                                                        <p class="text-dense font-black text-{{ $alert['type'] }}-600 uppercase tracking-widest mb-0.5">{{ $alert['label'] }}</p>
                                                         <p class="text-xs font-bold text-gray-900 dark:text-white leading-tight uppercase tracking-tighter">{{ $alert['msg'] }}</p>
                                                     </div>
                                                 </div>
@@ -189,7 +195,7 @@
                     </div>
                 @else
                     <div class="h-full flex flex-col items-center justify-center bg-gray-50/50 dark:bg-gray-950/10 rounded-[3.5rem] border-4 border-dashed border-gray-100 dark:border-gray-800 p-10 text-center animate-in fade-in duration-700">
-                        <div class="w-32 h-32 bg-white dark:bg-gray-900 rounded-[2.5rem] flex items-center justify-center text-gray-200 mb-10 shadow-inner">
+                        <div class="w-32 h-32 bg-white dark:bg-gray-900 rounded-mega flex items-center justify-center text-gray-200 mb-10 shadow-inner">
                             <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>

@@ -11,6 +11,7 @@ class Prescription extends Model
 
     protected $fillable = [
         'consultation_id',
+        'admission_id',
         'patient_id',
         'doctor_id',
         'created_by',
@@ -44,5 +45,10 @@ class Prescription extends Model
     public function doctor()
     {
         return $this->belongsTo(Doctor::class);
+    }
+
+    public function admission()
+    {
+        return $this->belongsTo(Admission::class);
     }
 }

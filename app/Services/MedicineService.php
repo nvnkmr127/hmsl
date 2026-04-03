@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Medicine;
 
-class MedicineManager
+class MedicineService
 {
     public function getAll()
     {

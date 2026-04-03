@@ -27,7 +27,7 @@ class DischargeManagement extends Component
     {
         $this->selectedAdmissionId = $id;
         $this->dischargeNotes = '';
-        $this->dispatch('open-modal', ['name' => 'discharge-modal']);
+        $this->dispatch('open-modal', name: 'discharge-modal');
     }
 
     public function processDischarge(IpdManager $manager)
@@ -51,7 +51,7 @@ class DischargeManagement extends Component
 
             $manager->dischargePatient($admission, $this->dischargeNotes);
 
-            $this->dispatch('close-modal', ['name' => 'discharge-modal']);
+            $this->dispatch('close-modal', name: 'discharge-modal');
             $this->dispatch('notify', [
                 'type' => 'success',
                 'message' => 'Patient has been discharged successfully!'

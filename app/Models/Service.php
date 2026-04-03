@@ -11,6 +11,12 @@ class Service extends Model
 
     protected $fillable = ['code', 'name', 'category', 'department_id', 'price', 'description', 'is_active'];
 
+    protected $casts = [
+        'price' => 'decimal:2',
+        'is_active' => 'boolean',
+    ];
+
+
     public function department()
     {
         return $this->belongsTo(Department::class);

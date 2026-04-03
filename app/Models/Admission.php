@@ -22,6 +22,21 @@ class Admission extends Model
         'created_by',
     ];
 
+    public function vitals()
+    {
+        return $this->hasMany(PatientVital::class);
+    }
+
+    public function medications()
+    {
+        return $this->hasMany(Prescription::class);
+    }
+
+    public function labOrders()
+    {
+        return $this->hasMany(LabOrder::class);
+    }
+
     protected $casts = [
         'admission_date' => 'datetime',
         'discharge_date' => 'datetime',

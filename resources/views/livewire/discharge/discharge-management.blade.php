@@ -69,11 +69,11 @@
                         </td>
                         <td>
                             <p class="text-xs font-semibold text-gray-700 dark:text-gray-300">{{ $admission->bed?->ward?->name ?? 'N/A' }}</p>
-                            <p class="text-[10px] text-gray-500 uppercase tracking-widest">{{ $admission->bed?->name ?? 'N/A' }}</p>
+                            <p class="text-tiny text-gray-500 uppercase tracking-widest">{{ $admission->bed?->name ?? 'N/A' }}</p>
                         </td>
                         <td>
                             <p class="text-xs font-semibold text-gray-700 dark:text-gray-300">{{ $admission->admission_date->format('d M, Y') }}</p>
-                            <p class="text-[10px] text-gray-500">{{ $admission->admission_date->format('H:i') }}</p>
+                            <p class="text-tiny text-gray-500">{{ $admission->admission_date->format('H:i') }}</p>
                         </td>
                         <td>
                             <p class="text-xs font-semibold text-gray-700 dark:text-gray-300">{{ $admission->doctor?->full_name ?? 'Unassigned' }}</p>

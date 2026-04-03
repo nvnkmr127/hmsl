@@ -17,34 +17,15 @@ class PatientService
         return $prefix . '-' . date('Y') . '-' . str_pad($nextId, 5, '0', STR_PAD_LEFT);
     }
 
-    public function getAll($search = null, $filters = [], $sortBy = 'latest')
+    public function getAll(?string $search = null, array $filters = [], string $sortBy = 'latest')
     {
-        $query = Patient::query();
-
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('first_name', 'like', "%{$search}%")
-                    ->orWhere('last_name', 'like', "%{$search}%")
-                    ->orWhere('uhid', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%");
-            });
-        }
-
-        if (!empty($filters['gender'])) {
-            $query->where('gender', $filters['gender']);
-        }
-
-        if (!empty($filters['blood_group'])) {
-            $query->where('blood_group', $filters['blood_group']);
-        }
-
-        if ($sortBy === 'alphabetic') {
-            $query->orderBy('first_name');
-        } else {
-            $query->latest();
-        }
-
-        return $query->paginate(10);
+        return Patient::query()
+            ->when($search, fn($q) => $q->search($search))
+            ->when(isset($filters['gender']), fn($q) => $q->where('gender', $filters['gender']))
+            ->when(isset($filters['blood_group']), fn($q) => $q->where('blood_group', $filters['blood_group']))
+            ->when($sortBy === 'alphabetic', fn($q) => $q->orderBy('first_name'))
+            ->latest()
+            ->paginate(10);
     }
 
     public function getStats()

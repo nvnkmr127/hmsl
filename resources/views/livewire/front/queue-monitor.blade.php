@@ -11,7 +11,7 @@
                     <div class="p-6 bg-indigo-600 text-white relative">
                         <div class="relative z-10">
                             <h2 class="text-xl font-black uppercase tracking-tight">DR. {{ data_get($stat, 'doctor.full_name', 'Unassigned') }}</h2>
-                            <p class="text-[10px] font-black text-indigo-200 uppercase tracking-widest mt-0.5">{{ data_get($stat, 'doctor.department.name', 'No Department') }}</p>
+                            <p class="text-tiny font-black text-indigo-200 uppercase tracking-widest mt-0.5">{{ data_get($stat, 'doctor.department.name', 'No Department') }}</p>
                         </div>
                     </div>
                 @endif
@@ -28,11 +28,11 @@
                 <!-- Footer Stats -->
                 <div class="p-8 grid grid-cols-2 divide-x divide-gray-100 dark:divide-gray-800">
                     <div class="text-center">
-                        <span class="text-[10px] font-black text-amber-500 uppercase tracking-widest block mb-1">Up Next</span>
+                        <span class="text-tiny font-black text-amber-500 uppercase tracking-widest block mb-1">Up Next</span>
                         <span class="text-4xl font-black text-gray-400 italic">#{{ str_pad($stat['next_token'], 2, '0', STR_PAD_LEFT) }}</span>
                     </div>
                     <div class="text-center">
-                        <span class="text-[10px] font-black text-emerald-500 uppercase tracking-widest block mb-1">Status</span>
+                        <span class="text-tiny font-black text-emerald-500 uppercase tracking-widest block mb-1">Status</span>
                         <span class="text-xs font-black text-gray-900 dark:text-white uppercase tracking-widest">In Progress</span>
                     </div>
                 </div>

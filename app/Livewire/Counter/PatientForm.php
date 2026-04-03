@@ -34,14 +34,6 @@ class PatientForm extends Component
     #[Validate('required|string|max:15')]
     public $phone;
 
-    #[Validate('nullable|string|max:255')]
-    public $insurance_provider;
-
-    #[Validate('nullable|string|max:255')]
-    public $insurance_policy;
-
-    #[Validate('nullable|date')]
-    public $insurance_validity;
 
     #[Validate('nullable|string|max:10')]
     public $blood_group;
@@ -96,7 +88,7 @@ class PatientForm extends Component
         $this->father_name = $patient->father_name;
         $this->mother_name = $patient->mother_name;
         $this->gender = $patient->gender;
-        $this->date_of_birth = $patient->date_of_birth ? $patient->date_of_birth->format('Y-m-d') : null;
+        $this->date_of_birth = $patient->date_of_birth ? \Carbon\Carbon::parse($patient->date_of_birth)->format('Y-m-d') : null;
         $this->phone = $patient->phone;
         $this->blood_group = $patient->blood_group;
         $this->address = $patient->address;
@@ -107,9 +99,7 @@ class PatientForm extends Component
         $this->emergency_contact_phone = $patient->emergency_contact_phone;
         $this->marital_status = $patient->marital_status;
         $this->is_active = $patient->is_active;
-        $this->insurance_provider = $patient->insurance_provider;
-        $this->insurance_policy = $patient->insurance_policy;
-        $this->insurance_validity = $patient->insurance_validity ? $patient->insurance_validity->format('Y-m-d') : null;
+
 
         $this->dispatch('open-modal', name: 'patient-modal');
     }
@@ -135,9 +125,6 @@ class PatientForm extends Component
             'emergency_contact_phone' => $this->emergency_contact_phone,
             'marital_status' => $this->marital_status,
             'is_active' => $this->is_active,
-            'insurance_provider' => $this->insurance_provider,
-            'insurance_policy' => $this->insurance_policy,
-            'insurance_validity' => $this->insurance_validity,
         ];
 
         if ($this->isEditing) {
@@ -147,7 +134,8 @@ class PatientForm extends Component
         } else {
             $patient = $service->create($data);
             $message = 'Patient registered successfully with UHID!';
-            $this->dispatch('patient-registered', $patient->id);
+            $this->dispatch('patient-registered', id: $patient->id);
+
         }
 
         $this->dispatch('close-modal', name: 'patient-modal');

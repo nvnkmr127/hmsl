@@ -13,33 +13,27 @@ class MasterDataSeeder extends Seeder
      */
     public function run(): void
     {
-        $departments = [
-            ['name' => 'General Medicine', 'description' => 'Primary healthcare and diagnostics'],
-            ['name' => 'Cardiology', 'description' => 'Heart and vascular system treatments'],
-            ['name' => 'Pediatrics', 'description' => 'Medical care for infants and children'],
-            ['name' => 'Orthopedics', 'description' => 'Bone and muscular system treatments'],
-            ['name' => 'Dermatology', 'description' => 'Skin, hair, and nail treatments'],
-            ['name' => 'Gynecology', 'description' => 'Female reproductive health'],
-        ];
-
-        foreach ($departments as $dept) {
-            $createdDept = Department::updateOrCreate(['name' => $dept['name']], $dept);
-            
-            // Seed a doctor for each department
-            Doctor::updateOrCreate(
-                ['email' => strtolower(str_replace(' ', '.', $dept['name'])) . '@hospital.com'],
-                [
-                    'full_name' => 'Dr. ' . fake()->name(),
-                    'department_id' => $createdDept->id,
-                    'specialization' => $dept['name'] . ' Specialist',
-                    'qualification' => 'MBBS, MD',
-                    'phone' => '+91 ' . fake()->numerify('##########'),
-                    'consultation_fee' => 500,
-                    'registration_number' => 'REG-' . fake()->numerify('######'),
-                    'is_active' => true,
-                ]
-            );
-        }
+        $pediatrics = Department::updateOrCreate(
+            ['name' => 'Pediatrics'], 
+            ['description' => 'Specialized medical care for infants, children, and adolescents.']
+        );
+        
+        $adminUser = \App\Models\User::where('email', 'admin@hospital.com')->first();
+        
+        Doctor::updateOrCreate(
+            ['email' => 'pediatrician@hospital.com'],
+            [
+                'full_name' => 'Dr. ' . ($adminUser->name ?? 'Specialist'),
+                'user_id' => $adminUser->id ?? null,
+                'department_id' => $pediatrics->id,
+                'specialization' => 'Senior Pediatrician',
+                'qualification' => 'MBBS, MD (Pediatrics)',
+                'phone' => '+91 9876543210',
+                'consultation_fee' => 500,
+                'registration_number' => 'REG-PED-001',
+                'is_active' => true,
+            ]
+        );
 
         $services = [
             ['name' => 'Consultation - GP', 'category' => 'OPD', 'price' => 500],
@@ -109,7 +103,7 @@ class MasterDataSeeder extends Seeder
             ['name' => 'Emergency Room', 'type' => 'ER', 'daily_charge' => 2000, 'capacity' => 8],
         ];
 
-        $wardManager = new \App\Services\WardManager();
+        $wardManager = new \App\Services\WardService();
         foreach ($wards as $w) {
             $ward = \App\Models\Ward::updateOrCreate(['name' => $w['name']], $w);
             if ($ward->wasRecentlyCreated || $ward->beds()->count() == 0) {

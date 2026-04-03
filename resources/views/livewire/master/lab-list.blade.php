@@ -44,7 +44,7 @@
                 @forelse($labTests as $test)
                     <tr>
                         <td>
-                            <span class="text-[10px] font-black font-mono text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-lg italic">
+                            <span class="text-tiny font-black font-mono text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-lg italic">
                                 {{ $test->code ?: 'N/A' }}
                             </span>
                         </td>
@@ -57,7 +57,7 @@
                         </td>
                         <td>
                             <div class="flex items-center gap-1.5">
-                                <span class="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-[10px] font-black text-gray-600 dark:text-gray-400">
+                                <span class="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-tiny font-black text-gray-600 dark:text-gray-400">
                                     {{ $test->parameters_count }} UNIT(S)
                                 </span>
                             </div>

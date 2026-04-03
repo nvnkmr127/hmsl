@@ -30,7 +30,7 @@
             <div class="space-y-4">
                 <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-2">
                     <p class="section-lbl" style="color:#7c3aed">Measured Parameters</p>
-                    <button type="button" wire:click="addParameter" class="btn btn-outline btn-sm py-1.5 h-auto text-[10px] uppercase">
+                    <button type="button" wire:click="addParameter" class="btn btn-outline btn-sm py-1.5 h-auto text-tiny uppercase">
                         + Add Parameter Row
                     </button>
                 </div>

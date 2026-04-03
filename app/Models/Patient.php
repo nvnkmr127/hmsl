@@ -11,6 +11,10 @@ class Patient extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $dispatchesEvents = [
+        'created' => \App\Events\PatientCreated::class,
+    ];
+
     protected $fillable = [
         'uhid',
         'first_name',
@@ -80,6 +84,16 @@ class Patient extends Model
     public function consultations()
     {
         return $this->hasMany(Consultation::class);
+    }
+
+    public function scopeSearch($query, $term)
+    {
+        return $query->where(function ($q) use ($term) {
+            $q->where('phone', 'like', "%{$term}%")
+              ->orWhere('uhid', 'like', "%{$term}%")
+              ->orWhere('first_name', 'like', "%{$term}%")
+              ->orWhere('last_name', 'like', "%{$term}%");
+        });
     }
 
     public function vaccinations()

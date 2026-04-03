@@ -43,7 +43,7 @@
                             <tr>
                                 <td>
                                     <p class="font-bold text-gray-900 dark:text-white uppercase tracking-tight">{{ $t->name }}</p>
-                                    <p class="text-[10px] text-gray-400 font-medium italic">{{ $t->description ?: 'No description' }}</p>
+                                    <p class="text-tiny text-gray-400 font-medium italic">{{ $t->description ?: 'No description' }}</p>
                                 </td>
                                 <td class="hidden md:table-cell">
                                     <x-badge color="violet">{{ $t->category ?? 'General' }}</x-badge>
@@ -102,7 +102,7 @@
             <div class="border-t border-gray-100 dark:border-gray-800 pt-8">
                 <div class="flex items-center justify-between mb-6">
                     <h4 class="text-xs font-black text-gray-900 dark:text-white uppercase tracking-[0.2em]">Test Parameters & Reference Ranges</h4>
-                    <button type="button" wire:click="addParameter" class="btn btn-secondary px-4 py-2 text-[10px] font-black uppercase tracking-widest">
+                    <button type="button" wire:click="addParameter" class="btn btn-secondary px-4 py-2 text-tiny font-black uppercase tracking-widest">
                         Add Parameter
                     </button>
                 </div>
@@ -121,7 +121,7 @@
                         </div>
                     @endforeach
                     @if(empty($parameters))
-                        <p class="text-[10px] text-center text-gray-400 font-bold uppercase py-6 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-[2rem]">No parameters defined. Add at least one to enable result entry.</p>
+                        <p class="text-tiny text-center text-gray-400 font-bold uppercase py-6 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-ultra">No parameters defined. Add at least one to enable result entry.</p>
                     @endif
                 </div>
             </div>

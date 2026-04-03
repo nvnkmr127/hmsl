@@ -51,21 +51,21 @@
                 @forelse($services as $service)
                     <tr>
                         <td>
-                            <span class="text-[10px] font-black font-mono text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-lg">
+                            <span class="text-tiny font-black font-mono text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-lg">
                                 {{ $service->code ?: 'N/A' }}
                             </span>
                         </td>
                         <td>
                             <span class="font-bold text-gray-900 dark:text-white uppercase tracking-tight">{{ $service->name }}</span>
                             @if($service->description)
-                                <p class="text-[10px] text-gray-400 italic line-clamp-1 mt-0.5">{{ $service->description }}</p>
+                                <p class="text-tiny text-gray-400 italic line-clamp-1 mt-0.5">{{ $service->description }}</p>
                             @endif
                         </td>
                         <td>
                             <div class="flex flex-col gap-1">
                                 <x-badge color="violet">{{ $service->category }}</x-badge>
                                 @if($service->department)
-                                    <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest">{{ $service->department->name }}</span>
+                                    <span class="text-dense font-black text-gray-400 uppercase tracking-widest">{{ $service->department->name }}</span>
                                 @endif
                             </div>
                         </td>

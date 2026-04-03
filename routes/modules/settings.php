@@ -12,5 +12,7 @@ Route::middleware(['auth'])->group(function () {
         // Webhooks
         Route::get('/webhooks', fn() => view('pages.settings.webhooks'))->name('webhooks.index');
         Route::get('/webhooks/logs', fn() => view('pages.settings.webhook-logs'))->name('webhooks.logs');
+        Route::get('/webhooks/inbound', fn() => view('pages.settings.inbound-webhooks'))->name('webhooks.inbound');
+        Route::get('/api-tokens', fn() => view('pages.settings.api-tokens'))->name('api-tokens.index');
     });
 });

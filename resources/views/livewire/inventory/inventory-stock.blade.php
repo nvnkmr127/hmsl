@@ -44,7 +44,7 @@
                         @forelse($transactions as $t)
                             <tr>
                                 <td>
-                                    <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest">{{ $t->created_at->format('d M, Y H:i') }}</p>
+                                    <p class="text-tiny font-black text-gray-500 uppercase tracking-widest">{{ $t->created_at->format('d M, Y H:i') }}</p>
                                     <p class="font-bold text-gray-900 dark:text-white uppercase tracking-tight">{{ $t->item?->name ?? 'Deleted Item' }}</p>
                                 </td>
                                 <td>
@@ -61,7 +61,7 @@
                                 </td>
                                 <td class="hidden md:table-cell">
                                     <p class="text-xs text-gray-700 dark:text-gray-300 italic">"{{ $t->notes ?: 'No records' }}"</p>
-                                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Recorded By: {{ $t->creator?->name ?? 'System' }}</p>
+                                    <p class="text-tiny text-gray-400 font-bold uppercase tracking-widest mt-0.5">Recorded By: {{ $t->creator?->name ?? 'System' }}</p>
                                 </td>
                             </tr>
                         @empty

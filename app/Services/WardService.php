@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Models\Ward;
 use App\Models\Bed;
 
-class WardManager
+class WardService
 {
     public function getAllWards()
     {

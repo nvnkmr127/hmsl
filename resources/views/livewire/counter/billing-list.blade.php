@@ -80,7 +80,7 @@
                         </div>
                         <div class="text-right flex-shrink-0">
                             <p class="text-sm font-black text-gray-900 dark:text-white">₹{{ number_format($bill->total_amount, 2) }}</p>
-                            <p class="text-[10px] font-black uppercase tracking-widest text-gray-400 mt-1">{{ $bill->payment_method ?? '—' }}</p>
+                            <p class="text-tiny font-black uppercase tracking-widest text-gray-400 mt-1">{{ $bill->payment_method ?? '—' }}</p>
                         </div>
                     </div>
 

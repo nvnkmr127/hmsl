@@ -21,36 +21,46 @@ class BillGenerate extends Component
     public $notes;
 
     #[On('generate-bill')]
-    public function openBillingModal($consultationId)
+    public function openBillingModal($data = null)
     {
-        $this->consultationId = $consultationId;
-        $consultation = Consultation::with('patient', 'doctor')->findOrFail($consultationId);
+        if (!$data) return;
+        $this->consultationId = is_array($data) ? ($data['consultationId'] ?? null) : $data;
+        $consultation = Consultation::with('patient', 'doctor')->findOrFail($this->consultationId);
+
+
         
         $this->patientId = $consultation->patient_id;
         $this->patientName = $consultation->patient->full_name;
         
+        $doctorName = $consultation->doctor ? ' - Dr. ' . $consultation->doctor->full_name : '';
         $this->items = [
             [
-                'name' => 'Consultation Fee - Dr. ' . $consultation->doctor->full_name,
+                'name' => ($consultation->service?->name ?? 'Consultation Fee') . $doctorName,
                 'type' => 'Consultation',
                 'quantity' => 1,
                 'unit_price' => $consultation->fee
             ]
         ];
+
         
-        $this->discount = 0;
+        $this->discount = $consultation->discount_amount ?? 0;
         $this->tax = 0;
         $this->paymentMethod = 'Cash';
         $this->notes = '';
 
-        $this->dispatch('open-modal', ['name' => 'billing-modal']);
+        $this->dispatch('open-modal', name: 'billing-modal');
+
     }
 
     #[On('generate-bill-for-patient')]
-    public function openBillingModalForPatient($patientId)
+    public function openBillingModalForPatient($data = null)
     {
+        if (!$data) return;
         $this->consultationId = null;
-        $patient = Patient::findOrFail($patientId);
+        $this->patientId = is_array($data) ? ($data['patientId'] ?? null) : $data;
+        $patient = Patient::findOrFail($this->patientId);
+
+
 
         $this->patientId = $patient->id;
         $this->patientName = $patient->full_name;
@@ -63,7 +73,8 @@ class BillGenerate extends Component
         $this->paymentMethod = 'Cash';
         $this->notes = '';
 
-        $this->dispatch('open-modal', ['name' => 'billing-modal']);
+        $this->dispatch('open-modal', name: 'billing-modal');
+
     }
 
     public function addItem()
@@ -103,7 +114,8 @@ class BillGenerate extends Component
 
         // $service->markAsPaid($bill, $this->paymentMethod); // redundant since createBill sets it
 
-        $this->dispatch('close-modal', ['name' => 'billing-modal']);
+        $this->dispatch('close-modal', name: 'billing-modal');
+
         $this->dispatch('bill-generated', billId: $bill->id);
         $this->dispatch('notify', ['type' => 'success', 'message' => 'Bill generated and settled successfully!']);
     }

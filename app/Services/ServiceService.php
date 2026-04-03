@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Service;
 
-class ServiceManager
+class ServiceService
 {
     public function getAll()
     {

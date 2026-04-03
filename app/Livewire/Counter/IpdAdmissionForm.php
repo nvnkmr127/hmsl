@@ -6,14 +6,16 @@ use App\Models\Patient;
 use App\Models\Doctor;
 use App\Models\Ward;
 use App\Models\Bed;
-use App\Services\IpdManager;
+use App\Models\Admission;
+use App\Services\IpdService;
+use App\Models\ClinicalTemplate;
 use Livewire\Component;
 use Livewire\Attributes\Validate;
 
 class IpdAdmissionForm extends Component
 {
     public $patientId;
-    public $patientName;
+    public $patient;
     
     #[Validate('required|exists:doctors,id')]
     public $doctorId;
@@ -27,10 +29,14 @@ class IpdAdmissionForm extends Component
     #[Validate('required')]
     public $admissionDate;
     
+    public $weight;
+    public $height;
+    
     public $reason;
     public $notes;
 
     public $searchPatient = '';
+    public $stats = [];
 
     public function mount()
     {
@@ -41,38 +47,56 @@ class IpdAdmissionForm extends Component
         if ($activeDoctors->count() === 1) {
             $this->doctorId = $activeDoctors->first()->id;
         }
+
+        $this->loadStats();
+    }
+
+    public function loadStats()
+    {
+        $this->stats = [
+            'total_active' => Admission::where('status', 'Admitted')->count(),
+            'total_today' => Admission::whereDate('admission_date', now())->count(),
+            'beds_available' => Bed::where('is_available', true)->count(),
+            'beds_total' => Bed::count(),
+        ];
     }
 
     public function selectPatient($id)
     {
-        $patient = Patient::findOrFail($id);
+        $this->patient = Patient::findOrFail($id);
         $this->patientId = $id;
-        $this->patientName = $patient->full_name;
         $this->searchPatient = '';
+    }
+
+    public function updatedWardId()
+    {
+        $this->bedId = null;
     }
 
     public function getAvailableBedsProperty()
     {
         if (!$this->wardId) return collect();
-        return Bed::where(fn($q) => $q->where('ward_id', '=', $this->wardId))
-            ->where(fn($q) => $q->where('is_available', '=', true))
+        return Bed::where('ward_id', $this->wardId)
+            ->where('is_available', true)
             ->get();
     }
 
-    public function save(IpdManager $manager)
+    public function save(IpdService $service)
     {
         $this->validate();
 
-        $manager->admitPatient([
+        $service->admitPatient([
             'patient_id' => $this->patientId,
             'doctor_id' => $this->doctorId,
             'bed_id' => $this->bedId,
             'admission_date' => $this->admissionDate,
             'reason_for_admission' => $this->reason,
             'notes' => $this->notes,
+            'weight' => $this->weight,
+            'height' => $this->height,
         ]);
 
-        $this->dispatch('notify', ['type' => 'success', 'message' => 'Patient admitted successfully!']);
+        $this->dispatch('notify', ['type' => 'success', 'message' => 'Admission saved successfully!']);
         return redirect()->route('counter.ipd.index');
     }
 
@@ -80,16 +104,21 @@ class IpdAdmissionForm extends Component
     {
         $patients = [];
         if (strlen($this->searchPatient) >= 3) {
-            $patients = Patient::query()->where(fn($q) => $q->where('first_name', 'like', "%{$this->searchPatient}%"))
-                ->orWhere(fn($q) => $q->where('uhid', 'like', "%{$this->searchPatient}%"))
-                ->limit(5)
+            $patients = Patient::query()
+                ->where('first_name', 'like', "%{$this->searchPatient}%")
+                ->orWhere('last_name', 'like', "%{$this->searchPatient}%")
+                ->orWhere('uhid', 'like', "%{$this->searchPatient}%")
+                ->orWhere('phone', 'like', "%{$this->searchPatient}%")
+                ->limit(6)
                 ->get();
         }
 
         return view('livewire.counter.ipd-admission-form', [
             'patients' => $patients,
-            'doctors' => Doctor::where('is_active', true)->get(),
+            'doctors' => Doctor::where('is_active', true)->with('user')->get(),
             'wards' => Ward::all(),
+            'reasons' => ClinicalTemplate::where('type', 'reason')->get(),
+            'clinicalNotes' => ClinicalTemplate::where('type', 'notes')->get(),
         ]);
     }
 }

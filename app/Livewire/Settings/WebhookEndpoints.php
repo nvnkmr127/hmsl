@@ -10,18 +10,25 @@ use Illuminate\Support\Str;
 class WebhookEndpoints extends Component
 {
     public $endpoints;
+    public $sources;
+    public $activeTab = 'outbound'; // outbound, inbound
+    
     public $showModal = false;
     public $editingEndpointId;
+    public $editingSourceId;
 
+    // Common fields
     #[Validate('required|string|max:150')]
     public $name;
-
-    #[Validate('required|url')]
-    public $url;
-
     public $secret;
+    public $authType = 'secret'; // secret, bearer, open
 
+    // Outbound specific
+    public $url;
     public $selectedEvents = [];
+
+    // Inbound specific
+    public $slug;
 
     protected $availableEvents = [
         'patient.registered' => 'Patient Registered',
@@ -33,23 +40,41 @@ class WebhookEndpoints extends Component
 
     public function mount()
     {
-        $this->endpoints = WebhookEndpoint::latest()->get();
-        $this->secret = Str::random(32);
+        $this->loadData();
     }
 
-    public function openModal($id = null)
+    public function loadData()
     {
-        $this->reset(['name', 'url', 'selectedEvents', 'editingEndpointId']);
+        $this->endpoints = \App\Models\WebhookEndpoint::latest()->get();
+        $this->sources = \App\Models\WebhookSource::latest()->get();
+    }
+
+    public function openModal($id = null, $type = 'outbound')
+    {
+        $this->reset(['name', 'url', 'slug', 'selectedEvents', 'editingEndpointId', 'editingSourceId', 'authType']);
+        $this->activeTab = $type;
         
         if ($id) {
-            $endpoint = WebhookEndpoint::findOrFail($id);
-            $this->editingEndpointId = $id;
-            $this->name = $endpoint->name;
-            $this->url = $endpoint->url;
-            $this->secret = $endpoint->secret;
-            $this->selectedEvents = $endpoint->events;
+            if ($type === 'outbound') {
+                $endpoint = \App\Models\WebhookEndpoint::findOrFail($id);
+                $this->editingEndpointId = $id;
+                $this->name = $endpoint->name;
+                $this->url = $endpoint->url;
+                $this->secret = $endpoint->secret;
+                $this->selectedEvents = $endpoint->events;
+            } else {
+                $source = \App\Models\WebhookSource::findOrFail($id);
+                $this->editingSourceId = $id;
+                $this->name = $source->name;
+                $this->slug = $source->slug;
+                $this->secret = $source->secret;
+                $this->authType = $source->auth_type;
+            }
         } else {
             $this->secret = Str::random(32);
+            if ($type === 'inbound') {
+                $this->authType = 'secret';
+            }
         }
 
         $this->showModal = true;
@@ -57,39 +82,72 @@ class WebhookEndpoints extends Component
 
     public function save()
     {
-        $this->validate();
+        if ($this->activeTab === 'outbound') {
+            $this->validate([
+                'name' => 'required|string|max:150',
+                'url' => 'required|url',
+            ]);
 
-        $data = [
-            'name' => $this->name,
-            'url' => $this->url,
-            'secret' => $this->secret,
-            'events' => $this->selectedEvents,
-            'is_active' => true,
-        ];
+            $data = [
+                'name' => $this->name,
+                'url' => $this->url,
+                'secret' => $this->secret,
+                'events' => $this->selectedEvents,
+                'is_active' => true,
+            ];
 
-        if ($this->editingEndpointId) {
-            WebhookEndpoint::find($this->editingEndpointId)->update($data);
+            if ($this->editingEndpointId) {
+                \App\Models\WebhookEndpoint::find($this->editingEndpointId)->update($data);
+            } else {
+                \App\Models\WebhookEndpoint::create($data);
+            }
         } else {
-            WebhookEndpoint::create($data);
+            $this->validate([
+                'name' => 'required|string|max:150',
+                'slug' => 'required|alpha_dash|unique:webhook_sources,slug,' . $this->editingSourceId,
+                'authType' => 'required|in:secret,bearer,open',
+            ]);
+
+            $data = [
+                'name' => $this->name,
+                'slug' => $this->slug,
+                'secret' => $this->secret,
+                'auth_type' => $this->authType,
+                'is_active' => true,
+            ];
+
+            if ($this->editingSourceId) {
+                \App\Models\WebhookSource::find($this->editingSourceId)->update($data);
+            } else {
+                \App\Models\WebhookSource::create($data);
+            }
         }
 
-        $this->endpoints = WebhookEndpoint::latest()->get();
+        $this->loadData();
         $this->showModal = false;
-        $this->dispatch('notify', ['type' => 'success', 'message' => 'Webhook endpoint saved.']);
+        $this->dispatch('notify', ['type' => 'success', 'message' => 'Configuration saved.']);
     }
 
-    public function delete($id)
+    public function delete($id, $type = 'outbound')
     {
-        WebhookEndpoint::findOrFail($id)->delete();
-        $this->endpoints = WebhookEndpoint::latest()->get();
-        $this->dispatch('notify', ['type' => 'success', 'message' => 'Endpoint removed.']);
+        if ($type === 'outbound') {
+            \App\Models\WebhookEndpoint::findOrFail($id)->delete();
+        } else {
+            \App\Models\WebhookSource::findOrFail($id)->delete();
+        }
+        $this->loadData();
+        $this->dispatch('notify', ['type' => 'success', 'message' => 'Configuration removed.']);
     }
 
-    public function toggleStatus($id)
+    public function toggleStatus($id, $type = 'outbound')
     {
-        $endpoint = WebhookEndpoint::findOrFail($id);
-        $endpoint->update(['is_active' => !$endpoint->is_active]);
-        $this->endpoints = WebhookEndpoint::latest()->get();
+        if ($type === 'outbound') {
+            $record = \App\Models\WebhookEndpoint::findOrFail($id);
+        } else {
+            $record = \App\Models\WebhookSource::findOrFail($id);
+        }
+        $record->update(['is_active' => !$record->is_active]);
+        $this->loadData();
     }
 
     public function render()

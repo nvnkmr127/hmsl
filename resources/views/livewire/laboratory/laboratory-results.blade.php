@@ -10,7 +10,7 @@
             <x-card title="Search Archive">
                 <div class="space-y-4">
                     <x-form.input placeholder="Search by patient name or UHID..." wire:model.live.debounce.300ms="search" icon="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    <p class="text-[10px] text-gray-400 font-medium italic">Showing only completed and verified results. Current pendings are in the main queue.</p>
+                    <p class="text-tiny text-gray-400 font-medium italic">Showing only completed and verified results. Current pendings are in the main queue.</p>
                 </div>
             </x-card>
         </div>
@@ -34,14 +34,14 @@
                                 </td>
                                 <td class="hidden md:table-cell">
                                     <p class="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-tight">{{ $r->labTest?->name ?? 'Unknown' }}</p>
-                                    <p class="text-[10px] text-emerald-600 font-black uppercase tracking-widest">{{ $r->completed_at ? $r->completed_at->format('d M, Y H:i') : 'N/A' }}</p>
+                                    <p class="text-tiny text-emerald-600 font-black uppercase tracking-widest">{{ $r->completed_at ? $r->completed_at->format('d M, Y H:i') : 'N/A' }}</p>
                                 </td>
                                 <td class="hidden lg:table-cell">
                                     <div class="flex items-center gap-2">
-                                        <div class="w-6 h-6 rounded-full bg-slate-100 dark:bg-gray-800 flex items-center justify-center text-[10px] font-black text-slate-500 uppercase">
+                                        <div class="w-6 h-6 rounded-full bg-slate-100 dark:bg-gray-800 flex items-center justify-center text-tiny font-black text-slate-500 uppercase">
                                             {{ strtoupper(substr($r->technician?->name ?? 'S', 0, 1)) }}
                                         </div>
-                                        <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest">{{ $r->technician?->name ?? 'System' }}</p>
+                                        <p class="text-tiny font-black text-gray-500 uppercase tracking-widest">{{ $r->technician?->name ?? 'System' }}</p>
                                     </div>
                                 </td>
                                 <td>

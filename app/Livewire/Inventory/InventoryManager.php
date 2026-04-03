@@ -39,7 +39,7 @@ class InventoryManager extends Component
         $this->adjustmentType = 'in';
         $this->adjustmentQuantity = null;
         $this->adjustmentNotes = '';
-        $this->dispatch('open-modal', ['name' => 'stock-adjustment-modal']);
+        $this->dispatch('open-modal', name: 'stock-adjustment-modal');
     }
 
     public function submitAdjustment()
@@ -83,7 +83,7 @@ class InventoryManager extends Component
                 $item->increment('stock_quantity', $delta);
             }
 
-            $this->dispatch('close-modal', ['name' => 'stock-adjustment-modal']);
+            $this->dispatch('close-modal', name: 'stock-adjustment-modal');
             $this->dispatch('notify', [
                 'type' => 'success',
                 'message' => 'Stock adjustment recorded successfully!'

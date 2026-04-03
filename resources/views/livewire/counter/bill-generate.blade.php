@@ -66,24 +66,24 @@
                 <div class="p-6 rounded-2xl border border-violet-100 dark:border-violet-900/30 space-y-4"
                      style="background:rgba(124,58,237,0.03)">
                     <div class="flex justify-between items-center">
-                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Gross Subtotal</span>
+                        <span class="text-tiny font-black text-gray-400 uppercase tracking-widest">Gross Subtotal</span>
                         <span class="font-bold text-gray-900 dark:text-white">₹{{ number_format($this->subtotal, 2) }}</span>
                     </div>
                     <div class="flex justify-between items-center">
-                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Adjustment (-)</span>
+                        <span class="text-tiny font-black text-gray-400 uppercase tracking-widest">Adjustment (-)</span>
                         <div class="w-32">
                             <x-form.input type="number" step="1" wire:model.live="discount" class="text-right" />
                         </div>
                     </div>
                     <div class="flex justify-between items-center">
-                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Applicable Tax (+)</span>
+                        <span class="text-tiny font-black text-gray-400 uppercase tracking-widest">Applicable Tax (+)</span>
                         <div class="w-32">
                             <x-form.input type="number" step="1" wire:model.live="tax" class="text-right" />
                         </div>
                     </div>
                     <div class="pt-5 mt-2 border-t border-violet-100 dark:border-violet-800 flex justify-between items-end">
                         <div>
-                            <p class="text-[10px] font-black text-violet-500 uppercase tracking-[0.2em] mb-1">Total Net Payable</p>
+                            <p class="text-tiny font-black text-violet-500 uppercase tracking-[0.2em] mb-1">Total Net Payable</p>
                             <span class="text-3xl font-black text-gray-900 dark:text-white tracking-tighter">
                                 ₹{{ number_format($this->total, 2) }}
                             </span>

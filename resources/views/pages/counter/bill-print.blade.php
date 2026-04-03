@@ -3,116 +3,142 @@
 @section('title', 'Invoice — ' . $bill->bill_number)
 
 @section('content')
+
 <div class="header">
-    <div class="hospital-info">
-        <h1>{{ \App\Models\Setting::get('hospital_name', 'City Care Hospital') }}</h1>
-        <p>{{ \App\Models\Setting::get('hospital_tagline', '') }}</p>
-        <p>{{ \App\Models\Setting::get('hospital_address', '') }}, {{ \App\Models\Setting::get('hospital_city', '') }}</p>
-        <p>📞 {{ \App\Models\Setting::get('hospital_phone', '') }} &nbsp;|&nbsp; ✉ {{ \App\Models\Setting::get('hospital_email', '') }}</p>
+    <div class="hospital-identity">
+        <div class="hospital-logo">
+            {{ substr(\App\Models\Setting::get('hospital_name', 'H'), 0, 1) }}
+        </div>
+        <div class="hospital-info">
+            <h1>{{ \App\Models\Setting::get('hospital_name', 'City Care Hospital') }}</h1>
+            <p>{{ \App\Models\Setting::get('hospital_tagline', 'Excellence in Healthcare') }}</p>
+            <p>{{ \App\Models\Setting::get('hospital_address', 'Hospital Main Road') }}</p>
+            <p>Phone: {{ \App\Models\Setting::get('hospital_phone', '+91 1234567890') }} | Email: {{ \App\Models\Setting::get('hospital_email', 'contact@hospital.com') }}</p>
+        </div>
     </div>
-    <div style="text-align:right">
-        <p style="font-size:18pt; font-weight:700; color:#4F46E5; margin:0">INVOICE</p>
-        <p style="margin:4px 0"><strong>{{ $bill->bill_number }}</strong></p>
-        <p style="color:#888; margin:2px 0">Date: {{ $bill->created_at->format('d/m/Y H:i') }}</p>
-        <span style="display:inline-block; padding:4px 14px; border-radius:20px; font-size:9pt; font-weight:700;
-            background:{{ $bill->payment_status==='Paid' ? '#d1fae5' : '#fee2e2' }};
-            color:{{ $bill->payment_status==='Paid' ? '#065f46' : '#991b1b' }}">
-            {{ strtoupper($bill->payment_status) }}
-        </span>
+    <div class="text-right">
+        <h2 style="margin:0; font-size:18pt; font-weight:900; color:#4f46e5; letter-spacing:0.05em;">INVOICE</h2>
+        <p style="margin:4px 0; font-weight:700; font-size:11pt; color:#0f172a;">#{{ $bill->bill_number }}</p>
+        <p style="margin:2px 0; font-size:9pt; color:#64748b; font-weight:600;">{{ $bill->created_at->format('d M Y, h:i A') }}</p>
+        <div style="margin-top:8px; display:inline-block; padding:4px 12px; border-radius:8px; font-size:8pt; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; 
+            background: {{ $bill->payment_status === 'Paid' ? '#f0fdf4' : '#fef2f2' }}; 
+            color: {{ $bill->payment_status === 'Paid' ? '#166534' : '#991b1b' }};
+            border: 1px solid {{ $bill->payment_status === 'Paid' ? '#dcfce7' : '#fee2e2' }};">
+            {{ $bill->payment_status }}
+        </div>
     </div>
 </div>
 
 <div class="content">
-    {{-- Patient & Visit Info --}}
-    <div style="display:flex; gap:40px; margin-bottom:24px;">
-        <div style="flex:1; background:#f8f9ff; border-radius:8px; padding:16px;">
-            <p style="font-size:8pt; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:0.1em; margin:0 0 8px">Bill To</p>
-            <p style="font-weight:700; font-size:13pt; margin:0 0 4px;">{{ $bill->patient->full_name }}</p>
-            <p style="color:#555; margin:2px 0">UHID: <strong>{{ $bill->patient->uhid }}</strong></p>
-            <p style="color:#555; margin:2px 0">Phone: {{ $bill->patient->phone }}</p>
-            @if($bill->patient->address)
-                <p style="color:#555; margin:2px 0">{{ $bill->patient->address }}{{ $bill->patient->city ? ', ' . $bill->patient->city : '' }}</p>
-            @endif
+    <div style="display:grid; grid-template-cols: 1fr 1fr; gap:24px; margin-bottom:32px;">
+        <div style="background:#f8fafc; padding:20px; border-radius:20px; border:1px solid #f1f5f9;">
+            <p style="font-size:7.5pt; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:0.15em; margin-bottom:12px;">Bill To</p>
+            <p style="font-size:13pt; font-weight:900; color:#0f172a; margin:0 0 4px;">{{ $bill->patient->full_name }}</p>
+            <div style="display:flex; flex-direction:column; gap:2px; font-size:9.5pt; color:#475569; font-weight:500;">
+                <p>UHID: <span style="font-weight:700; color:#0f172a;">{{ $bill->patient->uhid }}</span></p>
+                <p>Phone: {{ $bill->patient->phone ?? 'N/A' }}</p>
+                @if($bill->patient->address)
+                <p style="margin-top:4px; line-height:1.2;">{{ $bill->patient->address }}</p>
+                @endif
+            </div>
         </div>
-        <div style="flex:1; background:#f8f9ff; border-radius:8px; padding:16px;">
-            <p style="font-size:8pt; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:0.1em; margin:0 0 8px">Consultation Details</p>
+        <div style="background:#f8fafc; padding:20px; border-radius:20px; border:1px solid #f1f5f9;">
+            <p style="font-size:7.5pt; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:0.15em; margin-bottom:12px;">Reference Information</p>
             @if($bill->consultation)
-                <p style="margin:2px 0">Doctor: <strong>{{ $bill->consultation->doctor?->full_name ?? '—' }}</strong></p>
-                <p style="margin:2px 0">Dept: {{ $bill->consultation->doctor?->department?->name ?? '—' }}</p>
-                <p style="margin:2px 0">Date: {{ $bill->consultation->consultation_date->format('d/m/Y') }}</p>
-                <p style="margin:2px 0">Token: #{{ $bill->consultation->token_number }}</p>
+            <div style="display:flex; flex-direction:column; gap:4px; font-size:9.5pt; color:#475569; font-weight:500;">
+                <p>Doctor: <span style="font-weight:700; color:#0f172a;">{{ $bill->consultation->doctor?->full_name ?? 'Resident Medical Officer' }}</span></p>
+                <p>Department: {{ $bill->consultation->doctor?->department?->name ?? 'OPD' }}</p>
+                <p>OP Token: #{{ str_pad($bill->consultation->token_number, 2, '0', STR_PAD_LEFT) }}</p>
+                <p>Visit Date: {{ $bill->consultation->consultation_date->format('d M Y') }}</p>
+            </div>
             @else
-                <p style="color:#888;">Walk-in / Manual Bill</p>
+            <p style="font-size:10pt; color:#94a3b8; font-style:italic; margin-top:20px;">Miscellaneous Billing / Service Charges</p>
             @endif
         </div>
     </div>
 
-    {{-- Line Items --}}
     <table class="table">
         <thead>
             <tr>
-                <th>#</th>
-                <th>Description</th>
-                <th>Type</th>
-                <th style="text-align:center">Qty</th>
-                <th style="text-align:right">Unit Price</th>
-                <th style="text-align:right">Amount</th>
+                <th style="width:40px;">#</th>
+                <th>Service Description</th>
+                <th style="width:100px;">Category</th>
+                <th class="text-center" style="width:60px;">Qty</th>
+                <th class="text-right" style="width:120px;">Unit Price</th>
+                <th class="text-right" style="width:120px;">Total</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($bill->items as $i => $item)
-                <tr>
-                    <td>{{ $i + 1 }}</td>
-                    <td>{{ $item->item_name }}</td>
-                    <td style="color:#888; font-size:9pt">{{ $item->item_type }}</td>
-                    <td style="text-align:center">{{ $item->quantity }}</td>
-                    <td style="text-align:right">₹{{ number_format($item->unit_price, 2) }}</td>
-                    <td style="text-align:right"><strong>₹{{ number_format($item->total_price, 2) }}</strong></td>
-                </tr>
+            @foreach($bill->items as $idx => $item)
+            <tr>
+                <td style="color:#94a3b8; font-size:9pt; font-weight:700;">{{ str_pad($idx + 1, 2, '0', STR_PAD_LEFT) }}</td>
+                <td>
+                    <p style="font-weight:700; color:#0f172a; margin:0;">{{ $item->item_name }}</p>
+                </td>
+                <td style="font-size:8.5pt; font-weight:600; color:#64748b;">{{ $item->item_type }}</td>
+                <td class="text-center" style="font-weight:600;">{{ $item->quantity }}</td>
+                <td class="text-right" style="color:#475569;">₹{{ number_format($item->unit_price, 2) }}</td>
+                <td class="text-right font-black" style="font-size:10.5pt; color:#0f172a;">₹{{ number_format($item->total_price, 2) }}</td>
+            </tr>
             @endforeach
         </tbody>
     </table>
 
-    {{-- Totals --}}
-    <div style="display:flex; justify-content:flex-end; margin-top:8px;">
-        <div style="width:280px;">
-            <div style="display:flex; justify-content:space-between; padding:6px 0; border-top:1px solid #eee;">
-                <span style="color:#555;">Subtotal</span>
-                <span>₹{{ number_format($bill->subtotal, 2) }}</span>
+    <div style="display:flex; justify-content: space-between; align-items: flex-start; margin-top:24px;">
+        <div style="width:50%;">
+            @if($bill->notes)
+            <div style="background:#fffbeb; border:1px solid #fef3c7; padding:16px; border-radius:16px;">
+                <p style="font-size:7pt; font-weight:800; color:#b45309; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:4px;">Billing Notes</p>
+                <p style="font-size:9pt; color:#78350f; line-height:1.4;">{{ $bill->notes }}</p>
+            </div>
+            @endif
+        </div>
+        <div style="width:300px; background:#f8fafc; border-radius:24px; padding:24px; border:1px solid #f1f5f9;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:10pt; color:#64748b; font-weight:600;">
+                <span>Subtotal</span>
+                <span style="color:#0f172a;">₹{{ number_format($bill->subtotal, 2) }}</span>
             </div>
             @if($bill->discount_amount > 0)
-            <div style="display:flex; justify-content:space-between; padding:6px 0; border-top:1px solid #eee; color:#059669;">
-                <span>Discount (–)</span>
-                <span>₹{{ number_format($bill->discount_amount, 2) }}</span>
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:10pt; color:#059669; font-weight:600;">
+                <span>Discount</span>
+                <span>- ₹{{ number_format($bill->discount_amount, 2) }}</span>
             </div>
             @endif
             @if($bill->tax_amount > 0)
-            <div style="display:flex; justify-content:space-between; padding:6px 0; border-top:1px solid #eee;">
-                <span>Tax (+)</span>
-                <span>₹{{ number_format($bill->tax_amount, 2) }}</span>
+            <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:10pt; color:#64748b; font-weight:600;">
+                <span>Taxes</span>
+                <span style="color:#0f172a;">+ ₹{{ number_format($bill->tax_amount, 2) }}</span>
             </div>
             @endif
-            <div style="display:flex; justify-content:space-between; padding:10px 0; border-top:3px double #4F46E5; margin-top:4px;">
-                <span style="font-weight:700; font-size:13pt;">NET TOTAL</span>
-                <span style="font-weight:700; font-size:15pt; color:#4F46E5;">₹{{ number_format($bill->total_amount, 2) }}</span>
+            <div style="height:1px; background:#e2e8f0; margin:12px 0;"></div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:9pt; font-weight:800; color:#0f172a; text-transform:uppercase; letter-spacing:0.05em;">Total Payable</span>
+                <span style="font-size:16pt; font-weight:900; color:#4f46e5;">₹{{ number_format($bill->total_amount, 2) }}</span>
             </div>
-            <div style="display:flex; justify-content:space-between; padding:4px 0; background:#f0fdf4; border-radius:6px; padding:8px 12px;">
-                <span style="color:#374151; font-size:9pt;">Payment Method</span>
-                <span style="font-weight:700; color:#065f46;">{{ $bill->payment_method ?? 'Cash' }}</span>
+            <div style="margin-top:16px; padding:8px 12px; background:white; border:1px solid #e2e8f0; border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:7.5pt; font-weight:800; color:#94a3b8; text-transform:uppercase;">Pay Method</span>
+                <span style="font-size:9pt; font-weight:800; color:#0f172a;">{{ $bill->payment_method }}</span>
             </div>
         </div>
     </div>
-
-    @if($bill->notes)
-    <div style="margin-top:24px; background:#fffbeb; border:1px solid #fed7aa; border-radius:8px; padding:12px;">
-        <p style="font-size:8pt; font-weight:700; color:#92400e; text-transform:uppercase; margin:0 0 4px;">Notes</p>
-        <p style="margin:0; color:#555;">{{ $bill->notes }}</p>
-    </div>
-    @endif
 </div>
 
-<div class="footer">
-    <p>{{ \App\Models\Setting::get('invoice_footer', 'Thank you for choosing our hospital. Get well soon!') }}</p>
-    <p style="margin:4px 0;">Generated: {{ now()->format('d/m/Y H:i') }} &nbsp;|&nbsp; Bill: {{ $bill->bill_number }}</p>
+<div class="footer" style="padding-bottom:20px;">
+    <div style="display:flex; justify-content:space-between; align-items: flex-end; margin-bottom:20px;">
+        <div style="text-align:left;">
+            <p style="font-size:7.5pt; font-weight:800; color:#94a3b8; text-transform:uppercase; margin-bottom:40px;">Billing Executive</p>
+            <div style="width:150px; border-bottom:1px solid #e2e8f0;"></div>
+            <p style="font-size:8pt; font-weight:700; color:#64748b; margin-top:8px;">Authorized Signature</p>
+        </div>
+        <div style="text-align:right;">
+            <p style="font-size:7.5pt; font-weight:800; color:#94a3b8; text-transform:uppercase; margin-bottom:40px;">Patient/Guardian</p>
+            <div style="width:150px; border-bottom:1px solid #e2e8f0;"></div>
+            <p style="font-size:8pt; font-weight:700; color:#64748b; margin-top:8px;">Signature</p>
+        </div>
+    </div>
+    <div style="background:#4f46e5; height:4px; border-radius:2px; margin-bottom:12px; opacity:0.1;"></div>
+    <p style="font-weight:700; color:#475569; font-size:8.5pt;">{{ \App\Models\Setting::get('invoice_footer', 'This is a computer-generated document and does not require a physical signature for validity unless specified.') }}</p>
+    <p style="margin-top:4px;">Printed on {{ date('d M Y, h:i A') }}</p>
 </div>
 @endsection
+

@@ -56,14 +56,14 @@
                                 </td>
                                 <td class="hidden md:table-cell">
                                     <p class="text-xs font-semibold text-gray-700 dark:text-gray-300">{{ $p->doctor?->full_name ?? 'Unassigned' }}</p>
-                                    <p class="text-[10px] text-gray-500">{{ $p->created_at->format('d M, Y H:i') }}</p>
+                                    <p class="text-tiny text-gray-500">{{ $p->created_at->format('d M, Y H:i') }}</p>
                                 </td>
                                 <td class="hidden lg:table-cell">
                                     <div class="space-y-1">
                                         @foreach(($p->medicines ?? []) as $m)
                                             <div class="flex items-center gap-2">
                                                 <div class="w-1.5 h-1.5 rounded-full bg-violet-400"></div>
-                                                <p class="text-xs text-gray-700 dark:text-gray-300">{{ $m['name'] ?? 'Medicine' }} <span class="text-[10px] text-gray-400">({{ $m['dose'] ?? 'N/A' }})</span></p>
+                                                <p class="text-xs text-gray-700 dark:text-gray-300">{{ $m['name'] ?? 'Medicine' }} <span class="text-tiny text-gray-400">({{ $m['dose'] ?? 'N/A' }})</span></p>
                                             </div>
                                         @endforeach
                                     </div>
@@ -82,7 +82,7 @@
                                                 <span wire:loading wire:target="dispense({{ $p->id }})">Saving...</span>
                                             </button>
                                         @else
-                                            <p class="text-[10px] text-gray-400 font-medium italic">Dispensed at {{ $p->dispensed_at ? $p->dispensed_at->format('H:i') : 'N/A' }}</p>
+                                            <p class="text-tiny text-gray-400 font-medium italic">Dispensed at {{ $p->dispensed_at ? $p->dispensed_at->format('H:i') : 'N/A' }}</p>
                                         @endif
                                     </div>
                                 </td>

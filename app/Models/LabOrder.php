@@ -14,6 +14,7 @@ class LabOrder extends Model
         'doctor_id',
         'lab_test_id',
         'consultation_id',
+        'admission_id',
         'results',
         'status',
         'collected_at',
@@ -51,5 +52,10 @@ class LabOrder extends Model
     public function consultation()
     {
         return $this->belongsTo(Consultation::class);
+    }
+
+    public function admission()
+    {
+        return $this->belongsTo(Admission::class);
     }
 }

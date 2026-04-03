@@ -1,17 +1,19 @@
 <div x-data="{ 
         notifications: [],
         add(notification) {
+            const id = Date.now();
             this.notifications.push({
-                id: Date.now(),
+                id: id,
                 type: notification.type || 'info',
                 message: notification.message || '',
                 show: false
             });
             this.$nextTick(() => {
-                this.notifications[this.notifications.length - 1].show = true;
+                const index = this.notifications.findIndex(n => n.id === id);
+                if (index !== -1) this.notifications[index].show = true;
             });
             setTimeout(() => {
-                this.remove(this.notifications[0].id);
+                this.remove(id);
             }, 3000);
         },
         remove(id) {

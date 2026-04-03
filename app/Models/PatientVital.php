@@ -12,6 +12,7 @@ class PatientVital extends Model
     protected $fillable = [
         'patient_id',
         'consultation_id',
+        'admission_id',
         'weight',
         'height',
         'bmi',
@@ -34,6 +35,11 @@ class PatientVital extends Model
     public function consultation()
     {
         return $this->belongsTo(Consultation::class);
+    }
+
+    public function admission()
+    {
+        return $this->belongsTo(Admission::class);
     }
 
     public function recorder()

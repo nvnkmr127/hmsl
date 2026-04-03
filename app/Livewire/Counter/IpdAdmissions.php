@@ -3,7 +3,7 @@
 namespace App\Livewire\Counter;
 
 use App\Models\Admission;
-use App\Services\IpdManager;
+use App\Services\IpdService;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -20,10 +20,10 @@ class IpdAdmissions extends Component
     {
         $this->selectedAdmissionId = (int) $id;
         $this->dischargeNotes = '';
-        $this->dispatch('open-modal', ['name' => 'ipd-discharge-modal']);
+        $this->dispatch('open-modal', name: 'ipd-discharge-modal');
     }
 
-    public function confirmDischarge(IpdManager $manager)
+    public function confirmDischarge(IpdService $manager)
     {
         if (!$this->selectedAdmissionId) {
             return;
@@ -32,7 +32,7 @@ class IpdAdmissions extends Component
         $admission = Admission::findOrFail($this->selectedAdmissionId);
         $manager->dischargePatient($admission, $this->dischargeNotes ?: null);
 
-        $this->dispatch('close-modal', ['name' => 'ipd-discharge-modal']);
+        $this->dispatch('close-modal', name: 'ipd-discharge-modal');
         $this->dispatch('notify', ['type' => 'success', 'message' => 'Patient discharged successfully!']);
         $this->reset(['selectedAdmissionId', 'dischargeNotes']);
     }
@@ -56,7 +56,8 @@ class IpdAdmissions extends Component
             ->paginate(10);
 
         return view('livewire.counter.ipd-admissions', [
-            'admissions' => $admissions
+            'admissions' => $admissions,
+            'dischargeTemplates' => \App\Models\ClinicalTemplate::where('type', 'discharge')->get(),
         ]);
     }
 }

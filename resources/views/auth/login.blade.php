@@ -61,7 +61,7 @@
         @foreach([['admin','Owner','Admin'],['doctor','Doctor','Clinical'],['counter','Counter','Reception'],['nurse','Nurse','Staff']] as [$role,$label,$dept])
         <a href="{{ route('autologin', ['role' => $role]) }}"
            class="p-3 rounded-xl border border-slate-200 dark:border-white/10 hover:border-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/10 transition-all group">
-            <p class="text-[10px] font-bold text-slate-400 group-hover:text-violet-500 uppercase tracking-wider mb-0.5">{{ $dept }}</p>
+            <p class="text-tiny font-bold text-slate-400 group-hover:text-violet-500 uppercase tracking-wider mb-0.5">{{ $dept }}</p>
             <p class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ $label }}</p>
         </a>
         @endforeach

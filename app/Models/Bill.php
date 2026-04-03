@@ -23,6 +23,14 @@ class Bill extends Model
         'created_by',
     ];
 
+    protected $casts = [
+        'subtotal' => 'decimal:2',
+        'tax_amount' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
+        'total_amount' => 'decimal:2',
+    ];
+
+
     public function patient()
     {
         return $this->belongsTo(Patient::class);

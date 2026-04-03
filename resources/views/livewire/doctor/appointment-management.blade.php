@@ -36,7 +36,7 @@
                                 </div>
                                 <div>
                                     <p class="text-sm font-bold text-gray-900 dark:text-white">{{ $app->patient->full_name }}</p>
-                                    <p class="text-[10px] text-gray-400 font-bold tracking-widest uppercase">{{ $app->patient->uhid }}</p>
+                                    <p class="text-tiny text-gray-400 font-bold tracking-widest uppercase">{{ $app->patient->uhid }}</p>
                                 </div>
                             </div>
                         </td>

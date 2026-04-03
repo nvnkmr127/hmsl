@@ -68,7 +68,7 @@
                                         </div>
                                         <div class="min-w-0">
                                             <p class="font-bold text-gray-900 dark:text-white truncate uppercase tracking-tight">{{ $m->name }}</p>
-                                            <p class="text-[10px] text-violet-600 dark:text-violet-400 font-bold uppercase tracking-widest truncate">{{ $m->category }} | {{ $m->strength }}</p>
+                                            <p class="text-tiny text-violet-600 dark:text-violet-400 font-bold uppercase tracking-widest truncate">{{ $m->category }} | {{ $m->strength }}</p>
                                         </div>
                                     </div>
                                 </td>
@@ -78,7 +78,7 @@
                                         $isExpired = $m->expire_date && $m->expire_date->isPast();
                                         $isNearExpiry = $m->expire_date && !$isExpired && $m->expire_date->diffInMonths(now()) < 3;
                                     @endphp
-                                    <p class="text-[10px] uppercase font-black tracking-widest {{ $isExpired ? 'text-red-500' : ($isNearExpiry ? 'text-amber-500' : 'text-gray-400') }}">
+                                    <p class="text-tiny uppercase font-black tracking-widest {{ $isExpired ? 'text-red-500' : ($isNearExpiry ? 'text-amber-500' : 'text-gray-400') }}">
                                         Exp: {{ $m->expire_date ? $m->expire_date->format('d M, Y') : 'N/A' }}
                                     </p>
                                 </td>
@@ -126,11 +126,11 @@
                     @php $med = \App\Models\Medicine::find($selectedMedicineId); @endphp
                     <div class="p-4 rounded-2xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 flex items-center justify-between">
                         <div>
-                            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Adjusting Stock For</p>
+                            <p class="text-tiny font-black text-gray-400 uppercase tracking-widest">Adjusting Stock For</p>
                             <p class="text-sm font-bold text-gray-900 dark:text-white mt-1">{{ $med?->name }}</p>
                         </div>
                         <div class="text-right">
-                            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Current Stock</p>
+                            <p class="text-tiny font-black text-gray-400 uppercase tracking-widest">Current Stock</p>
                             <p class="text-sm font-black text-violet-600 mt-1">{{ $med?->stock_quantity }}</p>
                         </div>
                     </div>

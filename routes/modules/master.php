@@ -18,6 +18,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/wards', [WardController::class, 'index'])->name('wards.index');
         Route::get('/beds', [\App\Http\Controllers\Master\BedController::class, 'index'])->name('beds.index');
         Route::get('/inventory-categories', fn() => view('pages.master.inventory-categories'))->name('inventory-categories.index');
+        Route::get('/clinical-templates', fn() => view('pages.master.clinical-templates'))->name('clinical-templates.index');
 
 
         Route::get('/', [DepartmentController::class, 'index'])->name('index');

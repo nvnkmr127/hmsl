@@ -10,7 +10,7 @@
         @if($link)
             <a href="{{ $link }}" class="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">{{ $label }}</a>
         @else
-            <span class="text-gray-700 dark:text-gray-200 font-bold uppercase tracking-wider text-[10px]">{{ $label }}</span>
+            <span class="text-gray-700 dark:text-gray-200 font-bold uppercase tracking-wider text-tiny">{{ $label }}</span>
         @endif
     @endforeach
 </nav>

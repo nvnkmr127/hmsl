@@ -34,7 +34,7 @@
                 @forelse($wards as $ward)
                     <tr>
                         <td>
-                            <span class="text-[10px] font-black font-mono text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-lg">
+                            <span class="text-tiny font-black font-mono text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-lg">
                                 {{ $ward->code ?: 'N/A' }}
                             </span>
                         </td>
@@ -59,7 +59,7 @@
                                     @endphp
                                     <div class="h-full bg-violet-600 rounded-full" style="width: {{ $percent }}%"></div>
                                 </div>
-                                <span class="text-[10px] font-bold text-gray-500 uppercase tracking-tighter">
+                                <span class="text-tiny font-bold text-gray-500 uppercase tracking-tighter">
                                     {{ $ward->beds_count - $ward->available_beds_count }} / {{ $ward->beds_count }} OCCUPIED
                                 </span>
                             </div>

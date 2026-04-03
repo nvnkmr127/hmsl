@@ -13,6 +13,7 @@ use App\Models\PatientVital;
 use App\Models\Bill;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\Cache;
 
 class PatientHistory extends Component
 {
@@ -341,26 +342,23 @@ class PatientHistory extends Component
     {
         $id = $this->patientId;
 
-        $visitsAll = Consultation::where('patient_id', $id);
         $billsAll = Bill::where('patient_id', $id);
-        $admissionsAll = Admission::where('patient_id', $id);
-        $prescriptionsAll = Prescription::where('patient_id', $id);
-        $labOrdersAll = LabOrder::where('patient_id', $id);
-        $vitalsAll = PatientVital::where('patient_id', $id);
-        $vaccinationsAll = PatientVaccination::where('patient_id', $id);
 
-        $counts = [
-            'visits' => (clone $visitsAll)->where('status', '!=', 'Cancelled')->count(),
-            'bills' => (clone $billsAll)->count(),
-            'admissions' => (clone $admissionsAll)->count(),
-            'discharges' => (clone $admissionsAll)->whereNotNull('discharge_date')->count(),
-            'prescriptions' => (clone $prescriptionsAll)->count(),
-            'labs' => (clone $labOrdersAll)->count(),
-            'vitals' => (clone $vitalsAll)->count(),
-            'vaccinations' => (clone $vaccinationsAll)->count(),
-            'appointments' => (clone $visitsAll)->whereDate('consultation_date', '>=', now()->toDateString())->where('status', '!=', 'Cancelled')->count(),
-            'treatments' => (clone $visitsAll)->count() + (clone $admissionsAll)->count() + (clone $prescriptionsAll)->count(),
-        ];
+        // COUNTS: Only calculate once per request or when strictly necessary
+        $counts = Cache::remember("patient_counts_{$id}", 60, function() use ($id) {
+            return [
+                'visits' => Consultation::where('patient_id', $id)->where('status', '!=', 'Cancelled')->count(),
+                'bills' => Bill::where('patient_id', $id)->count(),
+                'admissions' => Admission::where('patient_id', $id)->count(),
+                'discharges' => Admission::where('patient_id', $id)->whereNotNull('discharge_date')->count(),
+                'prescriptions' => Prescription::where('patient_id', $id)->count(),
+                'labs' => LabOrder::where('patient_id', $id)->count(),
+                'vitals' => PatientVital::where('patient_id', $id)->count(),
+                'vaccinations' => PatientVaccination::where('patient_id', $id)->count(),
+                'appointments' => Consultation::where('patient_id', $id)->whereDate('consultation_date', '>=', now()->toDateString())->where('status', '!=', 'Cancelled')->count(),
+            ];
+        });
+        $counts['treatments'] = $counts['visits'] + $counts['admissions'] + $counts['prescriptions'];
 
         $latestVisits = Consultation::with(['doctor.department'])->where('patient_id', $id)->orderByDesc('consultation_date')->limit(5)->get();
         $latestBills = Bill::where('patient_id', $id)->orderByDesc('created_at')->limit(5)->get();
@@ -454,19 +452,63 @@ class PatientHistory extends Component
         ];
 
         if ($this->tab === 'billing') {
-            $query = Bill::with(['items'])->where('patient_id', $id)->orderByDesc('created_at');
-            $query = $this->applyDateFilter($query, 'created_at');
+            $billsQuery = Bill::with(['items'])->where('patient_id', $id);
+            $billsQuery = $this->applyDateFilter($billsQuery, 'created_at');
+            
+            // Also include Paid consultations that don't have a Bill record yet
+            $unbilledConsultations = Consultation::where('patient_id', $id)
+                ->where('payment_status', 'Paid')
+                ->whereDoesntHave('bill');
+            $unbilledConsultations = $this->applyDateFilter($unbilledConsultations, 'consultation_date');
+
             if ($this->status) {
-                $query->where('payment_status', $this->status);
+                $billsQuery->where('payment_status', $this->status);
             }
+
             if ($this->search) {
                 $term = '%' . $this->search . '%';
-                $query->where(function ($q) use ($term) {
+                $billsQuery->where(function ($q) use ($term) {
                     $q->where('bill_number', 'like', $term)->orWhere('notes', 'like', $term);
                 });
             }
-            $datasets['bills'] = $query->paginate($this->perPage);
+
+            // Union them manually because they are different models
+            $formalBills = $billsQuery->get()->map(fn($b) => (object)[
+                'id' => $b->id,
+                'is_formal' => true,
+                'bill_number' => $b->bill_number,
+                'created_at' => $b->created_at,
+                'total_amount' => $b->total_amount,
+                'payment_method' => $b->payment_method,
+                'payment_status' => $b->payment_status,
+                'type' => 'Invoice'
+            ]);
+
+            $opdBills = $unbilledConsultations->get()->map(fn($c) => (object)[
+                'id' => $c->id,
+                'is_formal' => false,
+                'bill_number' => 'OPD-' . $c->token_number,
+                'created_at' => $c->created_at,
+                'total_amount' => $c->fee,
+                'payment_method' => $c->payment_method,
+                'payment_status' => $c->payment_status,
+                'type' => 'Registration'
+            ]);
+
+            $combined = $formalBills->concat($opdBills)->sortByDesc('created_at');
+            
+            // Manual pagination for combined collection
+            $currentPage = $this->getPage();
+            $datasets['bills'] = new \Illuminate\Pagination\LengthAwarePaginator(
+
+                $combined->forPage($currentPage, $this->perPage),
+                $combined->count(),
+                $this->perPage,
+                $currentPage,
+                ['path' => \Illuminate\Support\Facades\Request::url(), 'query' => \Illuminate\Support\Facades\Request::query()]
+            );
         }
+
 
         if ($this->tab === 'visits') {
             $query = Consultation::with(['doctor.department'])->where('patient_id', $id)->orderByDesc('consultation_date');

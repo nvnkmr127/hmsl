@@ -19,18 +19,18 @@
     </x-page-header>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="p-6 bg-white dark:bg-gray-900 rounded-[2rem] border border-gray-100 dark:border-gray-800 shadow-sm">
-            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Patients</p>
+        <div class="p-6 bg-white dark:bg-gray-900 rounded-ultra border border-gray-100 dark:border-gray-800 shadow-sm">
+            <p class="text-tiny font-black text-gray-400 uppercase tracking-widest mb-1">Total Patients</p>
             <h3 class="text-3xl font-black text-gray-900 dark:text-white">{{ number_format($stats['total']) }}</h3>
-            <p class="text-[10px] font-bold text-violet-600 mt-2 uppercase">Life-time registry</p>
+            <p class="text-tiny font-bold text-violet-600 mt-2 uppercase">Life-time registry</p>
         </div>
-        <div class="p-6 bg-white dark:bg-gray-900 rounded-[2rem] border border-gray-100 dark:border-gray-800 shadow-sm">
-            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">New Registrations</p>
+        <div class="p-6 bg-white dark:bg-gray-900 rounded-ultra border border-gray-100 dark:border-gray-800 shadow-sm">
+            <p class="text-tiny font-black text-gray-400 uppercase tracking-widest mb-1">New Registrations</p>
             <h3 class="text-3xl font-black text-emerald-600">{{ number_format($stats['today']) }}</h3>
-            <p class="text-[10px] font-bold text-gray-400 mt-2 uppercase">Registered Today</p>
+            <p class="text-tiny font-bold text-gray-400 mt-2 uppercase">Registered Today</p>
         </div>
-        <div class="p-6 bg-white dark:bg-gray-900 rounded-[2rem] border border-gray-100 dark:border-gray-800 shadow-sm">
-            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Gender Dist.</p>
+        <div class="p-6 bg-white dark:bg-gray-900 rounded-ultra border border-gray-100 dark:border-gray-800 shadow-sm">
+            <p class="text-tiny font-black text-gray-400 uppercase tracking-widest mb-1">Gender Dist.</p>
             <div class="flex items-center gap-4 mt-2">
                 <div>
                     <p class="text-xs font-black text-blue-500 uppercase">M: {{ $stats['male'] }}</p>
@@ -39,13 +39,13 @@
                     <p class="text-xs font-black text-pink-500 uppercase">F: {{ $stats['female'] }}</p>
                 </div>
             </div>
-            <p class="text-[10px] font-bold text-gray-400 mt-2 uppercase">Current breakdown</p>
+            <p class="text-tiny font-bold text-gray-400 mt-2 uppercase">Current breakdown</p>
         </div>
-        <div class="p-6 bg-violet-600 rounded-[2rem] shadow-lg shadow-violet-500/20 text-white relative overflow-hidden">
+        <div class="p-6 bg-violet-600 rounded-ultra shadow-lg shadow-violet-500/20 text-white relative overflow-hidden">
             <div class="relative z-10">
-                <p class="text-[10px] font-black text-violet-200 uppercase tracking-widest mb-1">Quick Booking</p>
+                <p class="text-tiny font-black text-violet-200 uppercase tracking-widest mb-1">Quick Booking</p>
                 <h3 class="text-xl font-black leading-tight">Generate<br>OP Token</h3>
-                <p class="text-[10px] font-black text-white/70 mt-2 uppercase">Search to begin</p>
+                <p class="text-tiny font-black text-white/70 mt-2 uppercase">Search to begin</p>
             </div>
             <svg class="absolute -right-4 -bottom-4 w-24 h-24 text-white/10" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
         </div>
@@ -140,14 +140,14 @@
                                 </div>
                                 <div class="flex flex-col">
                                     <span class="font-black text-gray-900 dark:text-white uppercase tracking-tight">{{ $patient->full_name }}</span>
-                                    <span class="text-[10px] font-black text-violet-600 dark:text-violet-400 uppercase tracking-widest">{{ $patient->uhid }}</span>
+                                    <span class="text-tiny font-black text-violet-600 dark:text-violet-400 uppercase tracking-widest">{{ $patient->uhid }}</span>
                                 </div>
                             </div>
                         </td>
                         <td>
                             <div class="flex flex-col">
                                 <span class="font-bold text-gray-700 dark:text-gray-300">{{ $patient->gender }}</span>
-                                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ $patient->age }}</span>
+                                <span class="text-tiny font-black text-gray-400 uppercase tracking-widest">{{ $patient->age }}</span>
                             </div>
                         </td>
                         <td>
@@ -157,7 +157,7 @@
                             @if($patient->blood_group)
                                 <x-badge color="danger">{{ $patient->blood_group }}</x-badge>
                             @else
-                                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest italic opacity-40">N/A</span>
+                                <span class="text-tiny font-black text-gray-400 uppercase tracking-widest italic opacity-40">N/A</span>
                             @endif
                         </td>
                         <td>

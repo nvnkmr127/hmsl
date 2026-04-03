@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Models\LabTest;
 use App\Models\LabParameter;
 
-class LabManager
+class LabService
 {
     public function getAllTests()
     {

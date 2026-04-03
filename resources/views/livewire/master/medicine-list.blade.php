@@ -49,8 +49,8 @@
                             <div class="flex flex-col">
                                 <span class="font-bold text-gray-900 dark:text-white uppercase tracking-tight">{{ $med->name }}</span>
                                 <div class="flex items-center gap-2">
-                                     <span class="text-[10px] text-gray-400 font-mono font-black italic">{{ $med->code ?: 'NO CODE' }}</span>
-                                     <span class="text-[10px] text-violet-600 dark:text-violet-400 font-bold tracking-widest">{{ $med->generic_name ?: 'GENERIC NOT SET' }}</span>
+                                     <span class="text-tiny text-gray-400 font-mono font-black italic">{{ $med->code ?: 'NO CODE' }}</span>
+                                     <span class="text-tiny text-violet-600 dark:text-violet-400 font-bold tracking-widest">{{ $med->generic_name ?: 'GENERIC NOT SET' }}</span>
                                 </div>
                             </div>
                         </td>
@@ -58,7 +58,7 @@
                         <td>
                             <div class="flex flex-col">
                                 <x-badge color="violet">{{ $med->category }}</x-badge>
-                                <span class="text-[10px] text-gray-500 font-bold mt-1 uppercase">{{ $med->strength }}</span>
+                                <span class="text-tiny text-gray-500 font-bold mt-1 uppercase">{{ $med->strength }}</span>
                             </div>
                         </td>
                         <td>

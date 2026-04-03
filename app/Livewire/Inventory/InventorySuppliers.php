@@ -25,7 +25,7 @@ class InventorySuppliers extends Component
     public function openCreate()
     {
         $this->reset(['name', 'contact_person', 'phone', 'email', 'address', 'selectedSupplierId']);
-        $this->dispatch('open-modal', ['name' => 'supplier-modal']);
+        $this->dispatch('open-modal', name: 'supplier-modal');
     }
 
     public function edit($id)
@@ -37,7 +37,7 @@ class InventorySuppliers extends Component
         $this->phone = $supplier->phone;
         $this->email = $supplier->email;
         $this->address = $supplier->address;
-        $this->dispatch('open-modal', ['name' => 'supplier-modal']);
+        $this->dispatch('open-modal', name: 'supplier-modal');
     }
 
     public function save()
@@ -67,7 +67,7 @@ class InventorySuppliers extends Component
                 $msg = 'Supplier added successfully!';
             }
 
-            $this->dispatch('close-modal', ['name' => 'supplier-modal']);
+            $this->dispatch('close-modal', name: 'supplier-modal');
             $this->dispatch('notify', ['type' => 'success', 'message' => $msg]);
             $this->reset();
         } catch (Throwable $e) {

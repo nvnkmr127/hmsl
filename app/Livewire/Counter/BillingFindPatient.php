@@ -12,8 +12,8 @@ class BillingFindPatient extends Component
     public function selectPatient(int $patientId): void
     {
         $this->dispatch('generate-bill-for-patient', $patientId);
-        $this->dispatch('close-modal', ['name' => 'billing-find-patient-modal']);
-        $this->dispatch('close-modal', ['name' => 'billing-create-modal']);
+        $this->dispatch('close-modal', name: 'billing-find-patient-modal');
+        $this->dispatch('close-modal', name: 'billing-create-modal');
     }
 
     public function render()

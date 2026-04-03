@@ -71,6 +71,8 @@
         </div>
     </div>
 
+    <livewire:counter.quick-op-booking />
+
     @livewireScripts
     @stack('scripts')
 </body>

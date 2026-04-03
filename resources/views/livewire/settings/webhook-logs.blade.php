@@ -2,7 +2,7 @@
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
             <h2 class="text-xl font-black text-gray-800 dark:text-white uppercase tracking-tight">Delivery Logs</h2>
-            <p class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-1">Audit trail for all webhook attempts</p>
+            <p class="text-tiny font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-1">Audit trail for all webhook attempts</p>
         </div>
         
         <div class="flex items-center space-x-3">
@@ -56,14 +56,14 @@
                                     HTTP {{ $log->response_status }}
                                 </x-badge>
                             @else
-                                <span class="text-[10px] text-rose-500 font-bold italic">Network Error</span>
+                                <span class="text-tiny text-rose-500 font-bold italic">Network Error</span>
                             @endif
                         </td>
                         <td class="px-6 py-4">
                             <span class="text-xs font-black text-gray-400">#{{ $log->attempt_number }} / 5</span>
                         </td>
                         <td class="px-6 py-4 text-right">
-                            <span class="text-[10px] text-gray-400 font-bold uppercase">{{ $log->delivered_at ? $log->delivered_at->format('d M, H:i') : '--' }}</span>
+                            <span class="text-tiny text-gray-400 font-bold uppercase">{{ $log->delivered_at ? $log->delivered_at->format('d M, H:i') : '--' }}</span>
                         </td>
                         <td class="px-6 py-4 text-right">
                             @if($log->status === 'failed')

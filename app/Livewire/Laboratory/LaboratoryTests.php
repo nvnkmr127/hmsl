@@ -31,7 +31,7 @@ class LaboratoryTests extends Component
     {
         $this->reset(['testName', 'testCategory', 'testPrice', 'testDescription', 'selectedTestId', 'parameters']);
         $this->parameters = [];
-        $this->dispatch('open-modal', ['name' => 'test-modal']);
+        $this->dispatch('open-modal', name: 'test-modal');
     }
 
     public function edit($id)
@@ -50,7 +50,7 @@ class LaboratoryTests extends Component
             'reference_range' => $p->reference_range
         ])->toArray();
 
-        $this->dispatch('open-modal', ['name' => 'test-modal']);
+        $this->dispatch('open-modal', name: 'test-modal');
     }
 
     public function addParameter()
@@ -97,7 +97,7 @@ class LaboratoryTests extends Component
                 }
             }
 
-            $this->dispatch('close-modal', ['name' => 'test-modal']);
+            $this->dispatch('close-modal', name: 'test-modal');
             $this->dispatch('notify', ['type' => 'success', 'message' => 'Lab test definition saved!']);
             $this->reset(['selectedTestId', 'testName', 'testCategory', 'testPrice', 'testDescription', 'parameters']);
         } catch (Throwable $e) {

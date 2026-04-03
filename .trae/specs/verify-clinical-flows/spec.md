@@ -16,7 +16,7 @@ Core hospital workflows (outpatient tokens, appointments, inpatient admission/di
 
 ## Impact
 - Affected specs: OPD token system, appointments, inpatient admission, discharge, discharge summary, billing, receipts, permissions/navigation.
-- Affected code: routes (counter/doctor/billing/discharge), Livewire flows, print views, services (OpdManager, BillingService, IpdManager), tests.
+- Affected code: routes (counter/doctor/billing/discharge), Livewire flows, print views, services (OpdService, BillingService, IpdManager), tests.
 
 ## ADDED Requirements
 ### Requirement: OPD Token System (Reception)

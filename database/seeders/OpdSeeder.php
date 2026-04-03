@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use App\Models\Patient;
 use App\Models\Doctor;
 use App\Models\Consultation;
-use App\Services\OpdManager;
+use App\Services\OpdService;
 use Illuminate\Database\Seeder;
 
 class OpdSeeder extends Seeder
@@ -15,7 +15,7 @@ class OpdSeeder extends Seeder
      */
     public function run(): void
     {
-        $manager = new OpdManager();
+        $manager = new OpdService();
         $doctor = Doctor::first();
         $patient = Patient::first();
 
