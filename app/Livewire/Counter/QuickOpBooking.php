@@ -121,6 +121,13 @@ class QuickOpBooking extends Component
 
     public function book($shouldPrint = true)
     {
+        \Illuminate\Support\Facades\Log::debug('QUICK_OP_BOOKING_START', [
+            'shouldPrint' => $shouldPrint,
+            'patient_id' => $this->selectedPatient?->id,
+            'service' => $this->selectedService,
+            'fee' => $this->fee
+        ]);
+
         $service = app(OpdService::class);
         $this->validate([
             'selectedPatient' => 'required',
@@ -144,9 +151,12 @@ class QuickOpBooking extends Component
                 'notes' => $this->notes,
             ]);
 
+            \Illuminate\Support\Facades\Log::info('QUICK_OP_BOOKING_SUCCESS', ['id' => $consultation->id]);
+
             $this->dispatch('notify', ['type' => 'success', 'message' => "Registration Success: #{$consultation->token_number}"]);
             
             if ($shouldPrint) {
+                \Illuminate\Support\Facades\Log::debug('QUICK_OP_BOOKING_DISPATCH_PRINT', ['id' => $consultation->id]);
                 $this->dispatch('print-op-slip', ['id' => $consultation->id]);
             }
 
@@ -154,6 +164,10 @@ class QuickOpBooking extends Component
             $this->dispatch('booking-completed');
 
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('QUICK_OP_BOOKING_FAILED', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             $this->dispatch('notify', ['type' => 'error', 'message' => $e->getMessage()]);
         }
     }

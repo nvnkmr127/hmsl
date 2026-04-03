@@ -172,6 +172,15 @@ class OpdBooking extends Component
 
     public function book($shouldPrint = true)
     {
+        \Illuminate\Support\Facades\Log::debug('OPD_BOOKING_START', [
+            'shouldPrint' => $shouldPrint,
+            'isEditing' => $this->isEditing,
+            'patient_id' => $this->selectedPatient?->id,
+            'service' => $this->selectedService,
+            'doctor' => $this->selectedDoctor,
+            'fee' => $this->fee
+        ]);
+
         $service = app(OpdService::class);
         $this->validate([
             'selectedPatient' => 'required',
@@ -183,6 +192,8 @@ class OpdBooking extends Component
             'temperature' => 'nullable|numeric|min:70|max:120',
             'paymentMode' => 'required|in:Cash,UPI,Card',
         ]);
+
+        \Illuminate\Support\Facades\Log::debug('OPD_BOOKING_VALIDATED');
 
         if ($this->isEditing) {
             $consultation = Consultation::findOrFail($this->editingId);
@@ -213,7 +224,12 @@ class OpdBooking extends Component
                     'payment_method' => $this->paymentMode,
                     'notes' => $this->notes,
                 ]);
+                \Illuminate\Support\Facades\Log::info('OPD_BOOKING_SUCCESS', ['id' => $consultation->id]);
             } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('OPD_BOOKING_FAILED', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
                 $this->dispatch('notify', ['type' => 'error', 'message' => $e->getMessage()]);
                 return;
             }
