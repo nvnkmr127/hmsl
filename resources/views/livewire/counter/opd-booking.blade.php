@@ -528,41 +528,4 @@
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.4); }
     </style>
 
-    <script>
-        document.addEventListener('livewire:init', () => {
-            console.log('Desk: Livewire System Initialized');
-
-            Livewire.on('print-op-slip', (event) => {
-                console.log('Desk: Printing Slip ID ->', event[0].id);
-                const url = "{{ route('counter.opd.print', ['id' => ':id']) }}".replace(':id', event[0].id);
-                window.open(url, '_blank');
-            });
-
-            Livewire.on('bill-generated', (event) => {
-                const billId = event?.billId ?? event?.[0]?.billId ?? event?.[0]?.bill_id ?? event?.[0];
-                if (!billId) return;
-                const url = "{{ route('billing.bills.print', ['bill' => ':id']) }}".replace(':id', billId);
-                window.open(url, '_blank');
-            });
-
-            Livewire.on('booking-completed', () => {
-                console.log('Desk: Booking Success Reset');
-                const searchInput = document.getElementById('patient-search-input');
-                if (searchInput) {
-                    setTimeout(() => {
-                        searchInput.focus();
-                        searchInput.select();
-                    }, 200);
-                }
-            });
-
-            // Global Modal Open Interceptor for Debugging
-            window.addEventListener('open-modal', (event) => {
-                const data = event.detail;
-                const name = data.name || (Array.isArray(data) ? data[0].name : (typeof data === 'string' ? data : 'UNKNOWN'));
-                console.log('Desk: Open Modal Full Detail ->', data);
-                console.log('Desk: Resolved Modal Name ->', name);
-            });
-        });
-    </script>
 </div>

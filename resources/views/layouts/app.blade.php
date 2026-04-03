@@ -72,8 +72,45 @@
     </div>
 
     <livewire:counter.quick-op-booking />
+    <x-toast />
 
     @livewireScripts
+    <script>
+        document.addEventListener('livewire:initialized', () => {
+            console.log('Global Livewire System Ready');
+
+            Livewire.on('print-op-slip', (event) => {
+                const id = event.id ?? event[0].id ?? event[0];
+                if (!id) return;
+                const url = "{{ route('counter.opd.print', ['id' => ':id']) }}".replace(':id', id);
+                window.open(url, '_blank');
+            });
+
+            Livewire.on('bill-generated', (event) => {
+                const billId = event?.billId ?? event?.[0]?.billId ?? event?.[0]?.bill_id ?? event?.[0];
+                if (!billId) return;
+                const url = "{{ route('billing.bills.print', ['bill' => ':id']) }}".replace(':id', billId);
+                window.open(url, '_blank');
+            });
+
+            Livewire.on('prescription-generated', (event) => {
+                const id = event.id ?? event[0].id ?? event[0];
+                if (!id) return;
+                const url = "{{ route('counter.prescriptions.print', ['id' => ':id']) }}".replace(':id', id);
+                window.open(url, '_blank');
+            });
+
+            Livewire.on('booking-completed', () => {
+                const searchInput = document.getElementById('patient-search-input');
+                if (searchInput) {
+                    setTimeout(() => {
+                        searchInput.focus();
+                        searchInput.select();
+                    }, 300);
+                }
+            });
+        });
+    </script>
     @stack('scripts')
 </body>
 </html>

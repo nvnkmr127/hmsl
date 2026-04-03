@@ -29,7 +29,7 @@ class OpdBooking extends Component
 
 
     public $searchPatient = '';
-    public $selectedPatient;
+    public ?Patient $selectedPatient = null;
     public $selectedDoctor;
     public $consultation_date;
     public $valid_upto;
