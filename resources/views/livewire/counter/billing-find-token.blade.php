@@ -11,8 +11,8 @@
                         <p class="text-xs font-black text-gray-400 uppercase tracking-widest">
                             {{ $c->consultation_date?->format('d M Y') }} · Token #{{ $c->token_number }}
                         </p>
-                        <p class="text-sm font-black text-gray-900 dark:text-white truncate mt-1">{{ $c->patient->full_name }}</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">{{ $c->patient->uhid }} · {{ $c->doctor?->full_name ?? '—' }}</p>
+                        <p class="text-sm font-black text-gray-900 dark:text-white truncate mt-1">{{ $c->patient?->full_name ?? 'Unknown' }}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">{{ $c->patient?->uhid ?? 'N/A' }} · {{ $c->doctor?->full_name ?? '—' }}</p>
                     </div>
                     <div class="text-right">
                         @if($c->payment_status === 'Paid')

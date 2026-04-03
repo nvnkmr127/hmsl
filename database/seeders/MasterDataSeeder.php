@@ -21,14 +21,14 @@ class MasterDataSeeder extends Seeder
         $adminUser = \App\Models\User::where('email', 'admin@hospital.com')->first();
         
         Doctor::updateOrCreate(
-            ['email' => 'pediatrician@hospital.com'],
+            ['email' => 'avinash.paed@hospital.com'],
             [
-                'full_name' => 'Dr. ' . ($adminUser->name ?? 'Specialist'),
-                'user_id' => $adminUser->id ?? null,
+                'full_name' => 'Dr. Avinash Lakkampally',
+                'user_id' => null, 
                 'department_id' => $pediatrics->id,
-                'specialization' => 'Senior Pediatrician',
+                'specialization' => 'Senior Paediatrician',
                 'qualification' => 'MBBS, MD (Pediatrics)',
-                'phone' => '+91 9876543210',
+                'phone' => '080088 02006',
                 'consultation_fee' => 500,
                 'registration_number' => 'REG-PED-001',
                 'is_active' => true,
@@ -36,13 +36,13 @@ class MasterDataSeeder extends Seeder
         );
 
         $services = [
-            ['name' => 'Consultation - GP', 'category' => 'OPD', 'price' => 500],
-            ['name' => 'Consultation - Specialist', 'category' => 'OPD', 'price' => 800],
-            ['name' => 'X-Ray Chest', 'category' => 'RADIO', 'price' => 1200],
+            ['name' => 'General Consultation', 'category' => 'OPD', 'price' => 500],
+            ['name' => 'Follow-up Consultation', 'category' => 'OPD', 'price' => 300],
+            ['name' => 'Immunization / Vaccination', 'category' => 'OPD', 'price' => 200],
+            ['name' => 'Nebulization', 'category' => 'OPD', 'price' => 150],
+            ['name' => 'Growth & Development Monitoring', 'category' => 'OPD', 'price' => 400],
             ['name' => 'Blood Routine (CBC)', 'category' => 'LAB', 'price' => 450],
-            ['name' => 'ECG', 'category' => 'LAB', 'price' => 600],
-            ['name' => 'Ward Bed Charge (General)', 'category' => 'IPD', 'price' => 1500],
-            ['name' => 'ICU Charge', 'category' => 'IPD', 'price' => 5000],
+            ['name' => 'CRP Test', 'category' => 'LAB', 'price' => 600],
         ];
 
         foreach ($services as $service) {

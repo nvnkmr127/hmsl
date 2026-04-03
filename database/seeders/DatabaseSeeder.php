@@ -16,9 +16,10 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
             SettingsSeeder::class,
             AdminUserSeeder::class,
+            ClinicalTemplateSeeder::class,
             MasterDataSeeder::class,
+            VaccinationSeeder::class,
             PatientSeeder::class,
-            OpdSeeder::class,
         ]);
     }
 }

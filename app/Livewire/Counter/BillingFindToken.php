@@ -24,7 +24,9 @@ class BillingFindToken extends Component
 
     public function render()
     {
-        $query = Consultation::with(['patient', 'doctor.department'])->orderByDesc('consultation_date');
+        $query = Consultation::with(['patient', 'doctor.department'])
+            ->has('patient')
+            ->orderByDesc('consultation_date');
         $query->whereDate('consultation_date', '>=', now()->subDays(30)->toDateString());
 
         if ($this->search) {
