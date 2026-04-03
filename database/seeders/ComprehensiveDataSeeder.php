@@ -26,6 +26,8 @@ class ComprehensiveDataSeeder extends Seeder
 {
     public function run(): void
     {
+        // Use Indian Locale for realistic names
+        $faker = \Faker\Factory::create('en_IN');
         $patientService = new PatientService();
         $doctor = Doctor::first();
         $admin = User::first();
@@ -35,27 +37,32 @@ class ComprehensiveDataSeeder extends Seeder
         $vaccines = Vaccine::all();
         $beds = Bed::where('is_available', true)->get();
 
-        // 1. Create 20 Patients (all children for Dwarakamai Children's Hospital)
+        // Local Nizamabad/Telangana area names (Telugu)
+        $firstNamesBoys = ['Anil', 'Suresh', 'Rahul', 'Prudhvi', 'Venkat', 'Siva', 'Sai', 'Karthik', 'Naveen', 'Raju', 'Mahesh', 'Ganesh', 'Varun', 'Tarun', 'Vikram'];
+        $firstNamesGirls = ['Lakshmi', 'Kavitha', 'Sravani', 'Priyanka', 'Deepika', 'Anusha', 'Swapna', 'Jyothi', 'Ramya', 'Siri', 'Pallavi', 'Divya', 'Keerthi', 'Honey'];
+        $lastNames = ['Lakkampally', 'Reddy', 'Chowdary', 'Varma', 'Yadav', 'Goud', 'Rao', 'Adicharla', 'Pendota', 'Mudiraj', 'Padala', 'Bodakunti', 'Kanaka', 'Mallela'];
+
+        // 1. Create 20 Patients (all children)
         for ($i = 0; $i < 20; $i++) {
-            $gender = fake()->randomElement(['Male', 'Female']);
-            $firstName = fake()->firstName($gender == 'Male' ? 'male' : 'female');
-            $lastName = fake()->lastName;
+            $gender = $faker->randomElement(['Male', 'Female']);
+            $firstName = ($gender == 'Male') ? $faker->randomElement($firstNamesBoys) : $faker->randomElement($firstNamesGirls);
+            $lastName = $faker->randomElement($lastNames);
             
             $patient = Patient::create([
                 'uhid' => $patientService->generateUHID(),
                 'first_name' => $firstName,
                 'last_name' => $lastName,
-                'father_name' => fake()->name('male'),
-                'mother_name' => fake()->name('female'),
+                'father_name' => $faker->randomElement($firstNamesBoys) . ' ' . $lastName,
+                'mother_name' => $faker->randomElement($firstNamesGirls) . ' ' . $lastName,
                 'gender' => $gender,
-                'date_of_birth' => fake()->dateTimeBetween('-12 years', '-1 months')->format('Y-m-d'),
-                'phone' => '9' . fake()->numerify('#########'),
-                'email' => fake()->unique()->safeEmail,
-                'blood_group' => fake()->randomElement(['A+', 'B+', 'O+', 'AB+', 'A-', 'B-', 'O-', 'AB-']),
-                'address' => fake()->streetAddress,
+                'date_of_birth' => $faker->dateTimeBetween('-12 years', '-1 months')->format('Y-m-d'),
+                'phone' => $faker->randomElement(['98', '99', '88', '77', '63']) . $faker->numerify('########'),
+                'email' => strtolower($firstName . '.' . $lastName . rand(1, 99) . '@example.com'),
+                'blood_group' => $faker->randomElement(['A+', 'B+', 'O+', 'AB+', 'A-', 'B-', 'O-', 'AB-']),
+                'address' => $faker->randomElement(['Tilak Gardens', 'Khaleelwadi', 'Bora Colony', 'Gandhi Chowk', 'Varni Road']),
                 'city' => 'Nizamabad',
                 'state' => 'Telangana',
-                'pincode' => '50300' . rand(1, 5),
+                'pincode' => '50300' . rand(1, 3),
             ]);
 
             // 2. Add Vital Logs for each patient (2-5 logs per patient)
@@ -64,7 +71,7 @@ class ComprehensiveDataSeeder extends Seeder
                     'patient_id' => $patient->id,
                     'weight' => rand(3, 40) + (rand(0, 9) / 10),
                     'height' => rand(50, 150),
-                    'temperature' => fake()->randomFloat(1, 97, 103),
+                    'temperature' => $faker->randomFloat(1, 97, 103),
                     'pulse' => rand(70, 120),
                     'resp_rate' => rand(18, 30),
                     'spo2' => rand(95, 100),
@@ -86,7 +93,7 @@ class ComprehensiveDataSeeder extends Seeder
                     'fee' => 500,
                     'status' => 'Completed',
                     'payment_status' => 'Paid',
-                    'payment_method' => fake()->randomElement(['Cash', 'UPI', 'Card']),
+                    'payment_method' => $faker->randomElement(['Cash', 'UPI', 'Google Pay', 'PhonePe']),
                 ]);
 
                 // 4. Bills for Consultations
@@ -118,8 +125,9 @@ class ComprehensiveDataSeeder extends Seeder
                     $med = $medicines->random();
                     $prescMedicines[] = [
                         'medicine_id' => $med->id,
-                        'medicine_name' => $med->name,
-                        'dosage' => '1-0-1',
+                        'name' => $med->name,
+                        'dose' => '1-0-1',
+                        'frequency' => 'Twice a day',
                         'duration' => '5 Days',
                         'instructions' => 'After food',
                     ];
@@ -129,9 +137,9 @@ class ComprehensiveDataSeeder extends Seeder
                     'consultation_id' => $consultant->id,
                     'patient_id' => $patient->id,
                     'doctor_id' => $doctor->id,
-                    'chief_complaint' => 'Fever and cold for 2 days',
-                    'diagnosis' => 'Viral Fever',
-                    'advice' => 'Rest and plenty of fluids.',
+                    'chief_complaint' => $faker->randomElement(['Fever for 2 days', 'Loose motions', 'Cough and cold', 'Loss of appetite']),
+                    'diagnosis' => $faker->randomElement(['Viral Infection', 'Upper Respiratory Tract Infection', 'Acute Gastroenteritis']),
+                    'advice' => 'Plenty of fluids, soft diet, and rest.',
                     'medicines' => $prescMedicines,
                     'created_by' => $admin->id,
                     'created_at' => $visitDate,
@@ -147,8 +155,8 @@ class ComprehensiveDataSeeder extends Seeder
                         'consultation_id' => $consultant->id,
                         'status' => 'Completed',
                         'completed_at' => $visitDate->copy()->addHours(2),
-                        'results' => ['observation' => 'Normal levels observed'],
-                        'notes' => 'Routine follow-up',
+                        'results' => ['observation' => 'Normal range observed'],
+                        'notes' => 'Tested at hospital lab',
                     ]);
                 }
             }
@@ -181,10 +189,10 @@ class ComprehensiveDataSeeder extends Seeder
                     'doctor_id' => $doctor->id,
                     'admission_date' => $admissionDate,
                     'discharge_date' => $isDischarged ? Carbon::now()->subDay() : null,
-                    'reason_for_admission' => fake()->randomElement(['Severe Fever', 'Dehydration', 'Respiratory Distress', 'Observation']),
+                    'reason_for_admission' => $faker->randomElement(['Pneumonia', 'Severe Dehydration', 'Pyrexia of Unknown Origin', 'Post-Op Observation']),
                     'status' => $isDischarged ? 'Discharged' : 'Admitted',
                     'created_by' => $admin->id,
-                    'notes' => 'Admission notes for ' . $firstName,
+                    'notes' => 'Admitted from OPD for further management.',
                 ]);
 
                 $bed->update(['is_available' => false]);

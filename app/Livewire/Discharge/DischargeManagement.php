@@ -3,7 +3,7 @@
 namespace App\Livewire\Discharge;
 
 use App\Models\Admission;
-use App\Services\IpdManager;
+use App\Services\IpdService;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Throwable;
@@ -30,7 +30,7 @@ class DischargeManagement extends Component
         $this->dispatch('open-modal', name: 'discharge-modal');
     }
 
-    public function processDischarge(IpdManager $manager)
+    public function processDischarge(IpdService $manager)
     {
         $this->validate([
             'selectedAdmissionId' => 'required|integer|exists:admissions,id',
