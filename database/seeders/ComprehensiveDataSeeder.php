@@ -21,13 +21,11 @@ use App\Models\Ward;
 use App\Services\PatientService;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
-use Faker\Factory as Faker;
 
 class ComprehensiveDataSeeder extends Seeder
 {
     public function run(): void
     {
-        $faker = Faker::create();
         $patientService = new PatientService();
         $doctor = Doctor::first();
         $admin = User::first();
@@ -39,22 +37,22 @@ class ComprehensiveDataSeeder extends Seeder
 
         // 1. Create 20 Patients (all children for Dwarakamai Children's Hospital)
         for ($i = 0; $i < 20; $i++) {
-            $gender = $faker->randomElement(['Male', 'Female']);
-            $firstName = $faker->firstName($gender == 'Male' ? 'male' : 'female');
-            $lastName = $faker->lastName;
+            $gender = fake()->randomElement(['Male', 'Female']);
+            $firstName = fake()->firstName($gender == 'Male' ? 'male' : 'female');
+            $lastName = fake()->lastName;
             
             $patient = Patient::create([
                 'uhid' => $patientService->generateUHID(),
                 'first_name' => $firstName,
                 'last_name' => $lastName,
-                'father_name' => $faker->name('male'),
-                'mother_name' => $faker->name('female'),
+                'father_name' => fake()->name('male'),
+                'mother_name' => fake()->name('female'),
                 'gender' => $gender,
-                'date_of_birth' => $faker->dateTimeBetween('-12 years', '-1 months')->format('Y-m-d'),
-                'phone' => '9' . $faker->numerify('#########'),
-                'email' => $faker->unique()->safeEmail,
-                'blood_group' => $faker->randomElement(['A+', 'B+', 'O+', 'AB+', 'A-', 'B-', 'O-', 'AB-']),
-                'address' => $faker->streetAddress,
+                'date_of_birth' => fake()->dateTimeBetween('-12 years', '-1 months')->format('Y-m-d'),
+                'phone' => '9' . fake()->numerify('#########'),
+                'email' => fake()->unique()->safeEmail,
+                'blood_group' => fake()->randomElement(['A+', 'B+', 'O+', 'AB+', 'A-', 'B-', 'O-', 'AB-']),
+                'address' => fake()->streetAddress,
                 'city' => 'Nizamabad',
                 'state' => 'Telangana',
                 'pincode' => '50300' . rand(1, 5),
@@ -64,9 +62,9 @@ class ComprehensiveDataSeeder extends Seeder
             for ($j = 0; $j < rand(2, 5); $j++) {
                 PatientVital::create([
                     'patient_id' => $patient->id,
-                    'weight' => rand(3, 40) + ($faker->randomFloat(1, 0, 9) / 10),
+                    'weight' => rand(3, 40) + (rand(0, 9) / 10),
                     'height' => rand(50, 150),
-                    'temperature' => $faker->randomFloat(1, 97, 103),
+                    'temperature' => fake()->randomFloat(1, 97, 103),
                     'pulse' => rand(70, 120),
                     'resp_rate' => rand(18, 30),
                     'spo2' => rand(95, 100),
@@ -82,13 +80,13 @@ class ComprehensiveDataSeeder extends Seeder
                     'patient_id' => $patient->id,
                     'doctor_id' => $doctor->id,
                     'service_id' => $services->where('category', 'OPD')->random()->id,
-                    'token_number' => rand(1, 50),
+                    'token_number' => rand(1, 400),
                     'consultation_date' => $visitDate,
                     'valid_upto' => $visitDate->copy()->addDays(7),
                     'fee' => 500,
                     'status' => 'Completed',
                     'payment_status' => 'Paid',
-                    'payment_method' => $faker->randomElement(['Cash', 'UPI', 'Card']),
+                    'payment_method' => fake()->randomElement(['Cash', 'UPI', 'Card']),
                 ]);
 
                 // 4. Bills for Consultations
@@ -131,8 +129,8 @@ class ComprehensiveDataSeeder extends Seeder
                     'consultation_id' => $consultant->id,
                     'patient_id' => $patient->id,
                     'doctor_id' => $doctor->id,
-                    'chief_complaint' => $faker->sentence,
-                    'diagnosis' => $faker->word . ' infection',
+                    'chief_complaint' => 'Fever and cold for 2 days',
+                    'diagnosis' => 'Viral Fever',
                     'advice' => 'Rest and plenty of fluids.',
                     'medicines' => $prescMedicines,
                     'created_by' => $admin->id,
@@ -140,7 +138,7 @@ class ComprehensiveDataSeeder extends Seeder
                 ]);
 
                 // 6. Lab Orders (Diagnostic Reports)
-                if (rand(0, 1)) {
+                if (rand(0, 1) && $labTests->count() > 0) {
                     $test = $labTests->random();
                     LabOrder::create([
                         'patient_id' => $patient->id,
@@ -149,8 +147,8 @@ class ComprehensiveDataSeeder extends Seeder
                         'consultation_id' => $consultant->id,
                         'status' => 'Completed',
                         'completed_at' => $visitDate->copy()->addHours(2),
-                        'results' => ['observation' => 'Normal'],
-                        'notes' => 'Routine checkup',
+                        'results' => ['observation' => 'Normal levels observed'],
+                        'notes' => 'Routine follow-up',
                     ]);
                 }
             }
@@ -183,9 +181,10 @@ class ComprehensiveDataSeeder extends Seeder
                     'doctor_id' => $doctor->id,
                     'admission_date' => $admissionDate,
                     'discharge_date' => $isDischarged ? Carbon::now()->subDay() : null,
-                    'reason_for_admission' => $faker->randomElement(['Severe Fever', 'Dehydration', 'Respiratory Distress', 'Observation']),
+                    'reason_for_admission' => fake()->randomElement(['Severe Fever', 'Dehydration', 'Respiratory Distress', 'Observation']),
                     'status' => $isDischarged ? 'Discharged' : 'Admitted',
                     'created_by' => $admin->id,
+                    'notes' => 'Admission notes for ' . $firstName,
                 ]);
 
                 $bed->update(['is_available' => false]);
