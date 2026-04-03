@@ -170,8 +170,9 @@ class OpdBooking extends Component
 
     }
 
-    public function book(OpdService $service, $shouldPrint = true)
+    public function book($shouldPrint = true)
     {
+        $service = app(OpdService::class);
         $this->validate([
             'selectedPatient' => 'required',
             'selectedService' => 'required|exists:services,id',
@@ -194,6 +195,9 @@ class OpdBooking extends Component
                 'notes' => $this->notes,
             ]);
             $message = "Appointment updated successfully!";
+            if ($shouldPrint) {
+                $this->dispatch('print-op-slip', ['id' => $consultation->id]);
+            }
         } else {
             try {
                 $consultation = $service->bookAppointment([

@@ -416,8 +416,20 @@
                             </div>
 
                             <div class="space-y-2">
+                                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Consulting Physician</label>
+                                <select wire:model.live="selectedDoctor" class="w-full bg-white dark:bg-gray-950 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 outline-none transition-all font-black text-gray-900 dark:text-white appearance-none text-sm shadow-sm">
+                                    <option value="">Any Available Doctor</option>
+                                    @foreach($doctors as $doctor)
+                                        <option value="{{ $doctor->id }}">Dr. {{ $doctor->full_name }} ({{ $doctor->department?->name ?? 'General' }})</option>
+                                    @endforeach
+                                </select>
+                                @error('selectedDoctor') <span class="text-[10px] font-bold text-rose-500 ml-1">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div class="space-y-2">
                                 <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Visit Date</label>
                                 <input type="date" wire:model.live="consultation_date" class="w-full bg-white dark:bg-gray-950 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 outline-none transition-all font-black text-gray-900 dark:text-white text-sm shadow-sm">
+                                @error('consultation_date') <span class="text-[10px] font-bold text-rose-500 ml-1">{{ $message }}</span> @enderror
                                 <p class="text-[9px] text-indigo-400 font-black uppercase tracking-[0.15em] ml-1 mt-2">Validity Auto-Extended: {{ \Carbon\Carbon::parse($valid_upto)->format('D, d M' ) }}</p>
                             </div>
                         </div>
@@ -431,11 +443,13 @@
                                 <div class="space-y-2">
                                     <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Weight (kg)</label>
                                     <input type="number" step="0.1" wire:model="weight" x-ref="weightInput" class="w-full bg-white dark:bg-gray-950 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 outline-none transition-all font-black text-gray-900 dark:text-white text-sm shadow-sm" placeholder="---">
+                                    @error('weight') <span class="text-[10px] font-bold text-rose-500 ml-1">{{ $message }}</span> @enderror
                                 </div>
 
                                 <div class="space-y-2">
                                     <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Temp (°F)</label>
                                     <input type="number" step="0.1" wire:model="temperature" class="w-full bg-white dark:bg-gray-950 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 outline-none transition-all font-black text-gray-900 dark:text-white text-sm shadow-sm" placeholder="98.6">
+                                    @error('temperature') <span class="text-[10px] font-bold text-rose-500 ml-1">{{ $message }}</span> @enderror
                                 </div>
                             </div>
 
@@ -445,10 +459,11 @@
                                         <label class="text-[10px] font-black text-violet-200 uppercase tracking-widest">Total Amount</label>
                                         <div class="px-2 py-0.5 bg-white/20 rounded-md text-[9px] font-black uppercase tracking-widest">REALTIME</div>
                                     </div>
-                                    <div class="flex items-end gap-2 mb-6">
+                                    <div class="flex items-end gap-2 mb-2">
                                         <span class="text-xl font-black opacity-60 pb-1">₹</span>
                                         <input type="number" wire:model="fee" class="w-full bg-transparent border-none p-0 text-3xl font-black focus:ring-0 outline-none text-white transition-all">
                                     </div>
+                                    @error('fee') <p class="text-[10px] font-bold text-white/80 mb-4">{{ $message }}</p> @enderror
                                     
                                     <div class="relative">
                                         <select wire:model="paymentMode" class="w-full bg-white/10 hover:bg-white/20 text-white border-none rounded-xl px-4 py-3 text-xs font-bold transition-all outline-none">
@@ -456,6 +471,7 @@
                                             <option class="text-gray-900" value="UPI">Settlement: Digital UPI</option>
                                             <option class="text-gray-900" value="Card">Settlement: Terminal Card</option>
                                         </select>
+                                        @error('paymentMode') <p class="text-[10px] font-bold text-white/80 mt-2">{{ $message }}</p> @enderror
                                     </div>
                                 </div>
                                 <svg class="absolute -right-8 -bottom-8 w-32 h-32 text-white/10 rotate-12" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L1 12l11 10 11-10L12 2zm0 18.5L2.5 12 12 3.5l9.5 8.5L12 20.5z"/></svg>

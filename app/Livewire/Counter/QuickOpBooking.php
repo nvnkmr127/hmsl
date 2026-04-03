@@ -119,8 +119,9 @@ class QuickOpBooking extends Component
         }
     }
 
-    public function book(OpdService $service, $shouldPrint = true)
+    public function book($shouldPrint = true)
     {
+        $service = app(OpdService::class);
         $this->validate([
             'selectedPatient' => 'required',
             'selectedService' => 'required|exists:services,id',

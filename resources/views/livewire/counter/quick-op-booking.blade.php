@@ -66,6 +66,7 @@
                                         <option value="">No services available</option>
                                     @endforelse
                                 </select>
+                                @error('selectedService') <p class="text-[10px] font-bold text-rose-500 mt-1 ml-1">{{ $message }}</p> @enderror
                             </div>
 
                             <div class="space-y-1.5">
@@ -78,6 +79,7 @@
                                         <option value="">No doctors available</option>
                                     @endforelse
                                 </select>
+                                @error('selectedDoctor') <p class="text-[10px] font-bold text-rose-500 mt-1 ml-1">{{ $message }}</p> @enderror
                             </div>
                         </div>
 
@@ -103,6 +105,8 @@
                                             <option class="text-gray-900" value="UPI">Settlement: UPI</option>
                                             <option class="text-gray-900" value="Card">Settlement: Card</option>
                                         </select>
+                                        @error('fee') <p class="text-[10px] font-bold text-white/80 mt-1">{{ $message }}</p> @enderror
+                                        @error('paymentMode') <p class="text-[10px] font-bold text-white/80 mt-1">{{ $message }}</p> @enderror
                                     </div>
                                 </div>
                                 <svg class="absolute -right-8 -bottom-8 w-32 h-32 text-white/5 opacity-10 rotate-12" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L1 12l11 10 11-10L12 2zm0 18.5L2.5 12 12 3.5l9.5 8.5L12 20.5z"/></svg>
