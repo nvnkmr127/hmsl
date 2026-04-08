@@ -1,4 +1,8 @@
-<div>
+@extends('layouts.app')
+
+@section('title', 'IPD Patient - ' . $admission->patient->full_name)
+
+@section('content')
     <x-page-header :title="$admission->patient->full_name" :subtitle="'Admission: ' . $admission->admission_number">
         <x-slot name="actions">
             <a href="{{ route('counter.ipd.index') }}" class="btn btn-secondary">
@@ -196,4 +200,4 @@
             </div>
         </div>
     </div>
-</div>
+@endsection

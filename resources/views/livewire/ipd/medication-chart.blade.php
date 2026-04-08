@@ -25,7 +25,7 @@
         </nav>
     </div>
 
-    @if($showForm)
+    @if($this->showForm)
         <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl mb-4">
             <h4 class="font-bold text-gray-900 dark:text-white mb-3">{{ $editingId ? 'Edit' : 'Add' }} Medicine</h4>
 
@@ -33,10 +33,10 @@
                 <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Medicine Name</label>
                 <div class="relative">
                     <input type="text" wire:model.live="searchMedicine" wire:focus="$set('showMedicineSearch', true)" class="w-full rounded-lg border-gray-200 dark:border-gray-700 text-sm" placeholder="Search medicine...">
-                    @if($showMedicineSearch && $medicines && $medicines->count() > 0)
+                    @if($this->showMedicineSearch && $medicines && $medicines->count() > 0)
                         <div class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 shadow-xl max-h-48 overflow-y-auto">
                             @foreach($medicines as $med)
-                                <button wire:click="selectMedicine({{ $med->id }})" class="w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm">
+                                <button wire:click="selectMedicine({{ $med->id }}, '{{ $med->name }}')" class="w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm">
                                     <span class="font-semibold">{{ $med->name }}</span>
                                     @if($med->strength)
                                         <span class="text-gray-500 ml-1">{{ $med->strength }}</span>
@@ -136,12 +136,12 @@
                         @endif
                         <p class="text-xs text-gray-400 mt-2">Started: {{ $med->start_date->format('d M Y') }}</p>
                     </div>
-                    @if($med->status === 'Active' && !$admission->status === 'Discharged')
+                    @if($med->status === 'Active' && $admission->status !== 'Discharged')
                         <div class="flex items-center gap-2">
                             <button wire:click="editMedication({{ $med->id }})" class="p-2 text-gray-400 hover:text-indigo-600">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                             </button>
-                            <button wire:click="confirmStop({{ $med->id }})" @click="$dispatch('open-modal', { name: 'stop-medication-modal' })" class="p-2 text-gray-400 hover:text-rose-600">
+                            <button wire:click="confirmStop({{ $med->id }})" class="p-2 text-gray-400 hover:text-rose-600">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                             </button>
                         </div>

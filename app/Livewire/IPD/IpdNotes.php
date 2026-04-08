@@ -18,6 +18,7 @@ class IpdNotes extends Component
     public $note_date;
     public $note_content;
     public $editingId = null;
+    public $showForm = false;
 
     public $quickNotes = [];
 
@@ -37,14 +38,12 @@ class IpdNotes extends Component
     public function loadQuickNotes()
     {
         $templates = ClinicalTemplate::where('type', 'notes')
-            ->whereIn('category', ['doctor', 'nurse', 'general'])
-            ->get()
-            ->groupBy('category');
+            ->get();
 
         $this->quickNotes = [
-            'doctor' => $templates->get('doctor', collect())->pluck('content')->toArray(),
-            'nurse' => $templates->get('nurse', collect())->pluck('content')->toArray(),
-            'general' => $templates->get('general', collect())->pluck('content')->toArray(),
+            'doctor' => $templates->pluck('content')->toArray(),
+            'nurse' => $templates->pluck('content')->toArray(),
+            'general' => $templates->pluck('content')->toArray(),
         ];
     }
 
@@ -94,7 +93,7 @@ class IpdNotes extends Component
             $message = 'Note added successfully';
         }
 
-        $this->reset(['note_content', 'editingId']);
+        $this->reset(['note_content', 'editingId', 'showForm']);
         $this->note_date = now()->format('Y-m-d\TH:i');
 
         $this->dispatch('notify', ['type' => 'success', 'message' => $message]);
@@ -112,11 +111,12 @@ class IpdNotes extends Component
         $this->note_type = $note->note_type;
         $this->note_date = $note->note_date->format('Y-m-d\TH:i');
         $this->note_content = $note->content;
+        $this->showForm = true;
     }
 
     public function cancelEdit()
     {
-        $this->reset(['editingId', 'note_content']);
+        $this->reset(['editingId', 'note_content', 'showForm']);
         $this->note_date = now()->format('Y-m-d\TH:i');
     }
 

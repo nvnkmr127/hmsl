@@ -295,11 +295,6 @@
             </div>
         </div>
 
-        <div class="space-y-4">
-            <label class="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] ml-2 block">Comprehensive Clinical Observer Notes</label>
-            <textarea wire:model="notes" rows="4" class="w-full bg-white dark:bg-gray-900 border-2 border-gray-100 dark:border-gray-800 focus:border-indigo-500 rounded-[2.5rem] px-8 py-6 outline-none transition-all font-bold placeholder-gray-300 dark:placeholder-gray-700 shadow-2xl shadow-indigo-500/5" placeholder="Record comorbidities, specialized nursing protocols, or emergency contact details..."></textarea>
-        </div>
-
         <!-- Submission Command Bar -->
         <div class="pt-10 border-t border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-6">
             <div class="flex items-center gap-3">

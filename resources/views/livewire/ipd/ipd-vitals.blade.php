@@ -8,7 +8,7 @@
         @endunless
     </div>
 
-    @if($showForm)
+    @if($this->showForm)
         <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl mb-4">
             <h4 class="font-bold text-gray-900 dark:text-white mb-3">New Vital Signs Entry</h4>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
