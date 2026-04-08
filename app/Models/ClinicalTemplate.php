@@ -9,5 +9,9 @@ class ClinicalTemplate extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['type', 'content'];
+    protected $fillable = [
+        'type',
+        'content',
+    ];
 }
+

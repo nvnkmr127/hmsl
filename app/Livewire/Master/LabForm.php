@@ -3,7 +3,7 @@
 namespace App\Livewire\Master;
 
 use App\Models\LabTest;
-use App\Services\LabManager;
+use App\Services\LabService;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
@@ -91,7 +91,7 @@ class LabForm extends Component
         $this->dispatch('open-modal', name: 'lab-modal');
     }
 
-    public function save(LabManager $manager)
+    public function save(LabService $service)
     {
         $this->validate();
 
@@ -107,9 +107,9 @@ class LabForm extends Component
 
         if ($this->isEditing) {
             $test = LabTest::findOrFail($this->testId);
-            $manager->updateTest($test, $testData, $this->parameters);
+            $service->updateTest($test, $testData, $this->parameters);
         } else {
-            $manager->createTest($testData, $this->parameters);
+            $service->createTest($testData, $this->parameters);
         }
 
         $this->dispatch('close-modal', name: 'lab-modal');

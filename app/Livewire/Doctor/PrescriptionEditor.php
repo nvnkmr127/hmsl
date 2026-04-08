@@ -51,10 +51,12 @@ class PrescriptionEditor extends Component
     public function addMedicine()
     {
         $this->medicines[] = [
+            'medicine_id'  => null,
             'name'         => '',
             'dose'         => '',
             'frequency'    => 'Once a day',
             'duration'     => '5 days',
+            'qty'          => 1,
             'instructions' => '',
         ];
     }
@@ -74,7 +76,28 @@ class PrescriptionEditor extends Component
             'follow_up_date'  => 'nullable|date|after:today',
             'medicines'       => 'nullable|array',
             'medicines.*.name' => 'required_with:medicines|string|max:255',
+            'medicines.*.qty' => 'nullable|integer|min:1|max:1000',
         ]);
+
+        $normalizedMedicines = collect($this->medicines)->map(function ($m) {
+            $row = is_array($m) ? $m : [];
+            $row['qty'] = isset($row['qty']) ? max(1, (int) $row['qty']) : 1;
+            $row['medicine_id'] = isset($row['medicine_id']) && $row['medicine_id'] !== '' ? (int) $row['medicine_id'] : null;
+            $row['name'] = isset($row['name']) ? trim((string) $row['name']) : '';
+
+            if (!$row['medicine_id'] && $row['name'] !== '') {
+                $match = Medicine::query()
+                    ->whereRaw('lower(name) = ?', [mb_strtolower($row['name'])])
+                    ->first();
+
+                if ($match) {
+                    $row['medicine_id'] = $match->id;
+                    $row['name'] = $match->name;
+                }
+            }
+
+            return $row;
+        })->values()->all();
 
         $data = [
             'consultation_id' => $this->consultationId,
@@ -85,7 +108,7 @@ class PrescriptionEditor extends Component
             'diagnosis'       => $this->diagnosis,
             'advice'          => $this->advice,
             'follow_up_date'  => $this->follow_up_date ?: null,
-            'medicines'       => array_values($this->medicines),
+            'medicines'       => $normalizedMedicines,
         ];
 
         if ($this->existingPrescription) {

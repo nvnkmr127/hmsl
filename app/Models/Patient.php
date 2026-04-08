@@ -100,4 +100,9 @@ class Patient extends Model
     {
         return $this->hasMany(PatientVaccination::class);
     }
+
+    public function consents()
+    {
+        return $this->hasMany(PatientConsent::class);
+    }
 }

@@ -56,4 +56,9 @@ class User extends Authenticatable
     {
         return str_replace('_', ' ', $this->getRoleNames()->first() ?? 'User');
     }
+
+    public function doctor()
+    {
+        return $this->hasOne(Doctor::class);
+    }
 }

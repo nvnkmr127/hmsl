@@ -13,6 +13,7 @@ class Bill extends Model
         'bill_number',
         'patient_id',
         'consultation_id',
+        'admission_id',
         'subtotal',
         'tax_amount',
         'discount_amount',
@@ -41,9 +42,19 @@ class Bill extends Model
         return $this->belongsTo(Consultation::class);
     }
 
+    public function admission()
+    {
+        return $this->belongsTo(Admission::class);
+    }
+
     public function items()
     {
         return $this->hasMany(BillItem::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(BillPayment::class);
     }
 
     public function creator()
@@ -57,5 +68,18 @@ class Bill extends Model
     public function getAmountInWordsAttribute()
     {
         return \Illuminate\Support\Number::spell((float) $this->total_amount);
+    }
+
+    public function getPaidAmountAttribute(): float
+    {
+        $payments = $this->relationLoaded('payments') ? $this->payments : $this->payments()->get();
+        $paid = (float) $payments->where('type', 'payment')->sum('amount');
+        $refunded = (float) $payments->where('type', 'refund')->sum('amount');
+        return $paid - $refunded;
+    }
+
+    public function getBalanceAmountAttribute(): float
+    {
+        return (float) $this->total_amount - (float) $this->paid_amount;
     }
 }

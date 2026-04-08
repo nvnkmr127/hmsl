@@ -92,7 +92,14 @@
                                         placeholder="Duration"
                                         class="block w-full rounded-xl border-transparent bg-gray-100/50 dark:bg-gray-700/50 text-sm text-gray-800 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 px-3 py-2 transition-all" />
                                 </div>
-                                <div class="col-span-2">
+                                <div class="col-span-1">
+                                    <input wire:model="medicines.{{ $idx }}.qty"
+                                        type="number"
+                                        min="1"
+                                        placeholder="Qty"
+                                        class="block w-full rounded-xl border-transparent bg-gray-100/50 dark:bg-gray-700/50 text-sm text-gray-800 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 px-3 py-2 transition-all" />
+                                </div>
+                                <div class="col-span-1">
                                     <input wire:model="medicines.{{ $idx }}.instructions"
                                         placeholder="Instructions (e.g. After food)"
                                         class="block w-full rounded-xl border-transparent bg-gray-100/50 dark:bg-gray-700/50 text-sm text-gray-800 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 px-3 py-2 transition-all" />

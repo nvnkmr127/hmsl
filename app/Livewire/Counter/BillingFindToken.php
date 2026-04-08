@@ -12,10 +12,6 @@ class BillingFindToken extends Component
     public function selectConsultation(int $consultationId): void
     {
         $consultation = Consultation::findOrFail($consultationId);
-        if ($consultation->payment_status !== 'Paid') {
-            $this->dispatch('notify', ['type' => 'error', 'message' => 'Token must be paid before generating a bill.']);
-            return;
-        }
 
         $this->dispatch('generate-bill', $consultationId);
         $this->dispatch('close-modal', name: 'billing-find-token-modal');
@@ -52,4 +48,3 @@ class BillingFindToken extends Component
         ]);
     }
 }
-

@@ -5,7 +5,11 @@ namespace App\Livewire\Counter;
 use App\Models\Patient;
 use App\Models\Doctor;
 use App\Models\Consultation;
+use App\Models\HospitalOwner;
 use App\Services\OpdService;
+use App\Services\BillingService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\Attributes\Validate;
 use Livewire\WithPagination;
@@ -37,8 +41,11 @@ class OpdBooking extends Component
     public $temperature;
     public $fee;
     public $paymentMode = 'Cash';
+    public $paymentStatus = 'Paid';
+    public $amountPaid = 0;
     public $selectedService;
     public $notes;
+    public $isFollowUp = false;
 
     
     public $isEditing = false;
@@ -62,8 +69,8 @@ class OpdBooking extends Component
 
     private function autoSelectDoctor()
     {
-        $user = auth()->user();
-        if ($user->hasRole('doctor_owner') || $user->hasRole('doctor')) {
+        $user = Auth::user();
+        if (HospitalOwner::isOwner($user)) {
             $doctor = Doctor::where('user_id', $user->id)->first();
             if ($doctor) {
                 $this->selectedDoctor = $doctor->id;
@@ -89,6 +96,31 @@ class OpdBooking extends Component
         $this->isEditing = false;
         $this->searchPatient = ''; // Clear search
         
+        // Check for recent consultations within validity period
+        $hasRecentVisit = Consultation::where('patient_id', $id)
+            ->where('status', '!=', 'Cancelled')
+            ->where('valid_upto', '>=', $this->consultation_date)
+            ->exists();
+
+        $this->isFollowUp = $hasRecentVisit;
+
+        if ($hasRecentVisit) {
+            $this->fee = 0;
+            $this->paymentStatus = 'Paid';
+            $this->amountPaid = 0;
+            $this->dispatch('notify', ['type' => 'success', 'message' => 'Follow-up visit: Free of charge.']);
+        } else {
+            // Re-select doctor or service to get current fee
+            if ($this->selectedService) {
+                $service = \App\Models\Service::find($this->selectedService);
+                if ($service) {
+                    $this->fee = $service->price;
+                }
+            } else {
+                $this->autoSelectDoctor();
+            }
+        }
+
         // Auto-fill from latest vitals if available
         $latestVitals = $this->selectedPatient->vitals()->latest()->first();
         if ($latestVitals) {
@@ -107,6 +139,18 @@ class OpdBooking extends Component
             $service = \App\Models\Service::find($id);
             if ($service) {
                 $this->fee = $service->price;
+                
+                // If patient selected, check for follow-up
+                if ($this->selectedPatient) {
+                    $hasRecentVisit = Consultation::where('patient_id', $this->selectedPatient->id)
+                        ->where('status', '!=', 'Cancelled')
+                        ->where('valid_upto', '>=', $this->consultation_date)
+                        ->exists();
+                    $this->isFollowUp = $hasRecentVisit;
+                    if ($hasRecentVisit) {
+                        $this->fee = 0;
+                    }
+                }
             }
         }
     }
@@ -117,14 +161,63 @@ class OpdBooking extends Component
             $doctor = Doctor::find($id);
             if ($doctor) {
                 $this->fee = $doctor->consultation_fee;
+                $this->updatedFee($this->fee);
+
+                // If patient selected, check for follow-up
+                if ($this->selectedPatient) {
+                    $hasRecentVisit = Consultation::where('patient_id', $this->selectedPatient->id)
+                        ->where('status', '!=', 'Cancelled')
+                        ->where('valid_upto', '>=', $this->consultation_date)
+                        ->exists();
+                    $this->isFollowUp = $hasRecentVisit;
+                    if ($hasRecentVisit) {
+                        $this->fee = 0;
+                    }
+                }
             }
+        }
+    }
+
+    public function updatedFee($value)
+    {
+        $fee = (float) $value;
+        if ($fee <= 0) {
+            $this->paymentStatus = 'Paid';
+            $this->amountPaid = 0;
+            return;
+        }
+
+        if ($this->paymentStatus === 'Paid') {
+            $this->amountPaid = $fee;
+        } elseif ($this->paymentStatus === 'Unpaid') {
+            $this->amountPaid = 0;
+        } else {
+            $this->amountPaid = min(max(0, (float) $this->amountPaid), $fee);
+        }
+    }
+
+    public function updatedPaymentStatus($value)
+    {
+        $fee = (float) $this->fee;
+        if ($fee <= 0) {
+            $this->paymentStatus = 'Paid';
+            $this->amountPaid = 0;
+            return;
+        }
+
+        if ($value === 'Paid') {
+            $this->amountPaid = $fee;
+        } elseif ($value === 'Unpaid') {
+            $this->amountPaid = 0;
+        } else {
+            $this->amountPaid = min(max(0, (float) $this->amountPaid), $fee);
         }
     }
 
 
     public function editBooking($id)
     {
-        $consultation = Consultation::with('patient')->findOrFail($id);
+        $consultation = Consultation::with(['patient', 'bill.payments'])->findOrFail($id);
         $this->editingId = $id;
         $this->isEditing = true;
         $this->selectedPatient = $consultation->patient;
@@ -138,6 +231,8 @@ class OpdBooking extends Component
 
         $this->fee = $consultation->fee;
         $this->paymentMode = $consultation->payment_method;
+        $this->paymentStatus = $consultation->bill?->payment_status ?: ($consultation->payment_status === 'Paid' ? 'Paid' : 'Unpaid');
+        $this->amountPaid = $consultation->bill ? (float) $consultation->bill->paid_amount : ($consultation->payment_status === 'Paid' ? (float) $consultation->fee : 0);
         $this->notes = $consultation->notes;
         $this->showBookingForm = true;
 
@@ -147,12 +242,40 @@ class OpdBooking extends Component
     public function cancelBooking($id)
     {
         $this->authorize('view opd');
-        $consultation = Consultation::findOrFail($id);
-        $consultation->update(['status' => 'Cancelled']);
+        $billing = app(BillingService::class);
+        $tokenNumber = Consultation::whereKey($id)->value('token_number');
+
+        DB::transaction(function () use ($id, $billing) {
+            $consultation = Consultation::with(['bill.payments'])->lockForUpdate()->findOrFail($id);
+
+            if ($consultation->status === 'Cancelled') {
+                return;
+            }
+
+            $bill = $consultation->bill;
+            if ($bill) {
+                $bill->load('payments');
+                $paid = (float) $bill->paid_amount;
+
+                if ($paid > 0) {
+                    $billing->recordPayment($bill, $paid, $bill->payment_method, 'refund', null, 'OPD token cancelled - refund');
+                    $billing->recalculatePaymentStatus($bill);
+                } else {
+                    $bill->items()->delete();
+                    $bill->delete();
+                }
+            }
+
+            $consultation->update([
+                'status' => 'Cancelled',
+                'payment_status' => 'Unpaid',
+                'payment_method' => null,
+            ]);
+        });
         
         $this->dispatch('notify', [
             'type' => 'warning',
-            'message' => "Token #{$consultation->token_number} has been cancelled."
+            'message' => "Token #{$tokenNumber} has been cancelled."
         ]);
 
     }
@@ -191,12 +314,42 @@ class OpdBooking extends Component
             'weight' => 'nullable|numeric|min:0|max:500',
             'temperature' => 'nullable|numeric|min:70|max:120',
             'paymentMode' => 'required|in:Cash,UPI,Card',
+            'paymentStatus' => 'required|in:Paid,Unpaid,Partially Paid',
+            'amountPaid' => 'nullable|numeric|min:0',
         ]);
 
         \Illuminate\Support\Facades\Log::debug('OPD_BOOKING_VALIDATED');
 
+        if ((float) $this->fee > 0 && $this->paymentStatus === 'Partially Paid') {
+            $paid = (float) $this->amountPaid;
+            if ($paid <= 0) {
+                $this->dispatch('notify', ['type' => 'error', 'message' => 'Enter an amount paid for Partially Paid.']);
+                return;
+            }
+            if ($paid >= (float) $this->fee) {
+                $this->dispatch('notify', ['type' => 'error', 'message' => 'Amount paid must be less than total for Partially Paid.']);
+                return;
+            }
+        }
+
         if ($this->isEditing) {
-            $consultation = Consultation::findOrFail($this->editingId);
+            $billing = app(BillingService::class);
+
+            $consultation = Consultation::with(['bill.payments', 'service', 'doctor'])->findOrFail($this->editingId);
+
+            $bill = $consultation->bill;
+            $feeChanged = (float) $this->fee !== (float) $consultation->fee;
+
+            if ($bill && $bill->payments()->exists() && $feeChanged) {
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => 'Cannot change fee after payments. Use Billing to refund/adjust.',
+                ]);
+                return;
+            }
+
+            $newConsultationStatus = ($this->fee <= 0 || $this->paymentStatus === 'Paid') ? 'Paid' : 'Unpaid';
+
             $consultation->update([
                 'service_id' => $this->selectedService,
                 'doctor_id' => $this->selectedDoctor,
@@ -204,7 +357,60 @@ class OpdBooking extends Component
                 'temperature' => $this->temperature,
                 'fee' => $this->fee,
                 'notes' => $this->notes,
+                'payment_status' => $newConsultationStatus,
+                'payment_method' => $newConsultationStatus === 'Paid' ? $this->paymentMode : null,
             ]);
+
+            if ($this->fee > 0) {
+                $itemName = ($consultation->service?->name ?? 'Consultation Fee') . ($consultation->doctor ? ' - Dr. ' . $consultation->doctor->full_name : '');
+                $billData = [
+                    'patient_id' => $consultation->patient_id,
+                    'consultation_id' => $consultation->id,
+                    'discount_amount' => $consultation->discount_amount ?? 0,
+                    'tax_amount' => 0,
+                    'payment_status' => $this->paymentStatus,
+                    'paid_amount' => (float) $this->amountPaid,
+                    'payment_method' => $this->paymentMode,
+                    'notes' => 'Bill for ' . ($consultation->service?->name ?? 'OPD Consultation'),
+                ];
+                $items = [[
+                    'name' => $itemName,
+                    'type' => 'Consultation',
+                    'quantity' => 1,
+                    'unit_price' => (float) $this->fee,
+                ]];
+
+                if ($bill) {
+                    DB::transaction(function () use ($bill, $items, $billData, $billing) {
+                        $bill->update([
+                            'discount_amount' => $billData['discount_amount'] ?? 0,
+                            'tax_amount' => $billData['tax_amount'] ?? 0,
+                            'notes' => $billData['notes'] ?? null,
+                        ]);
+
+                        $bill->items()->delete();
+                        $subtotal = 0;
+                        foreach ($items as $item) {
+                            $totalPrice = $item['quantity'] * $item['unit_price'];
+                            $bill->items()->create([
+                                'item_name' => $item['name'],
+                                'item_type' => $item['type'] ?? 'General',
+                                'quantity' => $item['quantity'],
+                                'unit_price' => $item['unit_price'],
+                                'total_price' => $totalPrice,
+                            ]);
+                            $subtotal += $totalPrice;
+                        }
+                        $totalAmount = $subtotal - ($bill->discount_amount ?? 0) + ($bill->tax_amount ?? 0);
+                        $bill->update(['subtotal' => $subtotal, 'total_amount' => $totalAmount]);
+
+                        $billing->recalculatePaymentStatus($bill);
+                    });
+                } else {
+                    $billing->createBill($billData, $items);
+                }
+            }
+
             $message = "Appointment updated successfully!";
             if ($shouldPrint) {
                 $this->dispatch('print-op-slip', ['id' => $consultation->id]);
@@ -220,8 +426,10 @@ class OpdBooking extends Component
                     'fee' => $this->fee,
                     'consultation_date' => $this->consultation_date,
                     'valid_upto' => $this->valid_upto,
-                    'payment_status' => 'Paid',
+                    'payment_status' => ($this->fee <= 0 || $this->paymentStatus === 'Paid') ? 'Paid' : 'Unpaid',
                     'payment_method' => $this->paymentMode,
+                    'bill_payment_status' => $this->paymentStatus,
+                    'paid_amount' => (float) $this->amountPaid,
                     'notes' => $this->notes,
                 ]);
                 \Illuminate\Support\Facades\Log::info('OPD_BOOKING_SUCCESS', ['id' => $consultation->id]);
@@ -245,7 +453,7 @@ class OpdBooking extends Component
         $this->dispatch('notify', ['type' => 'success', 'message' => $message]);
 
 
-        $this->reset(['selectedPatient', 'selectedService', 'selectedDoctor', 'fee', 'notes', 'showBookingForm', 'isEditing', 'editingId', 'weight', 'temperature', 'paymentMode', 'searchPatient', 'lastConsultationId']);
+        $this->reset(['selectedPatient', 'selectedService', 'selectedDoctor', 'fee', 'notes', 'showBookingForm', 'isEditing', 'editingId', 'weight', 'temperature', 'paymentMode', 'paymentStatus', 'amountPaid', 'searchPatient', 'lastConsultationId', 'isFollowUp']);
 
         $validityDays = \App\Models\Setting::get('opd_validity_days', 7);
         $this->consultation_date = date('Y-m-d');

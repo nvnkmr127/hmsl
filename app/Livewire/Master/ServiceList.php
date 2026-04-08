@@ -3,7 +3,7 @@
 namespace App\Livewire\Master;
 
 use App\Models\Service;
-use App\Services\ServiceManager;
+use App\Services\ServiceService;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -23,10 +23,10 @@ class ServiceList extends Component
         $this->resetPage();
     }
 
-    public function toggleActive($id, ServiceManager $manager)
+    public function toggleActive($id, ServiceService $service)
     {
-        $service = Service::findOrFail($id);
-        $manager->toggleActive($service);
+        $record = Service::findOrFail($id);
+        $service->toggleActive($record);
         
         $this->dispatch('notify', [
             'type' => 'success',
@@ -34,10 +34,10 @@ class ServiceList extends Component
         ]);
     }
 
-    public function deleteService($id, ServiceManager $manager)
+    public function deleteService($id, ServiceService $service)
     {
-        $service = Service::findOrFail($id);
-        $manager->delete($service);
+        $record = Service::findOrFail($id);
+        $service->delete($record);
         
         $this->dispatch('notify', [
             'type' => 'success',

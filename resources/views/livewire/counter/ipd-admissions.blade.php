@@ -57,7 +57,7 @@
                                             {{ substr($adm->patient->first_name, 0, 1) }}
                                         </div>
                                         <div>
-                                            <p class="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">{{ $adm->patient->full_name }}</p>
+                                            <a href="{{ route('counter.ipd.show', $adm->id) }}" class="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight hover:text-indigo-600">{{ $adm->patient->full_name }}</a>
                                             <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ $adm->patient->gender }} · {{ $adm->patient->age }}</p>
                                         </div>
                                     </div>
@@ -99,7 +99,13 @@
                                 </td>
                                 <td class="px-8 py-6 text-right">
                                     <div class="flex justify-end gap-2">
+                                        <a href="{{ route('billing.index', ['search' => $adm->patient->uhid]) }}" class="p-3 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white transition-all shadow-sm hover:shadow-lg hover:shadow-emerald-500/20" title="Collect Due">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                        </a>
                                         @if($adm->status === 'Admitted')
+                                            <button wire:click="orderLabs({{ $adm->id }})" class="p-3 bg-sky-50 dark:bg-sky-950/30 text-sky-600 rounded-xl hover:bg-sky-600 hover:text-white transition-all shadow-sm hover:shadow-lg hover:shadow-sky-500/20" title="Order Labs">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.673.337a4 4 0 01-2.574.344l-1.474-.411a5 5 0 00-3.578.176l-1.41.632" /></svg>
+                                            </button>
                                             <button wire:click="dischargePatient({{ $adm->id }})" class="p-3 bg-rose-50 dark:bg-rose-950/30 text-rose-600 rounded-xl hover:bg-rose-600 hover:text-white transition-all group/btn shadow-sm hover:shadow-lg hover:shadow-rose-500/20" title="Discharge">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                                             </button>
@@ -181,6 +187,36 @@
                 <button type="button" @click="$dispatch('close-modal', { name: 'ipd-discharge-modal' })" class="px-8 py-4 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-colors">Cancel</button>
                 <button type="button" wire:click="confirmDischarge" class="px-10 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-emerald-500/20 transition-all active:scale-95">
                     Confirm Check-out
+                </button>
+            </div>
+        </div>
+    </x-modal>
+
+    <x-modal name="ipd-lab-order-modal" title="Order Lab Tests" width="2xl">
+        <div class="p-6 space-y-4">
+            <div class="space-y-2 max-h-64 overflow-y-auto custom-scrollbar pr-1">
+                @foreach($labTests as $t)
+                    <label class="flex items-center justify-between gap-3 p-3 rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50/40 dark:bg-gray-900/20">
+                        <div class="flex items-center gap-3">
+                            <input type="checkbox" wire:model="selectedLabTests" value="{{ $t->id }}" class="checkbox checkbox-sm" />
+                            <div>
+                                <p class="text-sm font-bold text-gray-900 dark:text-white">{{ $t->name }}</p>
+                                <p class="text-xs text-gray-500">₹ {{ number_format((float) $t->price, 2) }}</p>
+                            </div>
+                        </div>
+                    </label>
+                @endforeach
+            </div>
+
+            <div>
+                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Notes (Optional)</label>
+                <textarea wire:model.live="labNotes" rows="2" class="w-full bg-gray-50 dark:bg-gray-950 border-2 border-transparent focus:border-indigo-500 rounded-3xl px-6 py-4 outline-none transition-all font-bold text-gray-900 dark:text-white text-sm shadow-sm placeholder-gray-300 dark:placeholder-gray-700 ring-4 ring-gray-100/50 dark:ring-gray-900/50"></textarea>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-2">
+                <button type="button" @click="$dispatch('close-modal', { name: 'ipd-lab-order-modal' })" class="px-8 py-4 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-colors">Cancel</button>
+                <button type="button" wire:click="confirmLabOrder" class="px-10 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-indigo-500/20 transition-all active:scale-95">
+                    Create Order
                 </button>
             </div>
         </div>

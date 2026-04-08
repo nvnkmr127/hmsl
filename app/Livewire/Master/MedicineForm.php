@@ -3,7 +3,7 @@
 namespace App\Livewire\Master;
 
 use App\Models\Medicine;
-use App\Services\MedicineManager;
+use App\Services\MedicineService;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
@@ -83,7 +83,7 @@ class MedicineForm extends Component
         $this->dispatch('open-modal', name: 'medicine-modal');
     }
 
-    public function save(MedicineManager $manager)
+    public function save(MedicineService $service)
     {
         $this->validate();
 
@@ -105,9 +105,9 @@ class MedicineForm extends Component
 
         if ($this->isEditing) {
             $medicine = Medicine::findOrFail($this->medicineId);
-            $manager->update($medicine, $data);
+            $service->update($medicine, $data);
         } else {
-            $manager->create($data);
+            $service->create($data);
         }
 
         $this->dispatch('close-modal', name: 'medicine-modal');

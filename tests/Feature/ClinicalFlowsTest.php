@@ -7,11 +7,13 @@ use App\Models\Bed;
 use App\Models\Bill;
 use App\Models\Department;
 use App\Models\Doctor;
+use App\Models\HospitalOwner;
 use App\Models\Patient;
+use App\Models\Service;
 use App\Models\User;
 use App\Models\Ward;
 use App\Services\BillingService;
-use App\Services\IpdManager;
+use App\Services\IpdService;
 use App\Services\OpdService;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -39,10 +41,9 @@ class ClinicalFlowsTest extends TestCase
     private function makeDoctor(): Doctor
     {
         $department = Department::create(['name' => 'General Medicine']);
-        $user = User::factory()->create();
 
         return Doctor::create([
-            'user_id' => $user->id,
+            'user_id' => null,
             'department_id' => $department->id,
             'full_name' => 'Dr Demo',
             'specialization' => 'General',
@@ -64,16 +65,29 @@ class ClinicalFlowsTest extends TestCase
         ]);
     }
 
+    private function makeOpdService(): Service
+    {
+        return Service::create([
+            'name' => 'General Consultation',
+            'category' => 'OPD',
+            'price' => 500,
+            'description' => null,
+            'is_active' => true,
+        ]);
+    }
+
     public function test_opd_token_is_created_and_print_slip_loads(): void
     {
         $receptionist = $this->makeUserWithRole('receptionist');
         $doctor = $this->makeDoctor();
+        $service = $this->makeOpdService();
         $patient = $this->makePatient('UHID-OPD-0001');
 
         $manager = app(OpdService::class);
         $consultation = $manager->bookAppointment([
             'patient_id' => $patient->id,
             'doctor_id' => $doctor->id,
+            'service_id' => $service->id,
             'fee' => 500,
             'consultation_date' => date('Y-m-d'),
             'payment_status' => 'Paid',
@@ -92,12 +106,14 @@ class ClinicalFlowsTest extends TestCase
     {
         $this->seedRoles();
         $doctor = $this->makeDoctor();
+        $service = $this->makeOpdService();
         $patient = $this->makePatient('UHID-OPD-0002');
 
         $manager = app(OpdService::class);
         $consultation = $manager->bookAppointment([
             'patient_id' => $patient->id,
             'doctor_id' => $doctor->id,
+            'service_id' => $service->id,
             'fee' => 500,
             'consultation_date' => date('Y-m-d'),
             'payment_status' => 'Paid',
@@ -114,6 +130,7 @@ class ClinicalFlowsTest extends TestCase
     {
         $doctorOwner = $this->makeUserWithRole('doctor_owner');
         $department = Department::create(['name' => 'General']);
+        $service = $this->makeOpdService();
 
         $doctor = Doctor::create([
             'user_id' => $doctorOwner->id,
@@ -123,12 +140,14 @@ class ClinicalFlowsTest extends TestCase
             'consultation_fee' => 500,
             'is_active' => true,
         ]);
+        HospitalOwner::setOwnerDoctor($doctor);
 
         $patient = $this->makePatient('UHID-OPD-0003');
         $manager = app(OpdService::class);
         $consultation = $manager->bookAppointment([
             'patient_id' => $patient->id,
             'doctor_id' => $doctor->id,
+            'service_id' => $service->id,
             'fee' => 500,
             'consultation_date' => date('Y-m-d'),
             'payment_status' => 'Paid',
@@ -180,6 +199,7 @@ class ClinicalFlowsTest extends TestCase
             'consultation_fee' => 500,
             'is_active' => true,
         ]);
+        HospitalOwner::setOwnerDoctor($doctor);
 
         $patient = Patient::create([
             'uhid' => 'UHID-IPD-0001',
@@ -211,7 +231,7 @@ class ClinicalFlowsTest extends TestCase
             'created_by' => $doctorOwner->id,
         ]);
 
-        $manager = app(IpdManager::class);
+        $manager = app(IpdService::class);
         $manager->dischargePatient($admission, 'Discharge instructions');
 
         $this->actingAs($doctorOwner)
@@ -226,4 +246,3 @@ class ClinicalFlowsTest extends TestCase
             ->assertSee($admission->admission_number);
     }
 }
-

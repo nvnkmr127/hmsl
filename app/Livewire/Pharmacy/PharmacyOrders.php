@@ -2,7 +2,11 @@
 
 namespace App\Livewire\Pharmacy;
 
+use App\Models\Medicine;
 use App\Models\Prescription;
+use App\Services\MedicineService;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Throwable;
@@ -26,29 +30,58 @@ class PharmacyOrders extends Component
         $this->resetPage();
     }
 
-    public function dispense($id)
+    public function dispense($id, MedicineService $medicineService)
     {
         $this->validate([
             'status' => 'required|in:pending,dispensed,all',
         ]);
 
         try {
-            $prescription = Prescription::findOrFail($id);
+            DB::transaction(function () use ($id, $medicineService) {
+                $prescription = Prescription::query()->lockForUpdate()->findOrFail($id);
 
-            if ($prescription->is_dispensed) {
-                $this->dispatch('notify', [
-                    'type' => 'warning',
-                    'message' => 'This prescription is already dispensed.',
+                if ($prescription->is_dispensed) {
+                    throw new \RuntimeException('This prescription is already dispensed.');
+                }
+
+                $items = is_array($prescription->medicines) ? $prescription->medicines : [];
+                foreach ($items as $item) {
+                    $medicineId = isset($item['medicine_id']) ? (int) $item['medicine_id'] : null;
+                    $name = isset($item['name']) ? trim((string) $item['name']) : '';
+                    $qty = isset($item['qty']) ? (int) $item['qty'] : 1;
+                    $qty = max(1, $qty);
+
+                    $medicine = null;
+                    if ($medicineId) {
+                        $medicine = Medicine::find($medicineId);
+                    } elseif ($name !== '') {
+                        $medicine = Medicine::query()
+                            ->whereRaw('lower(name) = ?', [mb_strtolower($name)])
+                            ->first();
+                    }
+
+                    if (!$medicine) {
+                        continue;
+                    }
+
+                    $medicineService->adjustStock(
+                        $medicine,
+                        -1 * $qty,
+                        'dispense',
+                        Prescription::class,
+                        (int) $prescription->id,
+                        'Dispensed for prescription #' . $prescription->id
+                    );
+                }
+
+                $prescription->update([
+                    'is_dispensed' => true,
+                    'dispensed_at' => now(),
+                    'dispensed_by' => Auth::id(),
                 ]);
 
-                return;
-            }
-
-            $prescription->update([
-                'is_dispensed' => true,
-                'dispensed_at' => now(),
-                'dispensed_by' => auth()->id(),
-            ]);
+                event(new \App\Events\Pharmacy\PrescriptionDispensed($prescription->load(['patient', 'doctor'])));
+            });
 
             $this->dispatch('notify', [
                 'type' => 'success',
@@ -56,9 +89,10 @@ class PharmacyOrders extends Component
             ]);
         } catch (Throwable $e) {
             report($e);
+            $message = $e instanceof \RuntimeException ? $e->getMessage() : 'Unable to mark this prescription as dispensed. Please try again.';
             $this->dispatch('notify', [
                 'type' => 'error',
-                'message' => 'Unable to mark this prescription as dispensed. Please try again.',
+                'message' => $message,
             ]);
         }
     }

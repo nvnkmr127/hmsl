@@ -3,7 +3,7 @@
 namespace App\Livewire\Master;
 
 use App\Models\Service;
-use App\Services\ServiceManager;
+use App\Services\ServiceService;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
@@ -62,7 +62,7 @@ class ServiceForm extends Component
         $this->dispatch('open-modal', name: 'service-modal');
     }
 
-    public function save(ServiceManager $manager)
+    public function save(ServiceService $service)
     {
         $this->validate();
 
@@ -78,10 +78,10 @@ class ServiceForm extends Component
 
 
         if ($this->isEditing) {
-            $service = Service::findOrFail($this->serviceId);
-            $manager->update($service, $data);
+            $record = Service::findOrFail($this->serviceId);
+            $service->update($record, $data);
         } else {
-            $manager->create($data);
+            $service->create($data);
         }
 
         $this->dispatch('close-modal', name: 'service-modal');

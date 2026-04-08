@@ -13,12 +13,15 @@ use App\Models\LabTest;
 use App\Models\Patient;
 use App\Models\PatientVital;
 use App\Models\PatientVaccination;
+use App\Models\PatientConsent;
 use App\Models\Prescription;
 use App\Models\User;
 use App\Models\Vaccine;
 use App\Models\Ward;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -29,6 +32,7 @@ class PatientHistoryDashboardTest extends TestCase
     public function test_patient_history_dashboard_loads_and_tabs_show_data(): void
     {
         $this->seed(RolePermissionSeeder::class);
+        Storage::fake('public');
 
         $user = User::factory()->create();
         $user->assignRole('receptionist');
@@ -49,7 +53,7 @@ class PatientHistoryDashboardTest extends TestCase
         $department = Department::create(['name' => 'General']);
         $doctorUser = User::factory()->create();
         $doctor = Doctor::create([
-            'user_id' => $doctorUser->id,
+            'user_id' => null,
             'department_id' => $department->id,
             'full_name' => 'Dr Demo',
             'specialization' => 'General',
@@ -148,15 +152,16 @@ class PatientHistoryDashboardTest extends TestCase
 
         Livewire::actingAs($user)
             ->test('counter.patient-history', ['id' => $patient->id])
-            ->assertSee('OP Visits')
-            ->assertSee('Treatment')
-            ->assertSee('Billing')
+            ->assertSee('OPD Visits')
+            ->assertSee('History')
+            ->assertSee('Bills')
             ->assertSee('Admissions')
             ->assertSee('Discharges')
-            ->assertSee('Medications')
-            ->assertSee('Diagnostics')
+            ->assertSee('Rx')
+            ->assertSee('Labs')
             ->assertSee('Vitals')
             ->assertSee('Vaccines')
+            ->assertSee('Consents')
             ->set('tab', 'treatment')
             ->assertSee('Treatment History')
             ->set('tab', 'billing')
@@ -178,6 +183,18 @@ class PatientHistoryDashboardTest extends TestCase
             ->set('tab', 'vitals')
             ->assertSee('Vital Logs')
             ->set('tab', 'vaccinations')
-            ->assertSee('Vaccination Records');
+            ->assertSee('Vaccination Records')
+            ->set('tab', 'consents')
+            ->set('consentType', 'high_risk')
+            ->set('consentSignedAt', now()->toDateString())
+            ->set('consentNotes', 'High risk consent')
+            ->set('consentFile', UploadedFile::fake()->image('high-risk-consent.jpg'))
+            ->call('uploadConsent');
+
+        $this->assertDatabaseCount('patient_consents', 1);
+        $consent = PatientConsent::first();
+        $this->assertSame($patient->id, $consent->patient_id);
+        $this->assertSame('high_risk', $consent->type);
+        $this->assertTrue(Storage::disk('public')->exists($consent->file_path));
     }
 }

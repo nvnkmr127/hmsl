@@ -2,11 +2,13 @@
 
 namespace App\Livewire\Master;
 
+use App\Models\HospitalOwner;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
 use Livewire\Attributes\On;
 use Spatie\Permission\Models\Role;
+use Illuminate\Validation\ValidationException;
 
 class UserForm extends Component
 {
@@ -56,6 +58,26 @@ class UserForm extends Component
 
         $this->validate($rules);
 
+        $ownerUserId = HospitalOwner::ownerUser()?->id;
+        if ($ownerUserId && $this->isEditing && (int) $ownerUserId === (int) $this->userId && $this->role !== 'doctor_owner') {
+            throw ValidationException::withMessages([
+                'role' => 'The hospital owner role cannot be removed.',
+            ]);
+        }
+
+        if ($this->role === 'doctor_owner') {
+            $existingOwner = User::query()
+                ->whereHas('roles', fn($q) => $q->where('name', 'doctor_owner'))
+                ->when($this->isEditing, fn($q) => $q->where('id', '!=', $this->userId))
+                ->first();
+
+            if ($existingOwner) {
+                throw ValidationException::withMessages([
+                    'role' => 'Only one doctor owner is allowed.',
+                ]);
+            }
+        }
+
         if ($this->isEditing) {
             $user = User::findOrFail($this->userId);
             $user->update([
@@ -87,7 +109,13 @@ class UserForm extends Component
 
     public function render()
     {
-        $roles = Role::all();
+        $ownerUserId = HospitalOwner::ownerUser()?->id;
+
+        $roles = Role::query()
+            ->when($ownerUserId && !$this->isEditing, fn($q) => $q->where('name', '!=', 'doctor_owner'))
+            ->when($ownerUserId && $this->isEditing && (int) $ownerUserId !== (int) $this->userId, fn($q) => $q->where('name', '!=', 'doctor_owner'))
+            ->get();
+
         return view('livewire.master.user-form', compact('roles'));
     }
 }

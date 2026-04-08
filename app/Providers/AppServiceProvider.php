@@ -34,11 +34,31 @@ class AppServiceProvider extends ServiceProvider
             \App\Listeners\WebhookDispatcher::class
         );
         \Illuminate\Support\Facades\Event::listen(
+            \App\Events\Billing\PaymentReceived::class,
+            \App\Listeners\WebhookDispatcher::class
+        );
+        \Illuminate\Support\Facades\Event::listen(
             \App\Events\System\DailySummaryGenerated::class,
             \App\Listeners\WebhookDispatcher::class
         );
         \Illuminate\Support\Facades\Event::listen(
             \App\Events\OPD\ConsultationCompleted::class,
+            \App\Listeners\WebhookDispatcher::class
+        );
+        \Illuminate\Support\Facades\Event::listen(
+            \App\Events\Pharmacy\PrescriptionDispensed::class,
+            \App\Listeners\WebhookDispatcher::class
+        );
+        \Illuminate\Support\Facades\Event::listen(
+            \App\Events\Pharmacy\MedicineLowStock::class,
+            \App\Listeners\WebhookDispatcher::class
+        );
+        \Illuminate\Support\Facades\Event::listen(
+            \App\Events\Laboratory\LabOrderCreated::class,
+            \App\Listeners\WebhookDispatcher::class
+        );
+        \Illuminate\Support\Facades\Event::listen(
+            \App\Events\Laboratory\LabOrderCompleted::class,
             \App\Listeners\WebhookDispatcher::class
         );
     }

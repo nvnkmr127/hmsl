@@ -3,7 +3,7 @@
 namespace App\Livewire\Master;
 
 use App\Models\Medicine;
-use App\Services\MedicineManager;
+use App\Services\MedicineService;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -22,10 +22,10 @@ class MedicineList extends Component
         $this->resetPage();
     }
 
-    public function toggleActive($id, MedicineManager $manager)
+    public function toggleActive($id, MedicineService $service)
     {
         $medicine = Medicine::findOrFail($id);
-        $manager->toggleActive($medicine);
+        $service->toggleActive($medicine);
         
         $this->dispatch('notify', [
             'type' => 'success',
@@ -33,10 +33,10 @@ class MedicineList extends Component
         ]);
     }
 
-    public function deleteMedicine($id, MedicineManager $manager)
+    public function deleteMedicine($id, MedicineService $service)
     {
         $medicine = Medicine::findOrFail($id);
-        $manager->delete($medicine);
+        $service->delete($medicine);
         
         $this->dispatch('notify', [
             'type' => 'success',

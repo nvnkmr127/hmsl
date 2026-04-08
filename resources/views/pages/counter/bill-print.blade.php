@@ -48,7 +48,15 @@
         </div>
         <div class="section-box">
             <p style="font-size: 8pt; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; text-decoration: underline;">Visit Details</p>
-            @if($bill->consultation)
+            @if($bill->admission)
+            <div style="font-size: 10pt; margin-top: 5px;">
+                <p>Admission No: <strong>{{ $bill->admission->admission_number }}</strong></p>
+                <p>Ward/Bed: {{ $bill->admission->bed?->ward?->name ?? '—' }} / {{ $bill->admission->bed?->bed_number ?? '—' }}</p>
+                <p>Doctor: <strong>{{ $bill->admission->doctor?->full_name ?? '—' }}</strong></p>
+                <p>Admitted: {{ $bill->admission->admission_date?->format('d/m/Y H:i') ?? '—' }}</p>
+                <p>Discharged: {{ $bill->admission->discharge_date?->format('d/m/Y H:i') ?? '—' }}</p>
+            </div>
+            @elseif($bill->consultation)
             <div style="font-size: 10pt; margin-top: 5px;">
                 <p>Doctor: <strong>{{ $bill->consultation->doctor?->full_name ?? 'Resident Medical Officer' }}</strong></p>
                 <p>Department: {{ $bill->consultation->doctor?->department?->name ?? 'OPD' }}</p>
@@ -138,4 +146,3 @@
     </div>
 </div>
 @endsection
-

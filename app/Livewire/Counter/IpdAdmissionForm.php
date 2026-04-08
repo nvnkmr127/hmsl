@@ -14,6 +14,7 @@ use Livewire\Attributes\Validate;
 
 class IpdAdmissionForm extends Component
 {
+    #[Validate('required|exists:patients,id')]
     public $patientId;
     public $patient;
     

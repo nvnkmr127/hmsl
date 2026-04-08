@@ -38,7 +38,7 @@ class ClinicalTemplateForm extends Component
     public function save()
     {
         $this->validate([
-            'type' => 'required|in:reason,notes',
+            'type' => 'required|in:reason,notes,discharge',
             'content' => 'required|string|max:500',
         ]);
 

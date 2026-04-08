@@ -17,6 +17,8 @@ class BillGenerate extends Component
     public $items = [];
     public $discount = 0;
     public $tax = 0;
+    public $paymentStatus = 'Paid';
+    public $amountPaid = 0;
     public $paymentMethod = 'Cash';
     public $notes;
 
@@ -45,7 +47,9 @@ class BillGenerate extends Component
         
         $this->discount = $consultation->discount_amount ?? 0;
         $this->tax = 0;
+        $this->paymentStatus = $consultation->payment_status === 'Paid' ? 'Paid' : 'Unpaid';
         $this->paymentMethod = 'Cash';
+        $this->amountPaid = $this->paymentStatus === 'Paid' ? (float) $this->total : 0;
         $this->notes = '';
 
         $this->dispatch('open-modal', name: 'billing-modal');
@@ -70,7 +74,9 @@ class BillGenerate extends Component
         ];
         $this->discount = 0;
         $this->tax = 0;
+        $this->paymentStatus = 'Paid';
         $this->paymentMethod = 'Cash';
+        $this->amountPaid = (float) $this->total;
         $this->notes = '';
 
         $this->dispatch('open-modal', name: 'billing-modal');
@@ -102,12 +108,19 @@ class BillGenerate extends Component
 
     public function save(BillingService $service)
     {
+        $this->validate([
+            'paymentStatus' => 'required|in:Paid,Unpaid,Partially Paid,Partial',
+            'amountPaid' => 'nullable|numeric|min:0',
+            'paymentMethod' => 'nullable|string|max:50',
+        ]);
+
         $bill = $service->createBill([
             'patient_id' => $this->patientId,
             'consultation_id' => $this->consultationId,
             'discount_amount' => $this->discount,
             'tax_amount' => $this->tax,
-            'payment_status' => 'Paid',
+            'payment_status' => $this->paymentStatus,
+            'paid_amount' => (float) $this->amountPaid,
             'payment_method' => $this->paymentMethod,
             'notes' => $this->notes,
         ], $this->items);
@@ -117,7 +130,7 @@ class BillGenerate extends Component
         $this->dispatch('close-modal', name: 'billing-modal');
 
         $this->dispatch('bill-generated', billId: $bill->id);
-        $this->dispatch('notify', ['type' => 'success', 'message' => 'Bill generated and settled successfully!']);
+        $this->dispatch('notify', ['type' => 'success', 'message' => 'Bill generated successfully!']);
     }
 
     public function render()

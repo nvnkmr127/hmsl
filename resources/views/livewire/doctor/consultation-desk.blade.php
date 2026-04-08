@@ -161,10 +161,18 @@
                                             </div>
                                         </div>
 
-                                        <button @click="$dispatch('open-prescription', { consultationId: {{ $selectedConsultation->id }} })" 
-                                                class="relative z-10 px-8 py-4 bg-white text-violet-600 rounded-[1.2rem] font-black text-xs uppercase tracking-widest hover:scale-105 transition-transform shadow-xl">
-                                            Add Medications
-                                        </button>
+                                        <div class="relative z-10 flex items-center gap-3">
+                                            <button type="button"
+                                                    @click="$dispatch('open-lab-order', { consultationId: {{ $selectedConsultation->id }} })"
+                                                    class="px-8 py-4 bg-white/20 text-white rounded-[1.2rem] font-black text-xs uppercase tracking-widest hover:bg-white/30 transition-colors shadow-xl">
+                                                Order Labs
+                                            </button>
+                                            <button type="button"
+                                                    @click="$dispatch('open-prescription', { consultationId: {{ $selectedConsultation->id }} })"
+                                                    class="px-8 py-4 bg-white text-violet-600 rounded-[1.2rem] font-black text-xs uppercase tracking-widest hover:scale-105 transition-transform shadow-xl">
+                                                Add Medications
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                                 <!-- Support Column (1/3) -->
@@ -209,4 +217,5 @@
     @endif
 
     <livewire:doctor.prescription-editor />
+    <livewire:doctor.lab-order-composer />
 </div>

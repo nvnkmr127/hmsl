@@ -14,7 +14,9 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Development Auto-Login
-Route::get('/autologin', [App\Http\Controllers\Auth\AutoLoginController::class, 'login'])->name('autologin');
+if (app()->environment('local')) {
+    Route::get('/autologin', [App\Http\Controllers\Auth\AutoLoginController::class, 'login'])->name('autologin');
+}
 
 // Settings Module
 require __DIR__.'/modules/settings.php';
@@ -42,8 +44,10 @@ require __DIR__.'/modules/inventory.php';
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/discharge', [App\Http\Controllers\DischargeController::class, 'index'])->name('discharge.index')->middleware('permission:admit patients');
+    Route::get('/discharge/export', [App\Http\Controllers\DischargeController::class, 'export'])->name('discharge.export')->middleware('permission:admit patients');
     Route::get('/discharge/{admission}', [App\Http\Controllers\DischargeController::class, 'show'])->whereNumber('admission')->name('discharge.summary')->middleware('permission:admit patients');
     Route::get('/discharge/{admission}/print', [App\Http\Controllers\DischargeController::class, 'print'])->whereNumber('admission')->name('discharge.print')->middleware('permission:admit patients');
+    Route::post('/discharge/{admission}/final-bill', [App\Http\Controllers\DischargeController::class, 'generateFinalBill'])->whereNumber('admission')->name('discharge.final-bill')->middleware('permission:admit patients');
 
     Route::get('/billing', [App\Http\Controllers\Counter\BillController::class, 'index'])->name('billing.index')->middleware('permission:view billing');
     Route::get('/billing/bills/{bill}/print', [App\Http\Controllers\Counter\BillController::class, 'print'])->whereNumber('bill')->name('billing.bills.print')->middleware('permission:view billing');

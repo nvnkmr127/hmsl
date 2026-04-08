@@ -9,9 +9,11 @@ use App\Models\Patient;
 use App\Models\Ward;
 use App\Models\Bed;
 use App\Models\Admission;
+use App\Models\Bill;
+use App\Models\HospitalOwner;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use App\Services\IpdManager;
+use App\Services\IpdService;
 use Tests\TestCase;
 
 class FeatureSmokeTest extends TestCase
@@ -24,6 +26,19 @@ class FeatureSmokeTest extends TestCase
 
         $user = User::factory()->create();
         $user->assignRole($role);
+
+        if ($role === 'doctor_owner') {
+            $department = Department::firstOrCreate(['name' => 'General']);
+            $doctor = Doctor::create([
+                'user_id' => $user->id,
+                'department_id' => $department->id,
+                'full_name' => 'Dr Owner',
+                'specialization' => 'General',
+                'consultation_fee' => 500,
+                'is_active' => true,
+            ]);
+            HospitalOwner::setOwnerDoctor($doctor);
+        }
 
         return $user;
     }
@@ -102,12 +117,11 @@ class FeatureSmokeTest extends TestCase
     {
         $this->seed(RolePermissionSeeder::class);
 
-        $creator = User::factory()->create()->assignRole('doctor_owner');
+        $creator = $this->userWithRole('doctor_owner');
 
-        $department = Department::create(['name' => 'General']);
-        $doctorUser = User::factory()->create();
+        $department = Department::firstOrCreate(['name' => 'General']);
         $doctor = Doctor::create([
-            'user_id' => $doctorUser->id,
+            'user_id' => null,
             'department_id' => $department->id,
             'full_name' => 'Dr Test',
             'specialization' => 'General',
@@ -139,8 +153,8 @@ class FeatureSmokeTest extends TestCase
             'created_by' => $creator->id,
         ]);
 
-        $manager = app(IpdManager::class);
-        $manager->dischargePatient($admission->fresh(['bed']), 'Test discharge');
+        $service = app(IpdService::class);
+        $service->dischargePatient($admission->fresh(['bed']), 'Test discharge');
 
         $admission->refresh();
         $bed->refresh();
@@ -149,6 +163,13 @@ class FeatureSmokeTest extends TestCase
         $this->assertNotNull($admission->discharge_date);
         $this->assertSame('Test discharge', $admission->notes);
         $this->assertTrue((bool) $bed->is_available);
+
+        $this->assertDatabaseHas('bills', ['admission_id' => $admission->id]);
+        $bill = Bill::where('admission_id', $admission->id)->first();
+        $this->assertNotNull($bill);
+        $this->assertSame((string) $patient->id, (string) $bill->patient_id);
+        $this->assertSame('Unpaid', $bill->payment_status);
+        $this->assertGreaterThan(0, (float) $bill->total_amount);
     }
 
     public function test_lab_technician_can_access_laboratory_pages(): void

@@ -6,6 +6,7 @@ use App\Models\Admission;
 use App\Models\Bill;
 use App\Models\Consultation;
 use App\Models\Doctor;
+use App\Models\HospitalOwner;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -43,9 +44,13 @@ class DashboardController extends Controller
         }
 
         if ($user->hasRole('doctor_owner')) {
+            $ownerUser = HospitalOwner::ownerUser();
+            if ($ownerUser && (int) $ownerUser->id !== (int) $user->id) {
+                abort(403);
+            }
             return view('pages.dashboard.admin', compact('metrics'));
         }
 
-        return view('pages.dashboard.admin', compact('metrics'));
+        abort(403);
     }
 }

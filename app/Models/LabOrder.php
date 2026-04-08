@@ -15,6 +15,8 @@ class LabOrder extends Model
         'lab_test_id',
         'consultation_id',
         'admission_id',
+        'order_number',
+        'group_uuid',
         'results',
         'status',
         'collected_at',

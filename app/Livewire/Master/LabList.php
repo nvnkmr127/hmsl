@@ -3,7 +3,7 @@
 namespace App\Livewire\Master;
 
 use App\Models\LabTest;
-use App\Services\LabManager;
+use App\Services\LabService;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -21,10 +21,10 @@ class LabList extends Component
         $this->resetPage();
     }
 
-    public function toggleActive($id, LabManager $manager)
+    public function toggleActive($id, LabService $service)
     {
         $test = LabTest::findOrFail($id);
-        $manager->toggleActive($test);
+        $service->toggleActive($test);
         
         $this->dispatch('notify', [
             'type' => 'success',
@@ -32,10 +32,10 @@ class LabList extends Component
         ]);
     }
 
-    public function deleteTest($id, LabManager $manager)
+    public function deleteTest($id, LabService $service)
     {
         $test = LabTest::findOrFail($id);
-        $manager->deleteTest($test);
+        $service->deleteTest($test);
         
         $this->dispatch('notify', [
             'type' => 'success',

@@ -5,19 +5,26 @@ namespace App\Livewire\Counter;
 use App\Models\Admission;
 use App\Models\LabOrder;
 use App\Models\PatientVaccination;
+use App\Models\PatientConsent;
 use App\Models\Prescription;
 use App\Models\Vaccine;
 use App\Models\Patient;
 use App\Models\Consultation;
 use App\Models\PatientVital;
 use App\Models\Bill;
+use App\Models\BillPayment;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
+use Livewire\Attributes\On;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class PatientHistory extends Component
 {
     use WithPagination;
+    use WithFileUploads;
     public $patientId;
     public $patient;
     public string $tab = 'overview';
@@ -26,6 +33,11 @@ class PatientHistory extends Component
     public ?string $dateFrom = null;
     public ?string $dateTo = null;
     public int $perPage = 10;
+
+    public $consentFile;
+    public string $consentType = 'high_risk';
+    public ?string $consentSignedAt = null;
+    public ?string $consentNotes = null;
 
     protected $queryString = [
         'tab' => ['except' => 'overview'],
@@ -39,6 +51,12 @@ class PatientHistory extends Component
     {
         $this->patientId = $id;
         $this->patient = Patient::findOrFail($id);
+    }
+
+    #[On('patient-saved')]
+    public function refreshPatient(): void
+    {
+        $this->patient = Patient::findOrFail($this->patientId);
     }
 
     public function updatedTab(): void
@@ -65,6 +83,47 @@ class PatientHistory extends Component
     public function updatedDateTo(): void
     {
         $this->resetPage();
+    }
+
+    public function uploadConsent(): void
+    {
+        $this->validate([
+            'consentType' => 'required|string|max:50',
+            'consentSignedAt' => 'nullable|date',
+            'consentNotes' => 'nullable|string|max:2000',
+            'consentFile' => 'required|file|max:8192|mimetypes:application/pdf,image/jpeg,image/png,image/webp',
+        ]);
+
+        $path = $this->consentFile->store("patients/{$this->patientId}/consents", 'public');
+
+        PatientConsent::create([
+            'patient_id' => $this->patientId,
+            'type' => $this->consentType,
+            'file_path' => $path,
+            'original_name' => $this->consentFile->getClientOriginalName(),
+            'mime_type' => $this->consentFile->getMimeType(),
+            'signed_at' => $this->consentSignedAt ?: null,
+            'notes' => $this->consentNotes,
+            'created_by' => Auth::id(),
+        ]);
+
+        Cache::forget("patient_counts_{$this->patientId}");
+        $this->reset(['consentFile', 'consentSignedAt', 'consentNotes']);
+        $this->dispatch('notify', ['type' => 'success', 'message' => 'Consent uploaded successfully.']);
+    }
+
+    public function deleteConsent(int $consentId): void
+    {
+        $consent = PatientConsent::where('patient_id', $this->patientId)->findOrFail($consentId);
+
+        if ($consent->file_path) {
+            Storage::disk('public')->delete($consent->file_path);
+        }
+
+        $consent->delete();
+
+        Cache::forget("patient_counts_{$this->patientId}");
+        $this->dispatch('notify', ['type' => 'success', 'message' => 'Consent deleted.']);
     }
 
     private function applyDateFilter($query, string $column)
@@ -271,28 +330,33 @@ class PatientHistory extends Component
         }
 
         if ($type === 'payments') {
-            $query = Bill::where('patient_id', $id)->orderByDesc('created_at');
-            $query = $this->applyDateFilter($query, 'created_at');
+            $query = BillPayment::query()
+                ->whereHas('bill', fn ($q) => $q->where('patient_id', $id))
+                ->with(['bill'])
+                ->orderByDesc('received_at');
+
+            $query = $this->applyDateFilter($query, 'received_at');
             if ($this->status) {
-                $query->where('payment_status', $this->status);
+                $query->where('type', $this->status);
             }
             if ($this->search) {
                 $term = '%' . $this->search . '%';
-                $query->where('bill_number', 'like', $term);
+                $query->whereHas('bill', fn ($bq) => $bq->where('bill_number', 'like', $term));
             }
 
-            $bills = $query->get();
-            $rows = $bills->map(function (Bill $b) {
+            $payments = $query->get();
+            $rows = $payments->map(function (BillPayment $p) {
                 return [
-                    $b->created_at?->format('Y-m-d H:i'),
-                    $b->bill_number,
-                    $b->total_amount,
-                    $b->payment_status,
-                    $b->payment_method,
+                    $p->received_at?->format('Y-m-d H:i'),
+                    $p->bill?->bill_number,
+                    $p->type,
+                    $p->amount,
+                    $p->method,
+                    $p->reference,
                 ];
             });
 
-            return $this->exportCsv("{$safeName}_payments_{$date}.csv", ['Date', 'Bill No', 'Amount', 'Status', 'Method'], $rows);
+            return $this->exportCsv("{$safeName}_payments_{$date}.csv", ['Date', 'Bill No', 'Type', 'Amount', 'Method', 'Reference'], $rows);
         }
 
         if ($type === 'treatment') {
@@ -355,6 +419,7 @@ class PatientHistory extends Component
                 'labs' => LabOrder::where('patient_id', $id)->count(),
                 'vitals' => PatientVital::where('patient_id', $id)->count(),
                 'vaccinations' => PatientVaccination::where('patient_id', $id)->count(),
+                'consents' => PatientConsent::where('patient_id', $id)->count(),
                 'appointments' => Consultation::where('patient_id', $id)->whereDate('consultation_date', '>=', now()->toDateString())->where('status', '!=', 'Cancelled')->count(),
             ];
         });
@@ -449,6 +514,7 @@ class PatientHistory extends Component
             'vitals' => null,
             'appointments' => null,
             'payments' => null,
+            'consents' => null,
         ];
 
         if ($this->tab === 'billing') {
@@ -642,6 +708,25 @@ class PatientHistory extends Component
                 $query->where('bill_number', 'like', $term);
             }
             $datasets['payments'] = $query->paginate($this->perPage);
+        }
+
+        if ($this->tab === 'consents') {
+            $query = PatientConsent::with(['creator'])
+                ->where('patient_id', $id)
+                ->orderByDesc('created_at');
+
+            $query = $this->applyDateFilter($query, 'created_at');
+
+            if ($this->search) {
+                $term = '%' . $this->search . '%';
+                $query->where(function ($q) use ($term) {
+                    $q->where('original_name', 'like', $term)
+                        ->orWhere('notes', 'like', $term)
+                        ->orWhere('type', 'like', $term);
+                });
+            }
+
+            $datasets['consents'] = $query->paginate($this->perPage);
         }
 
         return view('livewire.counter.patient-history', [

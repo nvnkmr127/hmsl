@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    'mappls' => [
+        'client_id' => env('MAPPLS_CLIENT_ID'),
+        'client_secret' => env('MAPPLS_CLIENT_SECRET'),
+        'autosuggest_bounds_filter' => env('MAPPLS_AUTOSUGGEST_BOUNDS_FILTER', 'bounds: 19.95,77.15; 15.80,81.05'),
+        'autosuggest_tokenize_address' => (bool) env('MAPPLS_AUTOSUGGEST_TOKENIZE_ADDRESS', false),
+        'autosuggest_max_query_length' => (int) env('MAPPLS_AUTOSUGGEST_MAX_QUERY_LENGTH', 45),
+    ],
+
 ];

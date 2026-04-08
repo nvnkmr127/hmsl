@@ -3,7 +3,7 @@
 namespace App\Livewire\Pharmacy;
 
 use App\Models\Medicine;
-use App\Services\MedicineManager;
+use App\Services\MedicineService;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Throwable;
@@ -41,7 +41,7 @@ class PharmacyStock extends Component
         $this->dispatch('open-modal', name: 'stock-adjustment-modal');
     }
 
-    public function submitAdjustment(MedicineManager $manager)
+    public function submitAdjustment(MedicineService $service)
     {
         $this->validate([
             'selectedMedicineId' => 'required|exists:medicines,id',
@@ -60,7 +60,14 @@ class PharmacyStock extends Component
                 return;
             }
 
-            $manager->updateStock($medicine, $this->adjustmentQuantity);
+            $service->adjustStock(
+                $medicine,
+                (int) $this->adjustmentQuantity,
+                'adjustment',
+                Medicine::class,
+                (int) $medicine->id,
+                $this->adjustmentNotes ?: null
+            );
 
             $this->dispatch('close-modal', name: 'stock-adjustment-modal');
             $this->dispatch('notify', [

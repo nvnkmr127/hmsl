@@ -9,7 +9,7 @@ use App\Http\Controllers\Master\WardController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->group(function () {
-    Route::group(['prefix' => 'master', 'as' => 'master.', 'middleware' => ['permission:manage master data']], function () {
+    Route::group(['prefix' => 'master', 'as' => 'master.', 'middleware' => ['permission:manage master data', 'hospital_owner']], function () {
         Route::get('/departments', [DepartmentController::class, 'index'])->name('departments.index');
         Route::get('/doctors', [DoctorController::class, 'index'])->name('doctors.index');
         Route::get('/services', [ServiceController::class, 'index'])->name('services.index');
@@ -27,6 +27,6 @@ Route::middleware(['auth'])->group(function () {
     Route::group(['prefix' => 'master', 'as' => 'master.'], function () {
         Route::get('/users', [\App\Http\Controllers\Master\UserController::class, 'index'])
             ->name('users.index')
-            ->middleware('permission:manage users');
+            ->middleware(['permission:manage users', 'hospital_owner']);
     });
 });

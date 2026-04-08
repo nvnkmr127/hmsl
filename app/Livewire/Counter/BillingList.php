@@ -3,6 +3,8 @@
 namespace App\Livewire\Counter;
 
 use App\Models\Bill;
+use App\Models\BillPayment;
+use App\Services\BillingService;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -13,6 +15,18 @@ class BillingList extends Component
     public $search = '';
     public $statusFilter = '';
     public $methodFilter = '';
+    public ?int $selectedBillId = null;
+    public string $paymentType = 'payment';
+    public string $paymentMethod = 'Cash';
+    public $paymentAmount = 0;
+    public ?string $paymentReference = null;
+    public ?string $paymentNotes = null;
+
+    protected $queryString = [
+        'search' => ['except' => ''],
+        'statusFilter' => ['except' => ''],
+        'methodFilter' => ['except' => ''],
+    ];
 
     public function updatedSearch()    { $this->resetPage(); }
     public function updatedStatusFilter() { $this->resetPage(); }
@@ -35,9 +49,56 @@ class BillingList extends Component
         }
     }
 
+    public function openPaymentModal(int $billId): void
+    {
+        $bill = Bill::with('payments')->findOrFail($billId);
+        $this->selectedBillId = $bill->id;
+        $this->paymentType = 'payment';
+        $this->paymentMethod = $bill->payment_method ?: 'Cash';
+        $this->paymentAmount = max(0, (float) $bill->balance_amount);
+        $this->paymentReference = null;
+        $this->paymentNotes = null;
+        $this->dispatch('open-modal', name: 'billing-payment-modal');
+    }
+
+    public function submitPayment(BillingService $service): void
+    {
+        $this->validate([
+            'selectedBillId' => 'required|integer|exists:bills,id',
+            'paymentType' => 'required|in:payment,refund',
+            'paymentMethod' => 'nullable|string|max:50',
+            'paymentAmount' => 'required|numeric|min:0.01',
+            'paymentReference' => 'nullable|string|max:100',
+            'paymentNotes' => 'nullable|string|max:2000',
+        ]);
+
+        $bill = Bill::with('payments')->findOrFail($this->selectedBillId);
+        $amount = round((float) $this->paymentAmount, 2);
+
+        if ($this->paymentType === 'refund' && $amount > (float) $bill->paid_amount) {
+            $this->dispatch('notify', ['type' => 'error', 'message' => 'Refund amount cannot be more than paid amount.']);
+            return;
+        }
+
+        $service->recordPayment(
+            $bill,
+            $amount,
+            $this->paymentMethod,
+            $this->paymentType,
+            $this->paymentReference ?: null,
+            $this->paymentNotes ?: null
+        );
+
+        $service->recalculatePaymentStatus($bill);
+
+        $this->dispatch('close-modal', name: 'billing-payment-modal');
+        $this->dispatch('notify', ['type' => 'success', 'message' => 'Payment saved.']);
+        $this->reset(['selectedBillId', 'paymentType', 'paymentMethod', 'paymentAmount', 'paymentReference', 'paymentNotes']);
+    }
+
     public function render()
     {
-        $bills = Bill::with(['patient', 'consultation.doctor'])
+        $bills = Bill::with(['patient', 'consultation.doctor', 'payments'])
             ->when($this->search, function ($q) {
                 $q->where('bill_number', 'like', "%{$this->search}%")
                   ->orWhereHas('patient', fn($pq) =>
@@ -51,12 +112,15 @@ class BillingList extends Component
             ->latest()
             ->paginate(15);
 
+        $paidTotal = (float) BillPayment::where('type', 'payment')->sum('amount');
+        $refundTotal = (float) BillPayment::where('type', 'refund')->sum('amount');
+        $todayPaid = (float) BillPayment::where('type', 'payment')->whereDate('received_at', today())->sum('amount');
+        $todayRefund = (float) BillPayment::where('type', 'refund')->whereDate('received_at', today())->sum('amount');
+
         $stats = [
-            'total_paid'    => Bill::where('payment_status', 'Paid')->sum('total_amount'),
-            'total_unpaid'  => Bill::where('payment_status', 'Unpaid')->count(),
-            'today_revenue' => Bill::where('payment_status', 'Paid')
-                                   ->whereDate('created_at', today())
-                                   ->sum('total_amount'),
+            'total_paid'    => $paidTotal - $refundTotal,
+            'total_unpaid'  => Bill::whereIn('payment_status', ['Unpaid', 'Partially Paid'])->count(),
+            'today_revenue' => $todayPaid - $todayRefund,
         ];
 
         return view('livewire.counter.billing-list', compact('bills', 'stats'));

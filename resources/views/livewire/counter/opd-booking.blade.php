@@ -208,9 +208,17 @@
                                     </p>
                                 </div>
                                 <div class="flex-shrink-0 text-right">
-                                    @if($consult->payment_status === 'Paid')
+                                    @php
+                                        $billStatus = $consult->bill?->payment_status;
+                                        $paid = $consult->bill ? (float) $consult->bill->paid_amount : 0;
+                                        $due = $consult->bill ? max(0, (float) $consult->bill->balance_amount) : 0;
+                                    @endphp
+                                    @if($billStatus === 'Paid' || $consult->payment_status === 'Paid')
                                         <span class="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-3 py-1 rounded-lg text-tiny font-black uppercase">PAID</span>
-                                        <p class="text-dense font-bold text-gray-400 mt-1 uppercase">{{ $consult->payment_method }}</p>
+                                        <p class="text-dense font-bold text-gray-400 mt-1 uppercase">{{ $consult->bill?->payment_method ?? $consult->payment_method }}</p>
+                                    @elseif($billStatus === 'Partially Paid')
+                                        <span class="bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 px-3 py-1 rounded-lg text-tiny font-black uppercase">PARTIAL</span>
+                                        <p class="text-[10px] font-bold text-gray-400 mt-1">Paid ₹{{ number_format($paid, 0) }} · Due ₹{{ number_format($due, 0) }}</p>
                                     @else
                                         <span class="bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 px-3 py-1 rounded-lg text-tiny font-black uppercase">UNPAID</span>
                                     @endif
@@ -233,11 +241,9 @@
                                            class="btn btn-secondary px-3 py-2 text-xs border-emerald-500/30 text-emerald-600 dark:text-emerald-400">
                                             Print Bill
                                         </a>
-                                    @elseif($consult->payment_status === 'Paid')
-                                        <button wire:click="$dispatch('generate-bill', { consultationId: {{ $consult->id }} })"
-                                                class="btn btn-secondary px-3 py-2 text-xs">
-                                            Bill
-                                        </button>
+                                        <a href="{{ route('billing.index', ['search' => $consult->bill->bill_number]) }}" class="btn btn-secondary px-3 py-2 text-xs">
+                                            Collect
+                                        </a>
                                     @endif
 
 
@@ -310,10 +316,20 @@
                                     <td class="px-8 py-6 text-center">
                                         <div class="flex flex-col items-center">
                                             <span class="text-sm font-black text-gray-900 dark:text-white mb-1">₹{{ number_format($consult->fee, 0) }}</span>
-                                            @if($consult->payment_status === 'Paid')
+                                            @php
+                                                $billStatus = $consult->bill?->payment_status;
+                                                $paid = $consult->bill ? (float) $consult->bill->paid_amount : 0;
+                                                $due = $consult->bill ? max(0, (float) $consult->bill->balance_amount) : 0;
+                                            @endphp
+                                            @if($billStatus === 'Paid' || $consult->payment_status === 'Paid')
                                                 <div class="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/30 rounded-md">
                                                     <span class="w-1 h-1 rounded-full bg-emerald-500"></span>
-                                                    <span class="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase italic">{{ $consult->payment_method }}</span>
+                                                    <span class="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase italic">{{ $consult->bill?->payment_method ?? $consult->payment_method }}</span>
+                                                </div>
+                                            @elseif($billStatus === 'Partially Paid')
+                                                <div class="flex items-center gap-1.5 px-2 py-0.5 bg-amber-50 dark:bg-amber-950/30 rounded-md">
+                                                    <span class="w-1 h-1 rounded-full bg-amber-500"></span>
+                                                    <span class="text-[9px] font-black text-amber-600 dark:text-amber-400 uppercase italic">Paid ₹{{ number_format($paid, 0) }} · Due ₹{{ number_format($due, 0) }}</span>
                                                 </div>
                                             @else
                                                 <span class="text-[9px] font-black text-rose-500 uppercase tracking-widest animate-pulse">NOT PAID</span>
@@ -336,12 +352,15 @@
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2-2v4" /></svg>
                                                 </a>
 
-                                                @if($consult->payment_status === 'Paid')
-                                                <button wire:click="$dispatch('generate-bill', { consultationId: {{ $consult->id }} })"
-
-                                                        class="p-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-amber-500 hover:text-white transition-all duration-300 shadow-sm" title="Generate Bill">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                                </button>
+                                                @if($consult->bill)
+                                                    <a href="{{ route('billing.bills.print', ['bill' => $consult->bill->id]) }}" target="_blank"
+                                                       class="p-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-amber-500 hover:text-white transition-all duration-300 shadow-sm" title="Print Bill">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                                                    </a>
+                                                    <a href="{{ route('billing.index', ['search' => $consult->bill->bill_number]) }}"
+                                                       class="p-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-emerald-600 hover:text-white transition-all duration-300 shadow-sm" title="Collect">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                    </a>
                                                 @endif
 
                                                 <button wire:click="editBooking({{ $consult->id }})" 
@@ -457,7 +476,12 @@
                                 <div class="relative z-10">
                                     <div class="flex items-center justify-between mb-4">
                                         <label class="text-[10px] font-black text-violet-200 uppercase tracking-widest">Total Amount</label>
-                                        <div class="px-2 py-0.5 bg-white/20 rounded-md text-[9px] font-black uppercase tracking-widest">REALTIME</div>
+                                        <div class="flex items-center gap-2">
+                                            @if($isFollowUp)
+                                                <div class="px-2 py-0.5 bg-emerald-500 rounded-md text-[9px] font-black uppercase tracking-widest text-white animate-bounce">FREE FOLLOW-UP</div>
+                                            @endif
+                                            <div class="px-2 py-0.5 bg-white/20 rounded-md text-[9px] font-black uppercase tracking-widest">REALTIME</div>
+                                        </div>
                                     </div>
                                     <div class="flex items-end gap-2 mb-2">
                                         <span class="text-xl font-black opacity-60 pb-1">₹</span>
@@ -466,6 +490,18 @@
                                     @error('fee') <p class="text-[10px] font-bold text-white/80 mb-4">{{ $message }}</p> @enderror
                                     
                                     <div class="relative">
+                                        <select wire:model="paymentStatus" class="w-full bg-white/10 hover:bg-white/20 text-white border-none rounded-xl px-4 py-3 text-xs font-bold transition-all outline-none mb-2">
+                                            <option class="text-gray-900" value="Paid">Payment: Paid</option>
+                                            <option class="text-gray-900" value="Partially Paid">Payment: Partially Paid</option>
+                                            <option class="text-gray-900" value="Unpaid">Payment: Unpaid</option>
+                                        </select>
+                                        @error('paymentStatus') <p class="text-[10px] font-bold text-white/80 mt-2">{{ $message }}</p> @enderror
+
+                                        @if($paymentStatus === 'Partially Paid')
+                                            <input type="number" step="1" min="0" wire:model="amountPaid" class="w-full bg-white/10 hover:bg-white/20 text-white border-none rounded-xl px-4 py-3 text-xs font-bold transition-all outline-none mb-2" placeholder="Amount paid">
+                                            @error('amountPaid') <p class="text-[10px] font-bold text-white/80 mt-2">{{ $message }}</p> @enderror
+                                        @endif
+
                                         <select wire:model="paymentMode" class="w-full bg-white/10 hover:bg-white/20 text-white border-none rounded-xl px-4 py-3 text-xs font-bold transition-all outline-none">
                                             <option class="text-gray-900" value="Cash">Settlement: Physical Cash</option>
                                             <option class="text-gray-900" value="UPI">Settlement: Digital UPI</option>

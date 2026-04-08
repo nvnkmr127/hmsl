@@ -49,9 +49,10 @@
                         loading: false,
                         results: [],
                         controller: null,
+                        supportsColony: {{ \Illuminate\Support\Js::from(property_exists($this, 'colony')) }},
                         async search(q) {
                             const query = (q || '').trim();
-                            if (query.length < 3) {
+                            if (query.length < 2) {
                                 this.results = [];
                                 this.open = false;
                                 return;
@@ -81,6 +82,9 @@
                             $wire.set('city', item.city || '');
                             $wire.set('state', item.state || '');
                             $wire.set('pincode', item.pincode || '');
+                            if (this.supportsColony) {
+                                $wire.set('colony', item.colony || '');
+                            }
                             this.open = false;
                             this.results = [];
                         },

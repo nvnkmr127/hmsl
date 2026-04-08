@@ -91,7 +91,7 @@
                     <div class="flex items-start justify-between gap-3">
                         <div class="min-w-0">
                             <p class="text-xs font-black text-gray-400 uppercase tracking-widest">{{ $patient->uhid }}</p>
-                            <p class="text-sm font-black text-gray-900 dark:text-white truncate mt-1">{{ $patient->full_name }}</p>
+                            <a href="{{ route('counter.patients.history', $patient->id) }}" class="text-sm font-black text-gray-900 dark:text-white truncate mt-1 hover:underline block">{{ $patient->full_name }}</a>
                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ $patient->gender }} · {{ $patient->age }} Years</p>
                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ $patient->phone }}</p>
                         </div>
@@ -139,7 +139,7 @@
                                     {{ strtoupper(substr($patient->first_name, 0, 1)) }}{{ strtoupper(substr($patient->last_name ?? '', 0, 1)) }}
                                 </div>
                                 <div class="flex flex-col">
-                                    <span class="font-black text-gray-900 dark:text-white uppercase tracking-tight">{{ $patient->full_name }}</span>
+                                    <a href="{{ route('counter.patients.history', $patient->id) }}" class="font-black text-gray-900 dark:text-white uppercase tracking-tight hover:underline">{{ $patient->full_name }}</a>
                                     <span class="text-tiny font-black text-violet-600 dark:text-violet-400 uppercase tracking-widest">{{ $patient->uhid }}</span>
                                 </div>
                             </div>

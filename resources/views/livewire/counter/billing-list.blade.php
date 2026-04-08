@@ -80,6 +80,7 @@
                         </div>
                         <div class="text-right flex-shrink-0">
                             <p class="text-sm font-black text-gray-900 dark:text-white">₹{{ number_format($bill->total_amount, 2) }}</p>
+                            <p class="text-[10px] font-bold text-gray-400">Paid: ₹{{ number_format($bill->paid_amount, 2) }} · Due: ₹{{ number_format(max(0, $bill->balance_amount), 2) }}</p>
                             <p class="text-tiny font-black uppercase tracking-widest text-gray-400 mt-1">{{ $bill->payment_method ?? '—' }}</p>
                         </div>
                     </div>
@@ -96,6 +97,11 @@
                             <p class="text-xs text-gray-400 mt-2">{{ $bill->created_at->format('d M Y') }}</p>
                         </div>
                         <div class="flex items-center gap-2">
+                            <button
+                               wire:click="openPaymentModal({{ $bill->id }})"
+                               class="btn btn-ghost px-3 py-2 text-xs">
+                                Collect
+                            </button>
                             <a href="{{ route('billing.bills.print', $bill->id) }}"
                                target="_blank"
                                class="btn btn-secondary px-3 py-2 text-xs">
@@ -145,6 +151,9 @@
                         </td>
                         <td class="px-4 py-3 text-right font-bold text-gray-900 dark:text-white">
                             ₹{{ number_format($bill->total_amount, 2) }}
+                            <div class="text-[10px] font-bold text-gray-400 mt-1">
+                                Paid: ₹{{ number_format($bill->paid_amount, 2) }} · Due: ₹{{ number_format(max(0, $bill->balance_amount), 2) }}
+                            </div>
                         </td>
                         <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                             {{ $bill->payment_method ?? '—' }}
@@ -163,6 +172,11 @@
                         </td>
                         <td class="px-4 py-3 text-right">
                             <div class="flex justify-end gap-1">
+                                <button
+                                   wire:click="openPaymentModal({{ $bill->id }})"
+                                   class="inline-flex items-center gap-1 text-xs font-bold text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900/20">
+                                    Collect
+                                </button>
                                 <a href="{{ route('billing.bills.print', $bill->id) }}"
                                    target="_blank"
                                    class="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200 transition-colors px-3 py-1.5 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20">
@@ -189,4 +203,29 @@
             {{ $bills->links() }}
         </div>
     </div>
+
+    <x-modal name="billing-payment-modal" title="Collect Payment" width="xl">
+        <div class="p-6 space-y-4">
+            <x-form.select label="Type" wire:model="paymentType">
+                <option value="payment">Payment</option>
+                <option value="refund">Refund</option>
+            </x-form.select>
+            <x-form.select label="Method" wire:model="paymentMethod">
+                <option value="Cash">Cash</option>
+                <option value="Card">Card / POS</option>
+                <option value="UPI">UPI</option>
+                <option value="Insurance">Insurance</option>
+            </x-form.select>
+            <x-form.input type="number" step="1" label="Amount" wire:model.live="paymentAmount" class="text-right" />
+            <x-form.input type="text" label="Reference (Optional)" wire:model="paymentReference" />
+            <div class="space-y-2">
+                <label class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest pl-1">Notes (Optional)</label>
+                <textarea rows="2" class="block w-full rounded-2xl border-transparent bg-gray-100/50 dark:bg-gray-700/50 text-gray-800 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500/20 focus:bg-white dark:focus:bg-gray-800 transition-all duration-300 px-4 py-3 sm:text-sm resize-none" wire:model="paymentNotes"></textarea>
+            </div>
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="button" @click="$dispatch('close-modal', { name: 'billing-payment-modal' })" class="btn btn-ghost px-6">Cancel</button>
+                <button type="button" wire:click="submitPayment" class="btn btn-primary px-10">Save</button>
+            </div>
+        </div>
+    </x-modal>
 </div>

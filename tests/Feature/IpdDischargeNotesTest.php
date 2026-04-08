@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Models\Admission;
 use App\Models\Bed;
+use App\Models\Bill;
 use App\Models\Department;
 use App\Models\Doctor;
+use App\Models\HospitalOwner;
 use App\Models\Patient;
 use App\Models\User;
 use App\Models\Ward;
@@ -34,6 +36,7 @@ class IpdDischargeNotesTest extends TestCase
             'consultation_fee' => 500,
             'is_active' => true,
         ]);
+        HospitalOwner::setOwnerDoctor($doctor);
 
         $patient = Patient::create([
             'uhid' => 'UHID-IPD-0009',
@@ -78,6 +81,9 @@ class IpdDischargeNotesTest extends TestCase
         $this->assertNotNull($admission->discharge_date);
         $this->assertSame('Discharge note test', $admission->notes);
         $this->assertTrue((bool) $bed->is_available);
+
+        $this->assertDatabaseHas('bills', ['admission_id' => $admission->id]);
+        $bill = Bill::where('admission_id', $admission->id)->first();
+        $this->assertNotNull($bill);
     }
 }
-

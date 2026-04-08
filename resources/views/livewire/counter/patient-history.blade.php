@@ -7,6 +7,11 @@
                 New OP Token
             </a>
             @endcan
+
+            <button @click="$dispatch('edit-patient', { id: {{ $patient->id }} })" class="btn btn-secondary">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                Edit Patient
+            </button>
             
             <div class="relative" x-data="{ open: false }">
                 <button @click="open = !open" class="btn btn-secondary">
@@ -130,6 +135,7 @@
             <button wire:click="$set('tab','billing')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'billing' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Bills ({{ $counts['bills'] }})</button>
             <button wire:click="$set('tab','vitals')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'vitals' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Vitals</button>
             <button wire:click="$set('tab','vaccinations')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'vaccinations' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Vaccines</button>
+            <button wire:click="$set('tab','consents')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'consents' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Consents ({{ $counts['consents'] ?? 0 }})</button>
         </div>
     </div>
 
@@ -308,6 +314,103 @@
                         @endforelse
                     </div>
                 </x-card>
+            </div>
+        </x-card>
+    @endif
+
+    @if($tab === 'consents')
+        <x-card title="Consents">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <x-card title="Upload Consent">
+                    <a target="_blank" href="{{ route('counter.patients.consents.high-risk', ['id' => $patient->id]) }}" class="btn btn-secondary w-full mb-4 justify-center">
+                        High Risk Consent Form (Telugu)
+                    </a>
+                    <a target="_blank" href="{{ route('counter.patients.consents.high-risk.en', ['id' => $patient->id]) }}" class="btn btn-secondary w-full mb-4 justify-center">
+                        High Risk Consent Form (English)
+                    </a>
+                    <form wire:submit="uploadConsent" class="space-y-4">
+                        <x-form.select label="Consent Type" wire:model="consentType" name="consentType">
+                            <option value="high_risk">High Risk Consent</option>
+                            <option value="surgery">Surgery Consent</option>
+                            <option value="anesthesia">Anesthesia Consent</option>
+                            <option value="other">Other</option>
+                        </x-form.select>
+
+                        <x-form.input label="Signed Date" type="date" wire:model="consentSignedAt" name="consentSignedAt" />
+
+                        <x-form.textarea label="Notes" wire:model="consentNotes" name="consentNotes" rows="3" placeholder="Optional notes" />
+
+                        <div>
+                            <p class="text-tiny font-black text-gray-400 uppercase tracking-widest mb-2">Upload File</p>
+                            <input type="file" wire:model="consentFile" class="w-full text-sm font-semibold text-gray-700 dark:text-gray-200 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:uppercase file:tracking-widest file:bg-violet-600 file:text-white hover:file:bg-violet-700" />
+                            @error('consentFile') <p class="text-xs font-bold text-red-600 mt-2">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div class="flex justify-end">
+                            <button type="submit" class="btn btn-primary" wire:loading.attr="disabled">
+                                <span wire:loading.remove wire:target="uploadConsent">Upload</span>
+                                <span wire:loading wire:target="uploadConsent">Uploading…</span>
+                            </button>
+                        </div>
+                    </form>
+                </x-card>
+
+                <div class="lg:col-span-2">
+                    <x-card title="Uploaded Consents">
+                        <div class="space-y-3">
+                            @forelse($datasets['consents'] as $c)
+                                @php
+                                    $url = \Illuminate\Support\Facades\Storage::disk('public')->url($c->file_path);
+                                    $isImage = $c->mime_type && str_starts_with($c->mime_type, 'image/');
+                                @endphp
+                                <div class="p-4 rounded-ultra bg-gray-50 dark:bg-white/5 border border-transparent hover:border-gray-100 dark:hover:border-white/10 transition-all">
+                                    <div class="flex items-start justify-between gap-4">
+                                        <div class="min-w-0">
+                                            <p class="text-tiny font-black text-gray-400 uppercase tracking-widest">
+                                                {{ strtoupper(str_replace('_', ' ', $c->type)) }}
+                                                @if($c->signed_at)
+                                                    · {{ \Illuminate\Support\Carbon::parse($c->signed_at)->format('d M Y') }}
+                                                @endif
+                                            </p>
+                                            <p class="text-sm font-black text-gray-900 dark:text-white mt-1 truncate">
+                                                {{ $c->original_name ?? 'Consent File' }}
+                                            </p>
+                                            @if($c->notes)
+                                                <p class="text-xs font-semibold text-gray-600 dark:text-gray-300 mt-1">{{ $c->notes }}</p>
+                                            @endif
+                                            <p class="text-xs text-gray-500 mt-2">
+                                                Uploaded {{ $c->created_at?->format('d M Y, h:i A') }}{{ $c->creator ? ' · ' . $c->creator->name : '' }}
+                                            </p>
+                                        </div>
+
+                                        <div class="flex items-center gap-2">
+                                            <a target="_blank" href="{{ $url }}" class="btn btn-secondary px-4">View</a>
+                                            <button type="button" wire:click="deleteConsent({{ $c->id }})" class="btn btn-ghost px-4">
+                                                Delete
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    @if($isImage)
+                                        <div class="mt-4">
+                                            <img src="{{ $url }}" alt="Consent" class="w-full max-h-[420px] object-contain rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-950" />
+                                        </div>
+                                    @endif
+                                </div>
+                            @empty
+                                <div class="p-8 text-center text-sm font-semibold text-gray-500">
+                                    No consent documents uploaded yet.
+                                </div>
+                            @endforelse
+                        </div>
+
+                        @if($datasets['consents'])
+                            <div class="mt-6">
+                                {{ $datasets['consents']->links() }}
+                            </div>
+                        @endif
+                    </x-card>
+                </div>
             </div>
         </x-card>
     @endif

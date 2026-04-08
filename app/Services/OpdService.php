@@ -6,6 +6,7 @@ use App\Models\Consultation;
 use App\Models\Doctor;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class OpdService
 {
@@ -44,6 +45,10 @@ class OpdService
     public function bookAppointment(array $data)
     {
         return DB::transaction(function () use ($data) {
+            $billPaymentStatus = $data['bill_payment_status'] ?? null;
+            $paidAmount = isset($data['paid_amount']) ? (float) $data['paid_amount'] : 0;
+            unset($data['bill_payment_status'], $data['paid_amount']);
+
             $consultationDate = isset($data['consultation_date']) ? Carbon::parse($data['consultation_date']) : now();
             $data['consultation_date'] = $consultationDate->toDateString();
 
@@ -70,8 +75,16 @@ class OpdService
             $data['valid_upto'] = $data['valid_upto'] ?? $consultationDate->copy()->addDays((int)$validityDays)->toDateString();
 
             // 3. STRICT REVENUE PROTECTION: Ensure fees are never zero due to missing relations
+            // Except for follow-up visits within validity period
             if (!isset($data['fee']) || $data['fee'] <= 0) {
-                if (isset($data['service_id'])) {
+                $hasRecentVisit = Consultation::where('patient_id', $data['patient_id'])
+                    ->where('status', '!=', 'Cancelled')
+                    ->where('valid_upto', '>=', $data['consultation_date'])
+                    ->exists();
+
+                if ($hasRecentVisit) {
+                    $data['fee'] = 0;
+                } elseif (isset($data['service_id'])) {
                     $service = \App\Models\Service::find($data['service_id']);
                     if (!$service) throw new \Exception('Requested Service record no longer exists.');
                     $data['fee'] = $service->price;
@@ -82,8 +95,19 @@ class OpdService
                 }
             }
 
-            if (($data['fee'] ?? 0) <= 0) {
+            if (($data['fee'] ?? 0) < 0) {
                 throw new \Exception('Could not determine a valid fee for this consultation.');
+            }
+            
+            // Still enforce fee if no recent visit and no price found
+            if ($data['fee'] == 0) {
+                $hasRecentVisit = Consultation::where('patient_id', $data['patient_id'])
+                    ->where('status', '!=', 'Cancelled')
+                    ->where('valid_upto', '>=', $data['consultation_date'])
+                    ->exists();
+                if (!$hasRecentVisit) {
+                    throw new \Exception('Consultation fee must be greater than zero for new visits.');
+                }
             }
 
             $consultation = Consultation::create($data);
@@ -93,20 +117,26 @@ class OpdService
                 'patient_id' => $consultation->patient_id,
                 'doctor_id' => $consultation->doctor_id,
                 'token' => $consultation->token_number,
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'ip' => request()->ip()
             ]);
 
-            // AUTO-BILLING: If payment is already reported, create a formal bill record
-            if ($consultation->payment_status === 'Paid' && $consultation->fee > 0) {
+            if ($consultation->fee > 0) {
+                $consultation->loadMissing(['service', 'doctor']);
+
+                $status = in_array($billPaymentStatus, ['Paid', 'Unpaid', 'Partially Paid'], true)
+                    ? $billPaymentStatus
+                    : ($consultation->payment_status === 'Paid' ? 'Paid' : 'Unpaid');
+
                 $this->billingService->createBill([
                     'patient_id' => $consultation->patient_id,
                     'consultation_id' => $consultation->id,
                     'discount_amount' => $consultation->discount_amount ?? 0,
                     'tax_amount' => 0,
-                    'payment_status' => 'Paid',
+                    'payment_status' => $status,
+                    'paid_amount' => $paidAmount,
                     'payment_method' => $consultation->payment_method ?? 'Cash',
-                    'notes' => 'Auto-generated bill for ' . ($consultation->service?->name ?? 'OPD Consultation'),
+                    'notes' => 'Bill for ' . ($consultation->service?->name ?? 'OPD Consultation'),
                 ], [
                     [
                         'name' => ($consultation->service?->name ?? 'Consultation Fee') . ($consultation->doctor ? ' - Dr. ' . $consultation->doctor->full_name : ''),
@@ -139,7 +169,7 @@ class OpdService
         \Illuminate\Support\Facades\Log::info('OPD_STATUS_UPDATED', [
             'id' => $consultation->id,
             'status' => $status,
-            'user_id' => auth()->id()
+            'user_id' => Auth::id()
         ]);
 
         if ($status === 'Completed') {
@@ -165,7 +195,7 @@ class OpdService
                 'id' => $consultation->id,
                 'method' => $method,
                 'amount' => $consultation->fee,
-                'user_id' => auth()->id()
+                'user_id' => Auth::id()
             ]);
 
             // If no bill exists for this consultation, create one

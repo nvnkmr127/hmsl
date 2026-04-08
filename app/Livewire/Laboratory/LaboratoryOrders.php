@@ -3,6 +3,7 @@
 namespace App\Livewire\Laboratory;
 
 use App\Models\LabOrder;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Throwable;
@@ -87,8 +88,10 @@ class LaboratoryOrders extends Component
                 'results' => $formattedResults,
                 'status' => 'Completed',
                 'completed_at' => now(),
-                'technician_id' => auth()->id()
+                'technician_id' => Auth::id()
             ]);
+
+            event(new \App\Events\Laboratory\LabOrderCompleted($order->load(['patient', 'doctor', 'labTest'])));
 
             $this->dispatch('close-modal', name: 'results-modal');
             $this->dispatch('notify', [
