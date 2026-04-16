@@ -3,6 +3,8 @@
 @section('title', 'User Management')
 
 @section('content')
+<x-breadcrumb />
+
 <x-page-header title="User Management" subtitle="Manage hospital staff access, roles, and permissions.">
     <x-slot name="actions">
         <button class="btn btn-primary" @click="$dispatch('create-user')">Add New User</button>

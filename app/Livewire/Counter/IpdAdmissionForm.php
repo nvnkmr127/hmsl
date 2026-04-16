@@ -17,33 +17,43 @@ class IpdAdmissionForm extends Component
     #[Validate('required|exists:patients,id')]
     public $patientId;
     public $patient;
-    
+
     #[Validate('required|exists:doctors,id')]
     public $doctorId;
-    
+
     #[Validate('required|exists:wards,id')]
     public $wardId;
-    
+
     #[Validate('required|exists:beds,id')]
     public $bedId;
-    
+
     #[Validate('required')]
     public $admissionDate;
-    
+
     public $weight;
     public $height;
-    
+
     public $reason;
     public $notes;
+
+    public $guardianName;
+    public $guardianPhone;
+    public $guardianRelation;
+    public $emergencyContact;
+    public $isEmergency = false;
 
     public $searchPatient = '';
     public $stats = [];
 
-    public function mount()
+    public function mount($patientId = null)
     {
         $this->admissionDate = now()->format('Y-m-d\TH:i');
-        
-        // Auto-select doctor if only one active exists
+
+        if ($patientId) {
+            $this->patientId = $patientId;
+            $this->patient = Patient::find($patientId);
+        }
+
         $activeDoctors = Doctor::where('is_active', true)->get();
         if ($activeDoctors->count() === 1) {
             $this->doctorId = $activeDoctors->first()->id;
@@ -86,7 +96,7 @@ class IpdAdmissionForm extends Component
     {
         $this->validate();
 
-        $service->admitPatient([
+        $data = [
             'patient_id' => $this->patientId,
             'doctor_id' => $this->doctorId,
             'bed_id' => $this->bedId,
@@ -95,16 +105,27 @@ class IpdAdmissionForm extends Component
             'notes' => $this->notes,
             'weight' => $this->weight,
             'height' => $this->height,
-        ]);
+            'guardian_name' => $this->guardianName,
+            'guardian_phone' => $this->guardianPhone,
+            'guardian_relation' => $this->guardianRelation,
+            'emergency_contact' => $this->emergencyContact,
+        ];
 
-        $this->dispatch('notify', ['type' => 'success', 'message' => 'Admission saved successfully!']);
-        return redirect()->route('counter.ipd.index');
+        if ($this->isEmergency) {
+            $data['is_emergency'] = true;
+            $data['reason_for_admission'] = 'EMERGENCY: ' . ($this->reason ?? 'Emergency admission');
+        }
+
+        $admission = $service->admitPatient($data);
+
+        $this->dispatch('notify', ['type' => 'success', 'message' => 'Patient admitted successfully!']);
+        return redirect()->route('counter.ipd.show', $admission->id);
     }
 
     public function render()
     {
         $patients = [];
-        if (strlen($this->searchPatient) >= 3) {
+        if (strlen($this->searchPatient) >= 2) {
             $patients = Patient::query()
                 ->where('first_name', 'like', "%{$this->searchPatient}%")
                 ->orWhere('last_name', 'like', "%{$this->searchPatient}%")

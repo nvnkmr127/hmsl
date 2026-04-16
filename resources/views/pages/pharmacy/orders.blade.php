@@ -3,6 +3,8 @@
 @section('title', 'Pharmacy Orders')
 
 @section('content')
+<x-breadcrumb />
+
 <x-page-header title="Pharmacy Orders" subtitle="Review incoming medicine requests and track fulfillment status." :back="route('pharmacy.index')" backLabel="Pharmacy">
     <x-slot name="actions">
         <button class="btn btn-primary">Create Order</button>

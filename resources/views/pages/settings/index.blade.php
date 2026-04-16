@@ -4,6 +4,8 @@
 
 @section('content')
     <div class="space-y-6">
+        <x-breadcrumb />
+
         <h1 class="text-3xl font-black text-gray-800 dark:text-white uppercase tracking-tight">System Settings</h1>
         
         <div class="flex flex-wrap gap-4 border-b border-gray-100 dark:border-gray-700/50 pb-4 mb-8">

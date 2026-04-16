@@ -3,6 +3,8 @@
 @section('title', 'Billing Management')
 
 @section('content')
+<x-breadcrumb />
+
 <x-page-header title="Billing Management" subtitle="Consolidate charges, apply discounts, and complete settlement.">
     <x-slot name="actions">
         @can('view reports')

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Admission;
 use App\Models\Bed;
 use App\Models\Setting;
+use App\Models\IpdMedicationChart;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -21,9 +22,6 @@ class IpdService
         $this->sequenceService = $sequenceService;
     }
 
-    /**
-     * Generate a unique admission number.
-     */
     public function generateAdmissionNumber(): string
     {
         $prefix = \App\Models\Setting::get('admission_prefix', 'ADM');
@@ -47,9 +45,6 @@ class IpdService
         return sprintf('%s-%s-%05d', $prefix, $scope, $seq);
     }
 
-    /**
-     * Handle the patient admission process.
-     */
     public function admitPatient(array $data): Admission
     {
         return DB::transaction(function () use ($data) {
@@ -65,8 +60,7 @@ class IpdService
             $bed->update(['is_available' => false]);
 
             $admission = Admission::create($data);
-            
-            // Record vitals if provided
+
             if (isset($data['weight']) || isset($data['height'])) {
                 \App\Models\PatientVital::create([
                     'patient_id' => $admission->patient_id,
@@ -78,14 +72,11 @@ class IpdService
             }
 
             event(new \App\Events\IPD\PatientAdmitted($admission->load(['patient', 'bed.ward', 'doctor.user'])));
-            
+
             return $admission;
         });
     }
 
-    /**
-     * Handle the patient discharge process.
-     */
     public function dischargePatient(Admission $admission, ?string $notes = null): Admission
     {
         return DB::transaction(function () use ($admission, $notes) {
@@ -94,22 +85,21 @@ class IpdService
                 'status' => 'Discharged',
                 'notes' => $notes ?: $admission->notes
             ]);
-            
-            // Free the bed
+
             $admission->bed()->update(['is_available' => true]);
 
             if (Schema::hasColumn('bills', 'admission_id')) {
                 $billItems = $this->buildFinalBillItems($admission->fresh());
                 $this->billingService->upsertAdmissionFinalBill($admission, $billItems);
             }
-            
+
             return $admission;
         });
     }
 
-    private function buildFinalBillItems(Admission $admission): array
+    public function buildFinalBillItems(Admission $admission): array
     {
-        $admission->loadMissing(['bed.ward', 'labOrders.labTest', 'medications']);
+        $admission->loadMissing(['bed.ward', 'bed', 'labOrders.labTest', 'ipdMedications']);
 
         $items = [];
 
@@ -119,14 +109,27 @@ class IpdService
         $stayDays = max(1, (int) ceil($stayHours / 24));
 
         $ward = $admission->bed?->ward;
-        $dailyCharge = (float) ($ward?->daily_charge ?? 0);
+        $bed = $admission->bed;
+        $dailyCharge = (float) ($bed?->per_day_charge ?? $ward?->daily_charge ?? 0);
 
         if ($dailyCharge > 0) {
             $items[] = [
-                'name' => ($ward?->name ?? 'Ward') . ' Bed Charges',
+                'name' => ($ward?->name ?? 'Ward') . ' - ' . ($bed?->bed_number ?? 'Bed') . ' (' . $stayDays . ' days)',
                 'type' => 'IPD',
                 'quantity' => $stayDays,
                 'unit_price' => $dailyCharge,
+            ];
+        }
+
+        $doctor = $admission->doctor;
+        if ($doctor) {
+            $visitCharge = (float) ($doctor->consultation_charge ?? Setting::get('ipd_daily_doctor_charge', 500));
+            $doctorVisitDays = max(1, $stayDays);
+            $items[] = [
+                'name' => 'Doctor Visit Charges - Dr. ' . $doctor->full_name . ' (' . $doctorVisitDays . ' days)',
+                'type' => 'Consultation',
+                'quantity' => $doctorVisitDays,
+                'unit_price' => $visitCharge,
             ];
         }
 
@@ -144,42 +147,51 @@ class IpdService
             ];
         }
 
-        foreach ($admission->medications as $rx) {
-            if (!$rx->is_dispensed) {
+        foreach ($admission->ipdMedications as $rx) {
+            if ($rx->status !== 'Active' && $rx->status !== 'Stopped') {
                 continue;
             }
 
-            $meds = is_array($rx->medicines) ? $rx->medicines : [];
-            foreach ($meds as $m) {
-                $medicineId = isset($m['medicine_id']) ? (int) $m['medicine_id'] : null;
-                $name = isset($m['name']) ? trim((string) $m['name']) : '';
-                $qty = isset($m['qty']) ? (int) $m['qty'] : 1;
-                $qty = max(1, $qty);
-
-                $medicine = null;
-                if ($medicineId) {
-                    $medicine = \App\Models\Medicine::find($medicineId);
-                } elseif ($name !== '') {
-                    $medicine = \App\Models\Medicine::query()
-                        ->whereRaw('lower(name) = ?', [mb_strtolower($name)])
-                        ->first();
-                }
-
-                $unitPrice = (float) ($medicine?->selling_price ?? 0);
-                if ($unitPrice <= 0) {
-                    continue;
-                }
-
-                $items[] = [
-                    'name' => $medicine?->name ?: ($name ?: 'Medicine'),
-                    'type' => 'Pharmacy',
-                    'quantity' => $qty,
-                    'unit_price' => $unitPrice,
-                ];
+            $medicine = $rx->medicine;
+            if (!$medicine) {
+                continue;
             }
+
+            $unitPrice = (float) ($medicine->selling_price ?? $medicine->price ?? 0);
+            if ($unitPrice <= 0) {
+                continue;
+            }
+
+            $qty = $this->calculateMedicationQuantity($rx);
+
+            $items[] = [
+                'name' => $rx->medicine_name . ($rx->dosage ? ' - ' . $rx->dosage : ''),
+                'type' => 'Pharmacy',
+                'quantity' => $qty,
+                'unit_price' => $unitPrice,
+            ];
         }
 
         return $items;
+    }
+
+    protected function calculateMedicationQuantity(IpdMedicationChart $med): int
+    {
+        $start = $med->start_date;
+        $end = $med->end_date ?? ($med->stopped_at ?? now());
+
+        $days = max(1, (int) $start->diffInDays($end));
+
+        $freqMultiplier = match ($med->frequency) {
+            'OD', 'Once daily' => 1,
+            'BD', 'Twice daily' => 2,
+            'TDS', 'Three times daily' => 3,
+            'QID', 'Four times daily' => 4,
+            'SOS', 'PRN' => 1,
+            default => 1,
+        };
+
+        return $days * $freqMultiplier;
     }
 
     public function ensureFinalBill(Admission $admission): void
@@ -192,19 +204,19 @@ class IpdService
         $this->billingService->upsertAdmissionFinalBill($admission, $billItems);
     }
 
-    /**
-     * Fetch the detailed admission record for discharge summary/print.
-     * Consolidates eager loading to the service layer.
-     */
     public function getDischargeDetails(Admission $admission): Admission
     {
         $relations = [
-            'patient', 
-            'doctor.user', 
-            'bed.ward', 
-            'vitals', 
-            'medications',
+            'patient',
+            'doctor.user',
+            'bed.ward',
+            'vitals',
+            'ipdMedications',
+            'ipdNotes',
+            'ipdVitals',
             'labOrders.labTest',
+            'diagnoses',
+            'dischargeSummary.medications',
         ];
 
         if (Schema::hasColumn('bills', 'admission_id')) {

@@ -2,7 +2,8 @@
     <div class="flex items-center justify-between mb-4">
         <h3 class="text-lg font-bold text-gray-900 dark:text-white">Medication Chart</h3>
         @unless($admission->status === 'Discharged')
-            <button wire:click="$toggle('showForm')" class="btn btn-primary text-xs">
+            <button wire:click="$toggle('showForm')" class="btn btn-primary text-xs" wire:loading.attr="disabled">
+                <svg wire:loading class="w-4 h-4 animate-spin mr-1" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                 Add Medicine
             </button>
         @endunless
@@ -33,13 +34,13 @@
                 <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Medicine Name</label>
                 <div class="relative">
                     <input type="text" wire:model.live="searchMedicine" wire:focus="$set('showMedicineSearch', true)" class="w-full rounded-lg border-gray-200 dark:border-gray-700 text-sm" placeholder="Search medicine...">
-                    @if($this->showMedicineSearch && $medicines && $medicines->count() > 0)
+                    @if($this->showMedicineSearch && strlen($this->searchMedicine) >= 2 && $medicines && $medicines->count() > 0)
                         <div class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 shadow-xl max-h-48 overflow-y-auto">
                             @foreach($medicines as $med)
-                                <button wire:click="selectMedicine({{ $med->id }}, '{{ $med->name }}')" class="w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm">
+                                <button wire:click="selectMedicine({{ $med->id }})" wire:key="med-{{ $med->id }}" class="w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm flex justify-between items-center">
                                     <span class="font-semibold">{{ $med->name }}</span>
                                     @if($med->strength)
-                                        <span class="text-gray-500 ml-1">{{ $med->strength }}</span>
+                                        <span class="text-gray-500 text-xs">{{ $med->strength }}</span>
                                     @endif
                                 </button>
                             @endforeach
@@ -128,13 +129,18 @@
                             @if($med->route) · {{ $med->route }}@endif
                             @if($med->duration) · {{ $med->duration }}@endif
                         </p>
+                        <div class="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                            <span>Start: {{ $med->start_date ? $med->start_date->format('d M Y') : 'N/A' }}</span>
+                            @if($med->end_date)
+                                <span>End: {{ $med->end_date->format('d M Y') }}</span>
+                            @endif
+                        </div>
                         @if($med->instructions)
                             <p class="text-xs text-gray-500 mt-1"><span class="font-bold">Instructions:</span> {{ $med->instructions }}</p>
                         @endif
                         @if($med->status === 'Stopped' && $med->stop_reason)
                             <p class="text-xs text-rose-500 mt-1"><span class="font-bold">Stop Reason:</span> {{ $med->stop_reason }}</p>
                         @endif
-                        <p class="text-xs text-gray-400 mt-2">Started: {{ $med->start_date->format('d M Y') }}</p>
                     </div>
                     @if($med->status === 'Active' && $admission->status !== 'Discharged')
                         <div class="flex items-center gap-2">

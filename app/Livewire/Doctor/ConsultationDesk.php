@@ -60,7 +60,7 @@ class ConsultationDesk extends Component
 
         foreach ($visits as $v) {
             $timeline->push((object)[
-                'date' => $v->consultation_date,
+                'date' => \Carbon\Carbon::parse($v->consultation_date),
                 'type' => 'OP Visit',
                 'title' => "Token #{$v->token_number}",
                 'meta' => $v->notes ?: 'Regular checkup',
@@ -71,7 +71,7 @@ class ConsultationDesk extends Component
         $admissions = \App\Models\Admission::with('bed.ward')->where('patient_id', $id)->get();
         foreach ($admissions as $a) {
             $timeline->push((object)[
-                'date' => $a->admission_date,
+                'date' => \Carbon\Carbon::parse($a->admission_date),
                 'type' => 'Admission',
                 'title' => 'In-Patient Admission',
                 'meta' => "Ward: " . (optional(optional($a->bed)->ward)->name ?? 'N/A'),

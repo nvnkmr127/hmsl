@@ -59,7 +59,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="glass-card p-5">
             <h3 class="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider mb-3">Vitals</h3>
-            @php $latestVital = $admission->vitals?->sortByDesc('created_at')->first(); @endphp
+            @php $latestVital = $admission->ipdVitals?->sortByDesc('recorded_at')->first(); @endphp
             @if($latestVital)
                 <div class="space-y-1 text-sm text-slate-700 dark:text-slate-200">
                     <p>Date: <span class="font-semibold">{{ $latestVital->created_at?->format('d M Y, H:i') }}</span></p>
@@ -107,29 +107,22 @@
     <div class="glass-card p-5">
         <h3 class="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider mb-3">Medications</h3>
         @php
-            $dispensed = $admission->medications?->filter(fn ($m) => (bool) $m->is_dispensed) ?? collect();
+            $dispensed = $admission->ipdMedications?->filter(fn ($m) => (bool) $m->is_dispensed) ?? collect();
         @endphp
         @if($dispensed->count())
             <div class="space-y-2">
                 @foreach($dispensed as $rx)
                     <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800">
                         <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Dispensed: {{ $rx->dispensed_at?->format('d M Y, H:i') ?? '—' }}</p>
-                        @php $meds = is_array($rx->medicines) ? $rx->medicines : []; @endphp
-                        @if(count($meds))
-                            <ul class="mt-2 text-sm text-slate-700 dark:text-slate-200 list-disc pl-5 space-y-1">
-                                @foreach($meds as $m)
-                                    <li>
-                                        <span class="font-semibold">{{ $m['name'] ?? 'Medicine' }}</span>
-                                        @if(isset($m['qty'])) · Qty {{ $m['qty'] }} @endif
-                                        @if(isset($m['dose']) && $m['dose']) · {{ $m['dose'] }} @endif
-                                        @if(isset($m['frequency']) && $m['frequency']) · {{ $m['frequency'] }} @endif
-                                        @if(isset($m['duration']) && $m['duration']) · {{ $m['duration'] }} @endif
-                                    </li>
-                                @endforeach
-                            </ul>
-                        @else
-                            <p class="text-sm text-slate-600 dark:text-slate-300 mt-2">No medicines listed.</p>
-                        @endif
+                        <ul class="mt-2 text-sm text-slate-700 dark:text-slate-200 list-disc pl-5 space-y-1">
+                            <li>
+                                <span class="font-semibold">{{ $rx->medicine_name ?? 'Medicine' }}</span>
+                                @if($rx->dosage) · {{ $rx->dosage }} @endif
+                                @if($rx->frequency) · {{ $rx->frequency }} @endif
+                                @if($rx->duration) · {{ $rx->duration }} @endif
+                                @if($rx->route) · {{ $rx->route }} @endif
+                            </li>
+                        </ul>
                     </div>
                 @endforeach
             </div>

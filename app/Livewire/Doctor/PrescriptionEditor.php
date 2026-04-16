@@ -73,7 +73,7 @@ class PrescriptionEditor extends Component
             'chief_complaint' => 'nullable|string|max:1000',
             'diagnosis'       => 'nullable|string|max:1000',
             'advice'          => 'nullable|string|max:2000',
-            'follow_up_date'  => 'nullable|date|after:today',
+            'follow_up_date'  => 'nullable|date',
             'medicines'       => 'nullable|array',
             'medicines.*.name' => 'required_with:medicines|string|max:255',
             'medicines.*.qty' => 'nullable|integer|min:1|max:1000',

@@ -1,16 +1,37 @@
 <div>
     <x-page-header 
-        title="Patient Admission" 
+        title="Patient Admission"
         subtitle="Start a new patient stay, assign a ward, and manage bed availability in real-time."
         back="{{ route('counter.ipd.index') }}"
     >
         <x-slot name="actions">
-            <a href="{{ route('counter.ipd.index') }}" class="btn btn-secondary border-indigo-200 dark:border-indigo-900 shadow-sm">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
-                Patient List
-            </a>
+            <div class="flex items-center gap-4">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" wire:model.live="isEmergency" class="sr-only peer">
+                    <div class="relative w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-rose-300 dark:peer-focus:ring-rose-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-rose-600"></div>
+                    <span class="text-sm font-bold text-gray-900 dark:text-gray-300">Emergency Admission</span>
+                </label>
+                <a href="{{ route('counter.ipd.index') }}" class="btn btn-secondary border-indigo-200 dark:border-indigo-900 shadow-sm">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                    Patient List
+                </a>
+            </div>
         </x-slot>
     </x-page-header>
+
+    @if($isEmergency)
+        <div class="mb-6 p-4 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-2xl">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-rose-500 flex items-center justify-center text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                </div>
+                <div>
+                    <p class="font-bold text-rose-900 dark:text-rose-200">Emergency Admission Mode</p>
+                    <p class="text-sm text-rose-700 dark:text-rose-300">Priority admission - no waiting in queue</p>
+                </div>
+            </div>
+        </div>
+    @endif
 
     <!-- Rapid Insights Hub -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-10 mt-8">

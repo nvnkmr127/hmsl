@@ -64,7 +64,7 @@
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-500">Status:</span>
-                        <x-badge :type="$admission->status === 'Admitted' ? 'success' : 'secondary'">{{ $admission->status }}</x-badge>
+                        <x-badge :type="$admission->status === 'Admitted' ? 'success' : ($admission->status === 'Discharged' ? 'info' : 'secondary')">{{ $admission->status }}</x-badge>
                     </div>
                 </div>
 
@@ -92,11 +92,14 @@
                         <a href="{{ route('counter.ipd.discharge', $admission->id) }}" class="btn btn-primary w-full text-xs">
                             Start Discharge Process
                         </a>
-                        @if($admission->finalBill)
-                            <a href="{{ route('billing.bills.print', $admission->finalBill->id) }}" target="_blank" class="btn btn-secondary w-full text-xs">
-                                Print Final Bill
-                            </a>
-                        @endif
+                        <div class="flex gap-2">
+                            <livewire:ipd.transfer-bed :admission="$admission" />
+                            @if($admission->finalBill)
+                                <a href="{{ route('billing.bills.print', $admission->finalBill->id) }}" target="_blank" class="btn btn-secondary w-full text-xs">
+                                    Print Bill
+                                </a>
+                            @endif
+                        </div>
                     </div>
                 </x-card>
             @endif

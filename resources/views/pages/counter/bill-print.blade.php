@@ -41,7 +41,7 @@
             <p style="font-size: 8pt; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; text-decoration: underline;">Patient Details</p>
             <p style="font-size: 14pt; font-weight: bold; margin: 0;">{{ $bill->patient->full_name }}</p>
             <div style="font-size: 10pt; margin-top: 5px;">
-                <p>UHID: <strong>PAT-{{ $bill->patient->created_at->format('Y') }}-{{ str_pad($bill->patient->id, 5, '0', STR_PAD_LEFT) }}</strong></p>
+                <p>UHID: <strong>{{ $bill->patient->uhid ?? 'N/A' }}</strong></p>
                 <p>Age/Gender: {{ $bill->patient->age }} / {{ $bill->patient->gender }}</p>
                 <p>Phone: {{ $bill->patient->phone ?? 'N/A' }}</p>
             </div>

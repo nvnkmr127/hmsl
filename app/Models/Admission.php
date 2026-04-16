@@ -27,6 +27,7 @@ class Admission extends Model
         'guardian_phone',
         'guardian_relation',
         'emergency_contact',
+        'is_emergency',
     ];
 
     protected $casts = [

@@ -3,6 +3,8 @@
 @section('title', 'Pharmacy Management')
 
 @section('content')
+<x-breadcrumb />
+
 <x-page-header title="Pharmacy Management" subtitle="Track prescriptions, dispense medicines, and manage pharmacy stock.">
     <x-slot name="actions">
         <button class="btn btn-secondary">

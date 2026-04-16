@@ -24,6 +24,14 @@ class Consultation extends Model
         'payment_method',
         'notes',
         'discount_amount',
+        'chief_complaints',
+        'history_of_present_illness',
+        'past_history',
+        'personal_history',
+        'general_examination',
+        'systemic_examination',
+        'examination_findings',
+        'created_by',
     ];
 
     protected $casts = [
@@ -33,8 +41,8 @@ class Consultation extends Model
         'weight' => 'decimal:2',
         'temperature' => 'decimal:2',
         'discount_amount' => 'decimal:2',
+        'chief_complaints' => 'array',
     ];
-
 
     public function patient()
     {
@@ -56,5 +64,23 @@ class Consultation extends Model
         return $this->hasOne(Bill::class);
     }
 
+    public function prescriptions()
+    {
+        return $this->hasMany(Prescription::class);
+    }
 
+    public function labOrders()
+    {
+        return $this->hasMany(LabOrder::class);
+    }
+
+    public function diagnoses()
+    {
+        return $this->hasMany(Diagnosis::class);
+    }
+
+    public function vitals()
+    {
+        return $this->hasMany(PatientVital::class);
+    }
 }

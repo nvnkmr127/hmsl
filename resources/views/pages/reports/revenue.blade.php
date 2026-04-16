@@ -4,6 +4,8 @@
 
 @section('content')
     <div class="space-y-6">
+        <x-breadcrumb />
+
         <div class="flex items-center justify-between mb-8">
             <h1 class="text-4xl font-black text-gray-800 dark:text-white uppercase tracking-tighter">Business Intelligence</h1>
             <div class="flex items-center space-x-2">

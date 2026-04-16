@@ -97,10 +97,13 @@ class OpdBooking extends Component
         $this->searchPatient = ''; // Clear search
         
         // Check for recent consultations within validity period
-        $hasRecentVisit = Consultation::where('patient_id', $id)
-            ->where('status', '!=', 'Cancelled')
-            ->where('valid_upto', '>=', $this->consultation_date)
-            ->exists();
+        $hasRecentVisit = false;
+        if ($this->valid_upto) {
+            $hasRecentVisit = Consultation::where('patient_id', $id)
+                ->where('status', '!=', 'Cancelled')
+                ->where('valid_upto', '>=', $this->consultation_date)
+                ->exists();
+        }
 
         $this->isFollowUp = $hasRecentVisit;
 

@@ -3,6 +3,8 @@
 @section('title', 'Discharge Management')
 
 @section('content')
+<x-breadcrumb />
+
 <x-page-header title="Discharge Management" subtitle="Prepare patient discharge summaries, clearance checks, and final instructions.">
     <x-slot name="actions">
         <a href="{{ route('discharge.export') }}" class="btn btn-secondary">Export Summary</a>

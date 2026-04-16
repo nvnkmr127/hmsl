@@ -12,6 +12,13 @@ use Illuminate\Support\Facades\Auth;
 
 class DischargeSummaryService
 {
+    protected IpdService $ipdService;
+
+    public function __construct(IpdService $ipdService)
+    {
+        $this->ipdService = $ipdService;
+    }
+
     public function createDraft(Admission $admission): DischargeSummary
     {
         return DB::transaction(function () use ($admission) {
@@ -124,6 +131,19 @@ class DischargeSummaryService
         $summary->markAsFinalized($user);
 
         return $summary;
+    }
+
+    public function dischargePatient(DischargeSummary $summary, User $user): Admission
+    {
+        $admission = $summary->admission;
+
+        if ($admission->status === 'Discharged') {
+            throw new \RuntimeException('Patient is already discharged.');
+        }
+
+        $this->finalize($summary, $user);
+
+        return $this->ipdService->dischargePatient($admission, 'Discharged via summary finalized');
     }
 
     public function getForAdmission(Admission $admission): ?DischargeSummary

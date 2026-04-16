@@ -19,6 +19,7 @@ class MedicationChart extends Component
     public $route = 'Oral';
     public $start_date;
     public $end_date;
+    public $duration;
     public $instructions;
 
     public $searchMedicine = '';
@@ -37,6 +38,7 @@ class MedicationChart extends Component
         'medicine_id' => 'nullable|exists:medicines,id',
         'dosage' => 'nullable|string',
         'frequency' => 'nullable|string',
+        'duration' => 'nullable|string',
         'route' => 'nullable|string',
         'start_date' => 'required|date',
         'end_date' => 'nullable|date|after_or_equal:start_date',
@@ -83,6 +85,7 @@ class MedicationChart extends Component
                 'medicine_id' => $this->medicine_id,
                 'dosage' => $this->dosage,
                 'frequency' => $this->frequency,
+                'duration' => $this->duration,
                 'route' => $this->route,
                 'start_date' => $this->start_date,
                 'end_date' => $this->end_date,
@@ -99,6 +102,7 @@ class MedicationChart extends Component
                 'medicine_name' => $this->medicine_name,
                 'dosage' => $this->dosage,
                 'frequency' => $this->frequency,
+                'duration' => $this->duration,
                 'route' => $this->route,
                 'start_date' => $this->start_date,
                 'end_date' => $this->end_date,
@@ -120,6 +124,7 @@ class MedicationChart extends Component
         $this->medicine_name = $med->medicine_name;
         $this->dosage = $med->dosage;
         $this->frequency = $med->frequency;
+        $this->duration = $med->duration;
         $this->route = $med->route;
         $this->start_date = $med->start_date->format('Y-m-d');
         $this->end_date = $med->end_date?->format('Y-m-d');
@@ -161,7 +166,7 @@ class MedicationChart extends Component
 
     public function resetForm()
     {
-        $this->reset(['medicine_name', 'medicine_id', 'dosage', 'frequency', 'route', 'end_date', 'instructions', 'editingId']);
+        $this->reset(['medicine_name', 'medicine_id', 'dosage', 'frequency', 'duration', 'route', 'end_date', 'instructions', 'editingId']);
         $this->start_date = now()->format('Y-m-d');
         $this->route = 'Oral';
         $this->showForm = false;

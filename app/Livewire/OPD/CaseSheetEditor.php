@@ -85,6 +85,14 @@ class CaseSheetEditor extends Component
             $this->resp_rate = $vitals->resp_rate;
         }
 
+        $this->chief_complaints = $this->consultation->chief_complaints ?? [];
+        $this->history_of_present_illness = $this->consultation->history_of_present_illness;
+        $this->past_history = $this->consultation->past_history;
+        $this->personal_history = $this->consultation->personal_history;
+        $this->general_examination = $this->consultation->general_examination;
+        $this->systemic_examination = $this->consultation->systemic_examination;
+        $this->examination_findings = $this->consultation->examination_findings;
+
         $this->diagnoses = Diagnosis::where('consultation_id', $this->consultation->id)
             ->get()
             ->toArray();
@@ -146,7 +154,7 @@ class CaseSheetEditor extends Component
     public function saveComplaints()
     {
         $this->consultation->update([
-            'chief_complaints' => json_encode($this->chief_complaints),
+            'chief_complaints' => $this->chief_complaints,
             'history_of_present_illness' => $this->history_of_present_illness,
             'past_history' => $this->past_history,
             'personal_history' => $this->personal_history,

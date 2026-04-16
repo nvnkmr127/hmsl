@@ -3,6 +3,8 @@
 @section('title', 'Laboratory Tracking')
 
 @section('content')
+<x-breadcrumb />
+
 <x-page-header title="Laboratory Tracking" subtitle="Manage clinical tests, biological samples, and diagnostic reports.">
     <x-slot name="actions">
         <button class="btn btn-secondary">

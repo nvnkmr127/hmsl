@@ -226,6 +226,32 @@ class DischargeSummaryForm extends Component
         ]);
     }
 
+    public function dischargePatient()
+    {
+        if (!$this->summary) {
+            $service = app(DischargeSummaryService::class);
+            $this->summary = $service->createDraft($this->admission);
+        }
+
+        $service = app(DischargeSummaryService::class);
+
+        try {
+            $admission = $service->dischargePatient($this->summary, Auth::user());
+
+            $this->dispatch('notify', [
+                'type' => 'success',
+                'message' => 'Patient discharged successfully!'
+            ]);
+
+            return redirect()->route('counter.ipd.show', $admission->id);
+        } catch (\Exception $e) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+
     public function importFromMedicationChart()
     {
         if (!$this->summary) {

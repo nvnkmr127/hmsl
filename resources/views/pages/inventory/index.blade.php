@@ -3,6 +3,8 @@
 @section('title', 'Inventory & Logistics')
 
 @section('content')
+<x-breadcrumb />
+
 <x-page-header title="Inventory & Logistics" subtitle="Monitor stock levels, manage suppliers, and track medical equipment.">
     <x-slot name="actions">
         <button class="btn btn-secondary">
