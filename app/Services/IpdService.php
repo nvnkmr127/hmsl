@@ -90,39 +90,64 @@ class IpdService
     public function dischargePatient(Admission $admission, ?string $notes = null): Admission
     {
         return DB::transaction(function () use ($admission, $notes) {
-            // 1. DISCHARGE SUMMARY CHECK (MANDATORY)
-            if (!$admission->dischargeSummary()->exists()) {
-                throw new \RuntimeException('Discharge Summary is mandatory before discharge.');
+            // 1. REFRESH & LOCK FOR UPDATE
+            $admission = Admission::query()->lockForUpdate()->find($admission->id);
+            if ($admission->status === 'Discharged') {
+                throw new \RuntimeException('Patient is already discharged.');
             }
 
-            // 2. BILL SETTLEMENT CHECK
+            // 2. DISCHARGE SUMMARY CHECK (MANDATORY & FINALIZED)
+            $summary = $admission->dischargeSummary;
+            if (!$summary || !$summary->is_finalized) {
+                throw new \RuntimeException('A Finalized Discharge Summary is mandatory before discharge.');
+            }
+
+            // 3. CLINICAL SAFETY CHECKS (PENDING ORDERS/MEDS)
+            $pendingOrders = \App\Models\LabOrder::where('admission_id', $admission->id)
+                ->whereNotIn('status', ['Completed', 'Cancelled', 'Rejected'])
+                ->count();
+            if ($pendingOrders > 0) {
+                throw new \RuntimeException("Cannot discharge. There are {$pendingOrders} pending lab orders that must be completed or cancelled.");
+            }
+
+            $activeMeds = \App\Models\IpdMedicationChart::where('admission_id', $admission->id)
+                ->where('status', 'Active')
+                ->count();
+            if ($activeMeds > 0) {
+                throw new \RuntimeException("Cannot discharge. There are {$activeMeds} active medications. Stop or complete all medications first.");
+            }
+
+            // 4. PRE-RECALCULATE FINAL BILL (To catch last-minute charges)
+            if (Schema::hasColumn('bills', 'admission_id')) {
+                 // Update discharge date temporarily for billing calculation
+                $originalDischargeDate = $admission->discharge_date;
+                $admission->discharge_date = now();
+                
+                $billItems = $this->buildFinalBillItems($admission);
+                $this->billingService->upsertAdmissionFinalBill($admission, $billItems);
+                
+                $admission->refresh();
+            }
+
+            // 5. BILL SETTLEMENT CHECK
             $bill = $admission->finalBill;
             if ($bill && $bill->payment_status !== 'Paid') {
                 $balance = number_format($bill->balance_amount, 2);
-                throw new \RuntimeException("Cannot discharge. Final bill has a pending balance of {$balance}. Seal the bill first.");
+                throw new \RuntimeException("Cannot discharge. Final bill has a pending balance of {$balance}. Settle the bill first.");
             }
 
-            if (!$bill && Schema::hasColumn('bills', 'admission_id')) {
-                // Ensure a final bill is at least generated before discharge
-                $this->ensureFinalBill($admission);
-                $admission->refresh();
-                if ($admission->finalBill->total_amount > 0) {
-                     throw new \RuntimeException("Final bill has been generated. Please settle the payment before discharge.");
-                }
-            }
-
+            // 6. EXECUTE DISCHARGE
             $admission->update([
                 'discharge_date' => now(),
                 'status' => 'Discharged',
-                'notes' => $notes ?: $admission->notes
+                'notes' => $notes ?: $admission->notes,
+                'discharged_by' => Auth::id(), // Audit Trail
             ]);
 
+            // 7. BED RELEASE
             $admission->bed()->update(['is_available' => true]);
 
-            if (Schema::hasColumn('bills', 'admission_id')) {
-                $billItems = $this->buildFinalBillItems($admission->fresh());
-                $this->billingService->upsertAdmissionFinalBill($admission, $billItems);
-            }
+            event(new \App\Events\IPD\PatientDischarged($admission->load(['patient', 'bed.ward', 'doctor.user'])));
 
             return $admission;
         });
@@ -155,12 +180,15 @@ class IpdService
         $doctor = $admission->doctor;
         if ($doctor) {
             $visitCharge = (float) ($doctor->consultation_charge ?? Setting::get('ipd_daily_doctor_charge', 500));
-            // EVIDENCE-BASED BILLING: Count only actual doctor round notes
-            $doctorVisitDays = $admission->ipdNotes()->where('note_type', 'Doctor')->count();
+            // EVIDENCE-BASED BILLING: Count distinct days of doctor rounds
+            $doctorVisitDays = $admission->ipdNotes()
+                ->where('note_type', 'Doctor')
+                ->selectRaw('COUNT(DISTINCT DATE(note_date)) as days')
+                ->value('days');
             
             if ($doctorVisitDays > 0) {
                 $items[] = [
-                    'name' => 'Doctor Visit Charges - Dr. ' . $doctor->full_name . ' (' . $doctorVisitDays . ' rounds)',
+                    'name' => 'Doctor Visit Charges - Dr. ' . $doctor->full_name . ' (' . $doctorVisitDays . ' days)',
                     'type' => 'Consultation',
                     'quantity' => $doctorVisitDays,
                     'unit_price' => $visitCharge,
@@ -179,6 +207,8 @@ class IpdService
                 'type' => 'Lab',
                 'quantity' => 1,
                 'unit_price' => $price,
+                'source_type' => \App\Models\LabOrder::class,
+                'source_id' => $order->id,
             ];
         }
 
@@ -200,6 +230,8 @@ class IpdService
                     'type' => 'Pharmacy',
                     'quantity' => $administeredQty,
                     'unit_price' => $unitPrice,
+                    'source_type' => \App\Models\IpdMedicationChart::class,
+                    'source_id' => $rx->id,
                 ];
             }
         }

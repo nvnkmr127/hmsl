@@ -124,8 +124,17 @@ class DischargeSummaryService
 
     public function finalize(DischargeSummary $summary, User $user): DischargeSummary
     {
-        if (!$summary->canFinalize()) {
-            throw new \RuntimeException('This summary cannot be finalized.');
+        if ($summary->is_finalized) {
+             throw new \RuntimeException('This summary is already finalized.');
+        }
+
+        $missing = [];
+        if (empty($summary->final_diagnosis)) $missing[] = 'Final Diagnosis';
+        if (empty($summary->treatment_summary)) $missing[] = 'Treatment Summary';
+        if (empty($summary->condition_at_discharge)) $missing[] = 'Condition at Discharge';
+
+        if (!empty($missing)) {
+            throw new \RuntimeException('Cannot finalize. Missing mandatory fields: ' . implode(', ', $missing));
         }
 
         $summary->markAsFinalized($user);

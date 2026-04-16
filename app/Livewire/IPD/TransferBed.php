@@ -31,31 +31,53 @@ class TransferBed extends Component
             'newBedId' => 'required|exists:beds,id',
         ]);
 
-        DB::transaction(function () {
-            $oldBed = $this->admission->bed;
-            if ($oldBed) {
-                $oldBed->update(['is_available' => true]);
-            }
+        try {
+            DB::transaction(function () {
+                // Check if patient is still admitted
+                if ($this->admission->status !== 'Admitted') {
+                    throw new \RuntimeException('Only admitted patients can be transferred.');
+                }
 
-            $newBed = Bed::findOrFail($this->newBedId);
-            if (!$newBed->is_available) {
-                throw new \RuntimeException('Selected bed is no longer available.');
-            }
+                $oldBed = $this->admission->bed;
+                $newBed = Bed::query()->lockForUpdate()->findOrFail($this->newBedId);
+                
+                if (!$newBed->is_available) {
+                    throw new \RuntimeException('Selected bed is no longer available.');
+                }
 
-            $newBed->update(['is_available' => false]);
+                if ($oldBed) {
+                    $oldBed->update(['is_available' => true]);
+                }
 
-            $this->admission->update([
-                'bed_id' => $this->newBedId,
+                $newBed->update(['is_available' => false]);
+
+                $this->admission->update([
+                    'bed_id' => $this->newBedId,
+                ]);
+
+                // Log the transfer in clinical notes
+                \App\Models\IpdNote::create([
+                    'admission_id' => $this->admission->id,
+                    'patient_id' => $this->admission->patient_id,
+                    'note_type' => 'Progress',
+                    'note_date' => now(),
+                    'content' => "BED TRANSFER: Transferred from " . ($oldBed->bed_number ?? 'Unknown') . " to " . $newBed->bed_number . ". Reason: " . ($this->reason ?: 'Medical/Administrative'),
+                    'created_by' => auth()->id(),
+                ]);
+            });
+
+            $this->dispatch('notify', [
+                'type' => 'success',
+                'message' => 'Patient transferred to ' . Bed::find($this->newBedId)->bed_number
             ]);
-        });
 
-        $this->dispatch('notify', [
-            'type' => 'success',
-            'message' => 'Patient transferred to ' . Bed::find($this->newBedId)->bed_number
-        ]);
-
-        $this->showModal = false;
-        $this->reason = '';
+            $this->showModal = false;
+            $this->reason = '';
+        } catch (\RuntimeException $e) {
+            $this->dispatch('notify', ['type' => 'error', 'message' => $e->getMessage()]);
+        } catch (\Exception $e) {
+            $this->dispatch('notify', ['type' => 'error', 'message' => 'Transfer failed.']);
+        }
     }
 
     public function getAvailableBedsProperty()

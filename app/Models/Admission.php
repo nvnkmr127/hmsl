@@ -28,6 +28,9 @@ class Admission extends Model
         'guardian_relation',
         'emergency_contact',
         'is_emergency',
+        'discharged_by',
+        'is_discount_authorized',
+        'authorized_discount_limit',
     ];
 
     protected $casts = [

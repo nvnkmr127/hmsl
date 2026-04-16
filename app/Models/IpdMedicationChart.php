@@ -31,6 +31,7 @@ class IpdMedicationChart extends Model
         'stopped_by',
         'is_dispensed',
         'dispensed_at',
+        'bill_item_id',
     ];
 
     protected $casts = [

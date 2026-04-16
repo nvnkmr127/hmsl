@@ -21,6 +21,10 @@ class BillGenerate extends Component
     public $amountPaid = 0;
     public $paymentMethod = 'Cash';
     public $notes;
+    public $discountType = 'flat';
+    public $discountReason = '';
+    public $isAuthorizedByDoctor = false;
+    public $authorizedLimit = 0;
 
     #[On('generate-bill')]
     public function openBillingModal($data = null)
@@ -29,8 +33,6 @@ class BillGenerate extends Component
         $this->consultationId = is_array($data) ? ($data['consultationId'] ?? null) : $data;
         $consultation = Consultation::with('patient', 'doctor')->findOrFail($this->consultationId);
 
-
-        
         $this->patientId = $consultation->patient_id;
         $this->patientName = $consultation->patient->full_name;
         
@@ -44,8 +46,12 @@ class BillGenerate extends Component
             ]
         ];
 
-        
         $this->discount = $consultation->discount_amount ?? 0;
+        $this->isAuthorizedByDoctor = $consultation->is_discount_authorized;
+        $this->authorizedLimit = $consultation->authorized_discount_limit;
+        
+        $this->discountType = 'flat';
+        $this->discountReason = $this->discount > 0 ? 'Doctor consultation discount' : '';
         $this->tax = 0;
         $this->paymentStatus = $consultation->payment_status === 'Paid' ? 'Paid' : 'Unpaid';
         $this->paymentMethod = 'Cash';
@@ -53,7 +59,6 @@ class BillGenerate extends Component
         $this->notes = '';
 
         $this->dispatch('open-modal', name: 'billing-modal');
-
     }
 
     #[On('generate-bill-for-patient')]
@@ -64,8 +69,6 @@ class BillGenerate extends Component
         $this->patientId = is_array($data) ? ($data['patientId'] ?? null) : $data;
         $patient = Patient::findOrFail($this->patientId);
 
-
-
         $this->patientId = $patient->id;
         $this->patientName = $patient->full_name;
 
@@ -73,6 +76,8 @@ class BillGenerate extends Component
             ['name' => 'Service', 'type' => 'Other', 'quantity' => 1, 'unit_price' => 0],
         ];
         $this->discount = 0;
+        $this->discountType = 'flat';
+        $this->discountReason = '';
         $this->tax = 0;
         $this->paymentStatus = 'Paid';
         $this->paymentMethod = 'Cash';
@@ -80,7 +85,6 @@ class BillGenerate extends Component
         $this->notes = '';
 
         $this->dispatch('open-modal', name: 'billing-modal');
-
     }
 
     public function addItem()
@@ -103,7 +107,11 @@ class BillGenerate extends Component
 
     public function getTotalProperty()
     {
-        return $this->subtotal - $this->discount + $this->tax;
+        $discountAmount = $this->discount;
+        if ($this->discountType === 'percentage') {
+            $discountAmount = ($this->subtotal * $this->discount) / 100;
+        }
+        return $this->subtotal - $discountAmount + $this->tax;
     }
 
     public function save(BillingService $service)
@@ -112,12 +120,14 @@ class BillGenerate extends Component
             'paymentStatus' => 'required|in:Paid,Unpaid,Partially Paid,Partial',
             'amountPaid' => 'nullable|numeric|min:0',
             'paymentMethod' => 'nullable|string|max:50',
+            'discount' => 'numeric|min:0',
+            'discountReason' => 'nullable|required_if:discount,>0|string|max:255',
         ]);
 
         $bill = $service->createBill([
             'patient_id' => $this->patientId,
             'consultation_id' => $this->consultationId,
-            'discount_amount' => $this->discount,
+            'discount_amount' => 0, // We will apply it separately for auditing
             'tax_amount' => $this->tax,
             'payment_status' => $this->paymentStatus,
             'paid_amount' => (float) $this->amountPaid,
@@ -125,10 +135,15 @@ class BillGenerate extends Component
             'notes' => $this->notes,
         ], $this->items);
 
-        // $service->markAsPaid($bill, $this->paymentMethod); // redundant since createBill sets it
+        if ($this->discount > 0) {
+            $service->applyDiscount($bill, [
+                'type' => $this->discountType,
+                'value' => $this->discount,
+                'reason' => $this->discountReason ?: 'Initial bill discount',
+            ]);
+        }
 
         $this->dispatch('close-modal', name: 'billing-modal');
-
         $this->dispatch('bill-generated', billId: $bill->id);
         $this->dispatch('notify', ['type' => 'success', 'message' => 'Bill generated successfully!']);
     }

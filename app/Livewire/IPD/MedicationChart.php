@@ -196,7 +196,8 @@ class MedicationChart extends Component
 
     public function getActiveMedicationsProperty()
     {
-        return IpdMedicationChart::where('admission_id', $this->admission->id)
+        return IpdMedicationChart::withCount('medicationAdministrations')
+            ->where('admission_id', $this->admission->id)
             ->where('status', 'Active')
             ->orderBy('start_date', 'desc')
             ->get();
@@ -204,7 +205,8 @@ class MedicationChart extends Component
 
     public function getStoppedMedicationsProperty()
     {
-        return IpdMedicationChart::where('admission_id', $this->admission->id)
+        return IpdMedicationChart::withCount('medicationAdministrations')
+            ->where('admission_id', $this->admission->id)
             ->where('status', 'Stopped')
             ->orderBy('stopped_at', 'desc')
             ->get();
@@ -212,7 +214,8 @@ class MedicationChart extends Component
 
     public function getCompletedMedicationsProperty()
     {
-        return IpdMedicationChart::where('admission_id', $this->admission->id)
+        return IpdMedicationChart::withCount('medicationAdministrations')
+            ->where('admission_id', $this->admission->id)
             ->where('status', 'Completed')
             ->orderBy('end_date', 'desc')
             ->get();
@@ -220,7 +223,8 @@ class MedicationChart extends Component
 
     public function getAllMedicationsProperty()
     {
-        return IpdMedicationChart::where('admission_id', $this->admission->id)
+        return IpdMedicationChart::withCount('medicationAdministrations')
+            ->where('admission_id', $this->admission->id)
             ->orderBy('start_date', 'desc')
             ->get();
     }

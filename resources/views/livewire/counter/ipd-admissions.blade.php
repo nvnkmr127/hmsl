@@ -104,7 +104,7 @@
                                         </a>
                                         @if($adm->status === 'Admitted')
                                             <button wire:click="orderLabs({{ $adm->id }})" class="p-3 bg-sky-50 dark:bg-sky-950/30 text-sky-600 rounded-xl hover:bg-sky-600 hover:text-white transition-all shadow-sm hover:shadow-lg hover:shadow-sky-500/20" title="Order Labs">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.673.337a4 4 0 01-2.574.344l-1.474-.411a5 5 0 00-3.578.176l-1.41.632" /></svg>
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9.75 3v6.75M14.25 3v6.75M21 21H3l5.625-11.25H15.375L21 21z" /></svg>
                                             </button>
                                             <button wire:click="dischargePatient({{ $adm->id }})" class="p-3 bg-rose-50 dark:bg-rose-950/30 text-rose-600 rounded-xl hover:bg-rose-600 hover:text-white transition-all group/btn shadow-sm hover:shadow-lg hover:shadow-rose-500/20" title="Discharge">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>

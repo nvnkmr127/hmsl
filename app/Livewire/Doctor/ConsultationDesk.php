@@ -18,6 +18,13 @@ class ConsultationDesk extends Component
     public $alerts = [];
     public $loadingSupport = false;
     public $discount = 0;
+    public $chiefComplaints = '';
+    public $diagnosisNotes = '';
+    public $advice = '';
+    public $isDiscountAuthorized = false;
+    public $authorizedLimit = 0;
+    public $discountReason = '';
+    public $discountType = 'flat';
 
     public function getDoctorProperty(): ?Doctor
     {
@@ -26,11 +33,10 @@ class ConsultationDesk extends Component
 
     public function assignMyselfAsDoctor()
     {
-        if (!\App\Models\HospitalOwner::isOwner(Auth::user())) {
+        $user = Auth::user();
+        if (!\App\Models\HospitalOwner::isOwner($user) && !$user->hasAnyRole(['doctor_owner', 'admin'])) {
             return;
         }
-
-        $user = Auth::user();
         $dept = \App\Models\Department::firstOrCreate(['name' => 'General'], ['is_active' => true]);
 
         $doctor = Doctor::updateOrCreate(
@@ -60,6 +66,11 @@ class ConsultationDesk extends Component
         }
         
         $this->selectedConsultation = $consultation;
+        $this->chiefComplaints = is_array($consultation->chief_complaints) 
+            ? implode(', ', $consultation->chief_complaints) 
+            : $consultation->chief_complaints;
+        $this->diagnosisNotes = $consultation->diagnosis_notes;
+        $this->advice = $consultation->advice;
         $this->discount = $consultation->discount_amount;
         $this->fetchCoreClinicalData($consultation);
         
@@ -140,11 +151,68 @@ class ConsultationDesk extends Component
         $this->loadingSupport = false;
     }
 
-    public function updatedDiscount($value)
+
+    public function openDiscountModal()
+    {
+        if (!$this->selectedConsultation) return;
+        $this->discount = $this->selectedConsultation->discount_amount;
+        $this->isDiscountAuthorized = $this->selectedConsultation->is_discount_authorized;
+        $this->authorizedLimit = $this->selectedConsultation->authorized_discount_limit;
+        $this->discountType = 'flat';
+        $this->discountReason = 'Doctor professional courtesy';
+        $this->dispatch('open-modal', name: 'doctor-discount-modal');
+    }
+
+    public function applyDiscount(\App\Services\BillingService $billingService)
+    {
+        if (!$this->selectedConsultation) return;
+        
+        $this->validate([
+            'discount' => 'required|numeric|min:0',
+            'discountReason' => 'required|string|max:255',
+            'authorizedLimit' => 'required|numeric|min:0',
+        ]);
+
+        $this->selectedConsultation->update([
+            'discount_amount' => $this->discount,
+            'is_discount_authorized' => $this->isDiscountAuthorized,
+            'authorized_discount_limit' => $this->authorizedLimit,
+        ]);
+
+        // If a bill already exists, apply the discount to the bill directly
+        $bill = \App\Models\Bill::where('consultation_id', $this->selectedConsultation->id)->first();
+        if ($bill && $this->discount > 0) {
+            try {
+                $billingService->applyDiscount($bill, [
+                    'type' => $this->discountType ?? 'flat',
+                    'value' => $this->discount,
+                    'reason' => $this->discountReason,
+                ]);
+            } catch (\Exception $e) {
+                // If bill is already paid or other error, we still updated the consultation record
+                // which is fine for record keeping.
+            }
+        }
+
+        $this->dispatch('close-modal', name: 'doctor-discount-modal');
+        $this->dispatch('notify', ['type' => 'success', 'message' => 'Discount applied/authorized successfully.']);
+    }
+
+    public function updated($propertyName)
+    {
+        if (in_array($propertyName, ['chiefComplaints', 'diagnosisNotes', 'advice'])) {
+            $this->saveDraft();
+        }
+    }
+
+    public function saveDraft()
     {
         if ($this->selectedConsultation) {
-            $this->selectedConsultation->update(['discount_amount' => $value]);
-            $this->dispatch('notify', ['type' => 'success', 'message' => 'Discount updated.']);
+            $this->selectedConsultation->update([
+                'chief_complaints' => $this->chiefComplaints,
+                'diagnosis_notes' => $this->diagnosisNotes,
+                'advice' => $this->advice,
+            ]);
         }
     }
 

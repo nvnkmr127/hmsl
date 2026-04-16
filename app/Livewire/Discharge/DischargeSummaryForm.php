@@ -217,13 +217,20 @@ class DischargeSummaryForm extends Component
 
     public function finalize()
     {
-        $service = app(DischargeSummaryService::class);
-        $service->finalize($this->summary, Auth::user());
+        try {
+            $service = app(DischargeSummaryService::class);
+            $service->finalize($this->summary, Auth::user());
 
-        $this->dispatch('notify', [
-            'type' => 'success',
-            'message' => 'Discharge summary finalized'
-        ]);
+            $this->dispatch('notify', [
+                'type' => 'success',
+                'message' => 'Discharge summary finalized'
+            ]);
+        } catch (\Exception $e) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => $e->getMessage()
+            ]);
+        }
     }
 
     public function dischargePatient()

@@ -25,6 +25,7 @@ class LabOrder extends Model
         'verified_at',
         'verified_by',
         'notes',
+        'bill_item_id',
     ];
 
     protected $casts = [

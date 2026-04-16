@@ -83,7 +83,14 @@ class DischargeSummary extends Model
 
     public function canFinalize(): bool
     {
-        return $this->status === 'Review' && !$this->is_finalized;
+        if ($this->is_finalized || $this->status === 'Finalized') {
+            return false;
+        }
+
+        // MANDATORY FIELDS VALIDATION
+        return !empty($this->final_diagnosis) && 
+               !empty($this->treatment_summary) && 
+               !empty($this->condition_at_discharge);
     }
 
     public function markAsFinalized(User $user): void

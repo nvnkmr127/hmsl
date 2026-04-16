@@ -10,5 +10,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/visits', [ReportController::class, 'visits'])->name('visits');
         Route::get('/dues', [ReportController::class, 'dues'])->name('dues');
         Route::get('/doctor-consults', [ReportController::class, 'doctorConsults'])->name('doctor-consults');
+        Route::get('/discounts', \App\Livewire\Reports\DiscountAuditReport::class)->name('discounts');
+        Route::get('/inventory', [ReportController::class, 'inventory'])->name('inventory');
+        Route::get('/lab', [ReportController::class, 'lab'])->name('lab');
     });
 });

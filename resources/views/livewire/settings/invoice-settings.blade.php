@@ -12,11 +12,14 @@
                 </div>
 
                 <!-- Paper Size -->
-                <x-form.select label="Print Paper Size" wire:model="print_paper_size" name="print_paper_size">
-                    <option value="A4">A4 Standard</option>
-                    <option value="A5">A5 Small</option>
-                    <option value="LETTER">Letter</option>
-                </x-form.select>
+                <div class="space-y-6">
+                    <x-form.select label="Print Paper Size" wire:model="print_paper_size" name="print_paper_size">
+                        <option value="A4">A4 Standard</option>
+                        <option value="A5">A5 Small</option>
+                        <option value="LETTER">Letter</option>
+                    </x-form.select>
+                    <x-form.checkbox label="Require Doctor Approval for Staff Discounts" wire:model="require_doctor_approval_for_discounts" name="require_doctor_approval_for_discounts" />
+                </div>
             </div>
 
             <hr class="border-gray-100 dark:border-gray-700/50">

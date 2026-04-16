@@ -2,7 +2,7 @@
 
 <div class="space-y-2">
     @if($label)
-        <label for="{{ $name }}" class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest pl-1">{{ $label }}</label>
+        <label for="{{ $name }}" class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest pl-1">{{ $label }}</label>
     @endif
     
     <div class="relative group">

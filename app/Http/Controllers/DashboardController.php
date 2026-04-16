@@ -47,11 +47,7 @@ class DashboardController extends Controller
             return view('pages.dashboard.pharmacy', compact('metrics'));
         }
 
-        if ($user->hasRole('doctor_owner')) {
-            $ownerUser = HospitalOwner::ownerUser();
-            if ($ownerUser && (int) $ownerUser->id !== (int) $user->id) {
-                abort(403);
-            }
+        if ($user->hasAnyRole(['admin', 'super_admin', 'doctor_owner'])) {
             return view('pages.dashboard.admin', compact('metrics'));
         }
 

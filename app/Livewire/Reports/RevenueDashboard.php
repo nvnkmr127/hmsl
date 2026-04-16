@@ -44,18 +44,21 @@ class RevenueDashboard extends Component
 
     public function render()
     {
-        $query = Bill::query()
-            ->where(fn($q) => $q->where('payment_status', '=', 'Paid'))
-            ->whereBetween('created_at', [$this->startDate . ' 00:00:00', $this->endDate . ' 23:59:59']);
+        $baseQuery = \App\Models\BillPayment::query()
+            ->whereBetween('received_at', [$this->startDate . ' 00:00:00', $this->endDate . ' 23:59:59']);
 
-        $totalRevenue = (clone $query)->sum('total_amount');
-        $totalBills = (clone $query)->count();
-        $totalDiscount = (clone $query)->sum('discount_amount');
-        $totalTax = (clone $query)->sum('tax_amount');
+        // TOTAL REVENUE = Payments - Refunds
+        $totalReceived = (clone $baseQuery)->where('type', 'payment')->sum('amount');
+        $totalRefunded = (clone $baseQuery)->where('type', 'refund')->sum('amount');
+        $totalRevenue = $totalReceived - $totalRefunded;
 
-        $paymentMethodSplit = (clone $query)
-            ->select('payment_method', DB::raw('SUM(total_amount) as total'))
-            ->groupBy('payment_method')
+        $totalBills = Bill::whereBetween('created_at', [$this->startDate . ' 00:00:00', $this->endDate . ' 23:59:59'])->count();
+        $totalDiscount = Bill::whereBetween('created_at', [$this->startDate . ' 00:00:00', $this->endDate . ' 23:59:59'])->sum('discount_amount');
+        $totalTax = Bill::whereBetween('created_at', [$this->startDate . ' 00:00:00', $this->endDate . ' 23:59:59'])->sum('tax_amount');
+
+        $paymentMethodSplit = (clone $baseQuery)
+            ->select('method as payment_method', DB::raw('SUM(CASE WHEN type = "payment" THEN amount ELSE -amount END) as total'))
+            ->groupBy('method')
             ->get();
 
         $departmentSplit = BillItem::query()
@@ -80,6 +83,14 @@ class RevenueDashboard extends Component
             ->limit(10)
             ->get();
 
+        $doctorDiscountSplit = \App\Models\BillDiscount::query()
+            ->where('status', 'approved')
+            ->whereBetween('applied_at', [$this->startDate . ' 00:00:00', $this->endDate . ' 23:59:59'])
+            ->with('doctor')
+            ->select('doctor_id', DB::raw('SUM(applied_amount) as total'))
+            ->groupBy('doctor_id')
+            ->get();
+
         return view('livewire.reports.revenue-dashboard', [
             'totalRevenue' => $totalRevenue,
             'totalBills' => $totalBills,
@@ -87,6 +98,7 @@ class RevenueDashboard extends Component
             'totalTax' => $totalTax,
             'paymentMethodSplit' => $paymentMethodSplit,
             'departmentSplit' => $departmentSplit,
+            'doctorDiscountSplit' => $doctorDiscountSplit,
             'dailyTrend' => $dailyTrend,
             'recentBills' => $recentBills,
         ]);

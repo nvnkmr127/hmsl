@@ -16,6 +16,7 @@ class ReportController extends Controller
             'Financial' => [
                 ['title' => 'Revenue Dashboard', 'route' => 'reports.revenue', 'icon' => 'revenue', 'desc' => 'Daily and monthly revenue performance analytics.'],
                 ['title' => 'Outstanding Dues', 'route' => 'reports.dues', 'icon' => 'dues', 'desc' => 'Track unpaid and partially paid bills.'],
+                ['title' => 'Discount Audit', 'route' => 'reports.discounts', 'icon' => 'discount', 'desc' => 'Detailed trail of all bill discounts and authorizers.'],
             ],
             'Clinical' => [
                 ['title' => 'Patient Visits', 'route' => 'reports.visits', 'icon' => 'visit', 'desc' => 'Comprehensive log of OPD visits and status.'],
@@ -48,5 +49,15 @@ class ReportController extends Controller
     public function doctorConsults()
     {
         return view('pages.reports.doctor-consults');
+    }
+
+    public function inventory()
+    {
+        return view('pages.reports.inventory');
+    }
+
+    public function lab()
+    {
+        return view('pages.reports.lab');
     }
 }

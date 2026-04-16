@@ -57,6 +57,11 @@ class Bill extends Model
         return $this->hasMany(BillPayment::class);
     }
 
+    public function discounts()
+    {
+        return $this->hasMany(BillDiscount::class);
+    }
+
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');

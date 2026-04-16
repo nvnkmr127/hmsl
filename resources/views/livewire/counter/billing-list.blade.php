@@ -102,6 +102,11 @@
                                class="btn btn-ghost px-3 py-2 text-xs">
                                 Collect
                             </button>
+                            <button
+                               wire:click="openDiscountModal({{ $bill->id }})"
+                               class="btn btn-ghost text-violet-600 px-3 py-2 text-xs">
+                                Disc
+                            </button>
                             <a href="{{ route('billing.bills.print', $bill->id) }}"
                                target="_blank"
                                class="btn btn-secondary px-3 py-2 text-xs">
@@ -166,6 +171,12 @@
                             @else
                                 <x-badge color="warning">{{ $bill->payment_status }}</x-badge>
                             @endif
+                            
+                            @if($bill->discounts->where('status', 'pending')->count() > 0)
+                                <div class="mt-1">
+                                    <x-badge color="violet" class="animate-pulse text-[10px]">Pending Disc.</x-badge>
+                                </div>
+                            @endif
                         </td>
                         <td class="px-4 py-3 text-xs text-gray-400">
                             {{ $bill->created_at->format('d M Y') }}
@@ -176,6 +187,11 @@
                                    wire:click="openPaymentModal({{ $bill->id }})"
                                    class="inline-flex items-center gap-1 text-xs font-bold text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900/20">
                                     Collect
+                                </button>
+                                <button
+                                   wire:click="openDiscountModal({{ $bill->id }})"
+                                   class="inline-flex items-center gap-1 text-xs font-bold text-violet-600 hover:text-violet-800 dark:text-violet-400 dark:hover:text-violet-200 transition-colors px-3 py-1.5 rounded-lg hover:bg-violet-50 dark:hover:bg-indigo-900/20">
+                                    Discount
                                 </button>
                                 <a href="{{ route('billing.bills.print', $bill->id) }}"
                                    target="_blank"
@@ -225,6 +241,50 @@
             <div class="flex justify-end gap-3 pt-2">
                 <button type="button" @click="$dispatch('close-modal', { name: 'billing-payment-modal' })" class="btn btn-ghost px-6">Cancel</button>
                 <button type="button" wire:click="submitPayment" class="btn btn-primary px-10">Save</button>
+            </div>
+        </div>
+    </x-modal>
+
+    <x-modal name="bill-discount-modal" title="Apply Authorized Discount" width="xl">
+        <div class="p-6 space-y-4">
+            <div class="bg-violet-50 dark:bg-violet-900/10 p-4 rounded-2xl border border-violet-100 dark:border-violet-800/30 mb-4">
+                <p class="text-xs font-bold text-violet-600 dark:text-violet-400 uppercase tracking-widest mb-1">Clinical Authorization</p>
+                @if($isAuthorizedByDoctor)
+                    <p class="text-[11px] text-violet-500/80 leading-relaxed font-bold uppercase">
+                        ✓ DOCTOR HAS AUTHORIZED STAFF TO APPLY DISCOUNT UP TO ₹{{ number_format($authorizedLimit, 2) }}.
+                    </p>
+                @else
+                    <p class="text-[11px] text-rose-500/80 leading-relaxed font-bold uppercase">
+                        ⚠ NO CLINICAL AUTHORIZATION GRANTED BY DOCTOR. ONLY DOCTORS OR ADMINS CAN PROCEED.
+                    </p>
+                @endif
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <x-form.select label="Discount Type" wire:model.live="discountType">
+                    <option value="flat">Flat Amount (₹)</option>
+                    <option value="percentage">Percentage (%)</option>
+                </x-form.select>
+                <x-form.input type="number" step="0.01" label="Value" wire:model.live="discountValue" class="text-right" />
+            </div>
+
+            @php
+                $currentBill = \App\Models\Bill::find($selectedBillId);
+            @endphp
+            @if($currentBill && $currentBill->items->count() > 1)
+                <x-form.select label="Apply to Specific Item (Optional)" wire:model.live="discountItemId">
+                    <option value="">Full Bill (Grand Total)</option>
+                    @foreach($currentBill->items as $item)
+                        <option value="{{ $item->id }}">{{ $item->item_name }} (₹{{ number_format($item->total_price, 2) }})</option>
+                    @endforeach
+                </x-form.select>
+            @endif
+
+            <x-form.input type="text" label="Reason (Mandatory)" wire:model="discountReason" placeholder="e.g. Professional Courtesy, Staff Discount..." />
+
+            <div class="flex justify-end gap-3 pt-4">
+                <button type="button" @click="$dispatch('close-modal', { name: 'bill-discount-modal' })" class="btn btn-ghost px-6">Cancel</button>
+                <button type="button" wire:click="submitDiscount" class="btn btn-primary px-10" style="background-color: #7c3aed">Apply Discount</button>
             </div>
         </div>
     </x-modal>

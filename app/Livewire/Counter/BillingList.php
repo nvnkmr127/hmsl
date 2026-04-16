@@ -22,6 +22,14 @@ class BillingList extends Component
     public ?string $paymentReference = null;
     public ?string $paymentNotes = null;
 
+    // Discount Properties
+    public $discountType = 'flat';
+    public $discountValue = 0;
+    public $discountReason = '';
+    public $discountItemId = null;
+    public $isAuthorizedByDoctor = false;
+    public $authorizedLimit = 0;
+
     protected $queryString = [
         'search' => ['except' => ''],
         'statusFilter' => ['except' => ''],
@@ -96,9 +104,52 @@ class BillingList extends Component
         $this->reset(['selectedBillId', 'paymentType', 'paymentMethod', 'paymentAmount', 'paymentReference', 'paymentNotes']);
     }
 
+    public function openDiscountModal(int $billId): void
+    {
+        $bill = Bill::with(['consultation', 'admission'])->findOrFail($billId);
+        $this->selectedBillId = $bill->id;
+        $this->discountType = 'flat';
+        $this->discountValue = 0;
+        $this->discountReason = '';
+        $this->discountItemId = null;
+
+        $clinicalSource = $bill->consultation ?? $bill->admission;
+        $this->isAuthorizedByDoctor = (bool) ($clinicalSource->is_discount_authorized ?? false);
+        $this->authorizedLimit = (float) ($clinicalSource->authorized_discount_limit ?? 0);
+
+        $this->dispatch('open-modal', name: 'bill-discount-modal');
+    }
+
+    public function submitDiscount(BillingService $service): void
+    {
+        $this->validate([
+            'selectedBillId' => 'required|integer|exists:bills,id',
+            'discountType' => 'required|in:percentage,flat',
+            'discountValue' => 'required|numeric|min:0.01',
+            'discountReason' => 'required|string|max:255',
+            'discountItemId' => 'nullable|exists:bill_items,id',
+        ]);
+
+        try {
+            $bill = Bill::findOrFail($this->selectedBillId);
+            $service->applyDiscount($bill, [
+                'type' => $this->discountType,
+                'value' => $this->discountValue,
+                'reason' => $this->discountReason,
+                'bill_item_id' => $this->discountItemId ?: null,
+            ]);
+
+            $this->dispatch('close-modal', name: 'bill-discount-modal');
+            $this->dispatch('notify', ['type' => 'success', 'message' => 'Discount applied successfully!']);
+            $this->reset(['selectedBillId', 'discountType', 'discountValue', 'discountReason', 'discountItemId']);
+        } catch (\Exception $e) {
+            $this->dispatch('notify', ['type' => 'error', 'message' => $e->getMessage()]);
+        }
+    }
+
     public function render()
     {
-        $bills = Bill::with(['patient', 'consultation.doctor', 'payments'])
+        $bills = Bill::with(['patient', 'consultation.doctor', 'payments', 'discounts'])
             ->when($this->search, function ($q) {
                 $q->where('bill_number', 'like', "%{$this->search}%")
                   ->orWhereHas('patient', fn($pq) =>

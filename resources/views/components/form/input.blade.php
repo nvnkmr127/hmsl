@@ -2,7 +2,7 @@
 
 <div class="space-y-1.5">
     @if($label)
-        <label for="{{ $name }}" class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">{{ $label }}</label>
+        <label for="{{ $name }}" class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest pl-1">{{ $label }}</label>
     @endif
 
     <div class="relative">

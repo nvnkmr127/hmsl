@@ -106,7 +106,7 @@
                         <div class="flex items-center gap-4">
                             <div class="w-12 h-12 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 dark:text-violet-400">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.673.337a4 4 0 01-2.574.344l-1.474-.411a5 5 0 00-3.578.176l-1.41.632"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 3v6.75M14.25 3v6.75M21 21H3l5.625-11.25H15.375L21 21z"/>
                                 </svg>
                             </div>
                             <div>

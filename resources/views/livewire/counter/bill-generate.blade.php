@@ -81,11 +81,27 @@
                         <span class="text-tiny font-black text-gray-400 uppercase tracking-widest">Gross Subtotal</span>
                         <span class="font-bold text-gray-900 dark:text-white">₹{{ number_format($this->subtotal, 2) }}</span>
                     </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-tiny font-black text-gray-400 uppercase tracking-widest">Adjustment (-)</span>
-                        <div class="w-32">
-                            <x-form.input type="number" step="1" wire:model.live="discount" class="text-right" />
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-tiny font-black text-gray-400 uppercase tracking-widest">Adjustment (-)</span>
+                            <div class="flex items-center gap-2">
+                                @if($isAuthorizedByDoctor)
+                                    <x-badge color="violet" class="text-[9px]">DR. AUTH: ₹{{ number_format($authorizedLimit, 0) }}</x-badge>
+                                @endif
+                                <select wire:model.live="discountType" class="text-xs border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900">
+                                    <option value="flat">₹</option>
+                                    <option value="percentage">%</option>
+                                </select>
+                                <div class="w-24">
+                                    <x-form.input type="number" step="0.01" wire:model.live="discount" class="text-right" />
+                                </div>
+                            </div>
                         </div>
+                        @if($discount > 0)
+                            <div class="bg-white/50 dark:bg-gray-900/50 p-3 rounded-xl border border-violet-100 dark:border-violet-900/30">
+                                <x-form.input label="Discount Reason (Mandatory)" wire:model="discountReason" placeholder="e.g. Professional Courtesy, Sole Doctor Disc..." />
+                            </div>
+                        @endif
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="text-tiny font-black text-gray-400 uppercase tracking-widest">Applicable Tax (+)</span>

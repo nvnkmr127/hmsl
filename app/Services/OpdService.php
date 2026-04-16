@@ -213,7 +213,8 @@ class OpdService
             ]);
 
             // If no bill exists for this consultation, create one
-            if (!$consultation->bill()->exists()) {
+            $existingBill = Bill::where('consultation_id', $consultation->id)->first();
+            if (!$existingBill) {
                 $this->billingService->createBill([
                     'patient_id' => $consultation->patient_id,
                     'consultation_id' => $consultation->id,
@@ -230,6 +231,11 @@ class OpdService
                         'unit_price' => $consultation->fee
                     ]
                 ]);
+            } else {
+                // If bill exists but is unpaid, mark it as paid
+                if ($existingBill->payment_status !== 'Paid') {
+                    $this->billingService->markAsPaid($existingBill, $method);
+                }
             }
 
             return $consultation;

@@ -23,6 +23,9 @@ class InvoiceSettings extends Component
     #[Validate('required|string')]
     public $print_paper_size;
 
+    #[Validate('required|boolean')]
+    public $require_doctor_approval_for_discounts;
+
     public function mount(SettingsService $settings)
     {
         $data = $settings->getGroup('invoice');
@@ -32,6 +35,7 @@ class InvoiceSettings extends Component
         $this->show_tax = filter_var($data['show_tax'] ?? true, FILTER_VALIDATE_BOOLEAN);
         $this->tax_percentage = $data['tax_percentage'] ?? '18';
         $this->print_paper_size = $data['print_paper_size'] ?? 'A4';
+        $this->require_doctor_approval_for_discounts = filter_var($data['require_doctor_approval_for_discounts'] ?? false, FILTER_VALIDATE_BOOLEAN);
     }
 
     public function save(SettingsService $settings)
@@ -44,6 +48,7 @@ class InvoiceSettings extends Component
             'show_tax' => $this->show_tax,
             'tax_percentage' => $this->tax_percentage,
             'print_paper_size' => $this->print_paper_size,
+            'require_doctor_approval_for_discounts' => $this->require_doctor_approval_for_discounts,
         ];
 
         $settings->updateGroup('invoice', $data);

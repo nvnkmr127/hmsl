@@ -35,6 +35,8 @@ class Consultation extends Model
         'advice',
         'follow_up_date',
         'created_by',
+        'is_discount_authorized',
+        'authorized_discount_limit',
     ];
 
     protected $casts = [

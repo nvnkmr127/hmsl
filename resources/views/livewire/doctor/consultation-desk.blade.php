@@ -9,7 +9,7 @@
             <h2 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight mb-2">Doctor Profile Missing</h2>
             <p class="text-gray-500 max-w-sm mx-auto font-medium mb-6">Your user account is not linked to a doctor profile. Please contact the administrator to assign your profile.</p>
 
-            @if(\App\Models\HospitalOwner::isOwner(auth()->user()))
+            @if(\App\Models\HospitalOwner::isOwner(auth()->user()) || auth()->user()->hasAnyRole(['admin', 'doctor_owner']))
                 <button wire:click="assignMyselfAsDoctor" class="btn btn-primary px-8 py-3 rounded-2xl shadow-lg shadow-violet-500/20 font-black uppercase tracking-widest text-xs">
                     Link Myself as Principal Doctor
                 </button>
@@ -127,12 +127,54 @@
                                                 <span class="text-3xl font-black text-gray-900 dark:text-white">#{{ $selectedConsultation->token_number }}</span>
                                             </div>
                                         </div>
-                                        <div class="p-6 bg-white dark:bg-gray-950 rounded-ultra border border-violet-200 dark:border-violet-900/50 shadow-lg shadow-violet-500/5">
-                                            <p class="text-dense font-black text-violet-600 uppercase tracking-widest mb-2">Discount (₹)</p>
+                                        <button wire:click="openDiscountModal" class="p-6 bg-white dark:bg-gray-950 rounded-ultra border border-violet-200 dark:border-violet-900/50 shadow-lg shadow-violet-500/5 text-left transition-all hover:bg-violet-50 dark:hover:bg-violet-900/20 group">
+                                            <p class="text-dense font-black text-violet-600 uppercase tracking-widest mb-2 group-hover:scale-105 origin-left transition-transform">Fee Discount</p>
                                             <div class="flex items-baseline gap-1">
-                                                <input type="number" wire:model.live.debounce.500ms="discount" class="w-full bg-transparent border-0 p-0 text-3xl font-black text-violet-600 focus:ring-0 placeholder-violet-200" placeholder="0.00">
+                                                <span class="text-3xl font-black text-violet-600">₹{{ number_format($discount, 2) }}</span>
+                                                <svg class="w-4 h-4 text-violet-300 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                                             </div>
+                                        </button>
+                                    </div>
+
+                                    {{-- Clinical Notes --}}
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div class="p-8 bg-white dark:bg-gray-950 rounded-ultra border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
+                                            <div class="flex items-center gap-3 mb-2">
+                                                <div class="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-900/20 flex items-center justify-center text-rose-600">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                                </div>
+                                                <h3 class="text-xs font-black text-gray-900 dark:text-white uppercase tracking-[0.2em]">Chief Complaints</h3>
+                                            </div>
+                                            <x-form.textarea 
+                                                wire:model.live.debounce.500ms="chiefComplaints"
+                                                placeholder="Enter patient complaints, symptoms, and duration..."
+                                                rows="4" />
                                         </div>
+                                        <div class="p-8 bg-white dark:bg-gray-950 rounded-ultra border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
+                                            <div class="flex items-center gap-3 mb-2">
+                                                <div class="w-8 h-8 rounded-lg bg-sky-50 dark:bg-sky-900/20 flex items-center justify-center text-sky-600">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                </div>
+                                                <h3 class="text-xs font-black text-gray-900 dark:text-white uppercase tracking-[0.2em]">Diagnosis & Findings</h3>
+                                            </div>
+                                            <x-form.textarea 
+                                                wire:model.live.debounce.500ms="diagnosisNotes"
+                                                placeholder="Clinical findings, differential diagnosis, and final assessment..."
+                                                rows="4" />
+                                        </div>
+                                    </div>
+
+                                    <div class="p-8 bg-white dark:bg-gray-950 rounded-ultra border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
+                                        <div class="flex items-center gap-3 mb-2">
+                                            <div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-600">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            </div>
+                                            <h3 class="text-xs font-black text-gray-900 dark:text-white uppercase tracking-[0.2em]">General Advice & Follow-up</h3>
+                                        </div>
+                                        <x-form.textarea 
+                                            wire:model.live.debounce.500ms="advice"
+                                            placeholder="Lifestyle changes, dietary advice, and follow-up instructions..."
+                                            rows="2" />
                                     </div>
 
                                     {{-- C. Timeline --}}
@@ -228,4 +270,40 @@
 
     <livewire:doctor.prescription-editor />
     <livewire:doctor.lab-order-composer />
+
+    <x-modal name="doctor-discount-modal" title="Authorize Consultation Discount" width="lg">
+        <div class="p-6 space-y-4">
+            <div class="space-y-4 pt-2">
+                <div class="flex items-center justify-between p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800">
+                    <div>
+                        <p class="text-xs font-black text-gray-900 dark:text-white uppercase tracking-widest">Enable Staff Permission</p>
+                        <p class="text-[10px] text-gray-400 font-bold uppercase">ALLOW COUNTER STAFF TO APPLY DISCOUNT</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" wire:model.live="isDiscountAuthorized" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-violet-300 dark:peer-focus:ring-violet-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-violet-600"></div>
+                    </label>
+                </div>
+
+                @if($isDiscountAuthorized)
+                    <div class="p-4 rounded-2xl bg-violet-50/50 dark:bg-violet-900/10 border border-violet-100 dark:border-violet-900/30 animate-in fade-in slide-in-from-top-2">
+                        <x-form.input type="number" step="1" label="Authorized Limit for Staff (₹)" wire:model.live="authorizedLimit" class="text-right font-black" />
+                        <p class="text-[10px] text-violet-500 font-bold uppercase mt-2">Staff can apply up to this amount without further approval</p>
+                    </div>
+                @endif
+            </div>
+
+            <div class="pt-4 border-t border-gray-100 dark:border-gray-800">
+                <p class="text-xs font-black text-gray-900 dark:text-white uppercase tracking-widest mb-3">Or Apply Direct Discount Now</p>
+                <x-form.input type="number" step="1" label="Discount Amount (₹)" wire:model.live="discount" class="text-right font-black text-xl" />
+            </div>
+            
+            <x-form.input type="text" label="Mandatory Reason" wire:model="discountReason" placeholder="e.g. Professional Courtesy, Staff Family..." />
+
+            <div class="flex justify-end gap-3 pt-4">
+                <button type="button" @click="$dispatch('close-modal', { name: 'doctor-discount-modal' })" class="btn btn-ghost px-6 font-bold uppercase tracking-widest text-xs">Cancel</button>
+                <button type="button" wire:click="applyDiscount" class="btn btn-primary px-10 font-bold uppercase tracking-widest text-xs shadow-lg shadow-violet-500/20">Set Discount</button>
+            </div>
+        </div>
+    </x-modal>
 </div>
