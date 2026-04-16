@@ -31,17 +31,19 @@ class PrescriptionEditor extends Component
         $this->patientName    = $consultation->patient->full_name;
         $this->doctorId       = $consultation->doctor_id;
 
-        // Load existing if any
+        // Load clinical data from consultation
+        $this->chief_complaint = is_array($consultation->chief_complaints) ? implode(', ', $consultation->chief_complaints) : $consultation->chief_complaints;
+        $this->diagnosis       = $consultation->diagnosis_notes;
+        $this->advice          = $consultation->advice;
+        $this->follow_up_date  = $consultation->follow_up_date?->format('Y-m-d');
+
+        // Load existing prescription if any
         $existing = Prescription::where('consultation_id', $consultationId)->first();
         if ($existing) {
             $this->existingPrescription = $existing->id;
-            $this->chief_complaint = $existing->chief_complaint;
-            $this->diagnosis       = $existing->diagnosis;
-            $this->advice          = $existing->advice;
-            $this->follow_up_date  = $existing->follow_up_date?->format('Y-m-d');
             $this->medicines       = $existing->medicines ?? [];
         } else {
-            $this->reset(['chief_complaint', 'diagnosis', 'advice', 'follow_up_date', 'existingPrescription']);
+            $this->existingPrescription = null;
             $this->medicines = [];
         }
 
@@ -99,15 +101,21 @@ class PrescriptionEditor extends Component
             return $row;
         })->values()->all();
 
+        $consultation = Consultation::findOrFail($this->consultationId);
+        
+        // Update Consultation clinical notes
+        $consultation->update([
+            'chief_complaints' => array_map('trim', explode(',', (string)$this->chief_complaint)),
+            'diagnosis_notes'  => $this->diagnosis,
+            'advice'           => $this->advice,
+            'follow_up_date'   => $this->follow_up_date ?: null,
+        ]);
+
         $data = [
             'consultation_id' => $this->consultationId,
-            'patient_id'      => Consultation::find($this->consultationId)->patient_id,
+            'patient_id'      => $consultation->patient_id,
             'doctor_id'       => $this->doctorId,
             'created_by'      => Auth::id(),
-            'chief_complaint' => $this->chief_complaint,
-            'diagnosis'       => $this->diagnosis,
-            'advice'          => $this->advice,
-            'follow_up_date'  => $this->follow_up_date ?: null,
             'medicines'       => $normalizedMedicines,
         ];
 

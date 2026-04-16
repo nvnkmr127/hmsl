@@ -27,6 +27,10 @@ class DashboardController extends Controller
             return view('pages.dashboard.reception', compact('metrics'));
         }
 
+        if ($user->hasRole('doctor')) {
+            return view('pages.dashboard.doctor', compact('metrics'));
+        }
+
         if ($user->hasRole('nurse')) {
             return view('pages.dashboard.nurse', compact('metrics'));
         }

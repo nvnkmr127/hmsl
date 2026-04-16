@@ -44,6 +44,12 @@ class PharmacyOrders extends Component
                     throw new \RuntimeException('This prescription is already dispensed.');
                 }
 
+                // 1. BILLING CHECK
+                $bill = $prescription->consultation?->bill ?? $prescription->admission?->finalBill;
+                if ($bill && $bill->payment_status !== 'Paid') {
+                    throw new \RuntimeException('Prescription cannot be dispensed until the bill is Paid.');
+                }
+
                 $items = is_array($prescription->medicines) ? $prescription->medicines : [];
                 foreach ($items as $item) {
                     $medicineId = isset($item['medicine_id']) ? (int) $item['medicine_id'] : null;
@@ -60,8 +66,9 @@ class PharmacyOrders extends Component
                             ->first();
                     }
 
+                    // 2. STOCK & EXISTENCE CHECK
                     if (!$medicine) {
-                        continue;
+                        throw new \RuntimeException("Medicine '{$name}' not found in inventory Master. Please add it to stock before dispensing.");
                     }
 
                     $medicineService->adjustStock(

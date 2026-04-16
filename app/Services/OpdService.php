@@ -63,6 +63,18 @@ class OpdService
             if ($exists) {
                 throw new \Exception('Patient already has an active booking for this service on this date.');
             }
+
+            // 1.1 DOCTOR-SERVICE COMPATIBILITY CHECK
+            if (isset($data['doctor_id']) && isset($data['service_id'])) {
+                $doctor = Doctor::find($data['doctor_id']);
+                $service = \App\Models\Service::find($data['service_id']);
+                
+                if ($doctor && $service && $service->department_id && $doctor->department_id !== $service->department_id) {
+                    $doctorDept = $doctor->department?->name ?? 'Doctor\'s Dept';
+                    $serviceDept = $service->department?->name ?? 'Service\'s Dept';
+                    throw new \Exception("Department mismatch: This service belongs to {$serviceDept}, but Dr. {$doctor->full_name} is in {$doctorDept}.");
+                }
+            }
             
             // 2. SAFE TOKEN GENERATION: Within the same transaction with exclusive locking
             $data['token_number'] = $this->generateToken(
@@ -146,6 +158,8 @@ class OpdService
                     ]
                 ]);
             }
+
+            event(new \App\Events\OPD\AppointmentBooked($consultation->load(['patient', 'doctor', 'service'])));
 
             return $consultation;
         });

@@ -44,6 +44,12 @@ class RolePermissionSeeder extends Seeder
         $roles = [
             'doctor_owner' => $permissions, // All permissions
             
+            'doctor' => [
+                'view patients', 'view opd', 'create opd visits', 'update opd vitals', 
+                'edit case sheets', 'write prescriptions', 'view ipd', 'update ipd notes', 
+                'manage medications'
+            ],
+            
             'receptionist' => [
                 'view patients', 'create patients', 'update patients',
                 'view opd', 'create opd visits',

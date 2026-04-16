@@ -52,7 +52,6 @@ class AppointmentManagement extends Component
             });
         }
 
-        // Upcoming = Today and Future
         if ($this->status === 'Upcoming') {
             $query->where(function($q) {
                 $q->where('consultation_date', '>=', today());
@@ -62,5 +61,20 @@ class AppointmentManagement extends Component
         $appointments = $query->latest('consultation_date')->paginate(10);
 
         return view('livewire.doctor.appointment-management', compact('appointments'));
+    }
+
+    public function cancelAppointment($id)
+    {
+        $appointment = Consultation::findOrFail($id);
+        
+        // Ensure the doctor owns this appointment
+        $doctor = Doctor::where('user_id', Auth::id())->first();
+        if ($appointment->doctor_id !== $doctor?->id) {
+            $this->dispatch('notify', ['type' => 'error', 'message' => 'Unauthorized.']);
+            return;
+        }
+
+        $appointment->update(['status' => 'Cancelled']);
+        $this->dispatch('notify', ['type' => 'success', 'message' => 'Appointment cancelled.']);
     }
 }

@@ -62,6 +62,9 @@
                         <td class="px-4 py-3 text-right">
                             <div class="flex justify-end gap-2">
                                 <button class="btn btn-ghost btn-xs text-violet-600 font-bold">Details</button>
+                                @if($app->status === 'Pending')
+                                    <button wire:click="cancelAppointment({{ $app->id }})" wire:confirm="Are you sure you want to cancel this appointment?" class="btn btn-ghost btn-xs text-rose-500 font-bold uppercase tracking-widest">Cancel</button>
+                                @endif
                                 @if($app->status === 'Completed')
                                     <a href="{{ route('doctor.prescription.print', $app->id) }}" target="_blank" class="btn btn-ghost btn-xs text-emerald-600 font-bold">RX</a>
                                 @endif

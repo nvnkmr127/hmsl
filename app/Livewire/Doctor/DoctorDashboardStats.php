@@ -22,6 +22,8 @@ class DoctorDashboardStats extends Component
                     'monthly_earnings' => 0,
                     'pending_today' => 0,
                     'completed_today' => 0,
+                    'active_ipd' => 0,
+                    'total_admissions' => 0,
                 ]
             ]);
         }
@@ -43,6 +45,10 @@ class DoctorDashboardStats extends Component
                 ->whereDate('consultation_date', today())
                 ->where('status', 'Completed')
                 ->count(),
+            'active_ipd' => \App\Models\Admission::where('doctor_id', $doctor->id)
+                ->where('status', 'Admitted')
+                ->count(),
+            'total_admissions' => \App\Models\Admission::where('doctor_id', $doctor->id)->count(),
         ];
 
         return view('livewire.doctor.doctor-dashboard-stats', compact('stats'));

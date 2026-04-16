@@ -24,6 +24,32 @@ class ConsultationDesk extends Component
         return Doctor::where('user_id', '=', Auth::id())->first();
     }
 
+    public function assignMyselfAsDoctor()
+    {
+        if (!\App\Models\HospitalOwner::isOwner(Auth::user())) {
+            return;
+        }
+
+        $user = Auth::user();
+        $dept = \App\Models\Department::firstOrCreate(['name' => 'General'], ['is_active' => true]);
+
+        $doctor = Doctor::updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'full_name' => $user->name,
+                'department_id' => $dept->id,
+                'specialization' => 'General/On-Duty',
+                'consultation_fee' => \App\Models\Setting::get('consultation_fee_default', 500),
+                'is_active' => true
+            ]
+        );
+
+        \App\Models\HospitalOwner::setOwnerDoctor($doctor);
+        
+        $this->dispatch('notify', ['type' => 'success', 'message' => 'Profile linked successfully.']);
+        return redirect()->route('doctor.dashboard');
+    }
+
     public function selectConsultation($id)
     {
         $consultation = Consultation::with(['patient'])->findOrFail($id);
@@ -125,6 +151,15 @@ class ConsultationDesk extends Component
     public function completeAndNext()
     {
         if ($this->selectedConsultation) {
+            // Validate clinical notes before completion
+            if (empty($this->selectedConsultation->chief_complaints) && empty($this->selectedConsultation->diagnosis_notes)) {
+                $this->dispatch('notify', [
+                    'type' => 'error', 
+                    'message' => 'Cannot complete consultation without chief complaints or diagnosis notes.'
+                ]);
+                return;
+            }
+
             $this->selectedConsultation->update(['status' => 'Completed']);
         }
 

@@ -4,6 +4,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Api\V1\PatientApiController;
+use App\Http\Controllers\Api\V1\DoctorApiController;
+use App\Http\Controllers\Api\V1\AppointmentApiController;
 use App\Http\Controllers\Api\V1\WebhookController;
 
 Route::prefix('v1')->group(function () {
@@ -18,5 +20,7 @@ Route::prefix('v1')->group(function () {
         });
 
         Route::apiResource('patients', PatientApiController::class);
+        Route::apiResource('doctors', DoctorApiController::class)->only(['index', 'show']);
+        Route::apiResource('appointments', AppointmentApiController::class);
     });
 });

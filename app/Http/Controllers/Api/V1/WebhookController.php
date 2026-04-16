@@ -31,7 +31,7 @@ class WebhookController extends Controller
             $this->authenticateRequest($request, $config);
 
             // 3. Dispatch job to process payload asynchronously
-            // ProcessWebhookJob::dispatch($webhook);
+            \App\Jobs\ProcessWebhookJob::dispatch($webhook);
 
             return response()->json([
                 'message' => 'Webhook received and queued for processing.',

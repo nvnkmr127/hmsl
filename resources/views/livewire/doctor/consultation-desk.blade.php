@@ -7,7 +7,13 @@
                 </svg>
             </div>
             <h2 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight mb-2">Doctor Profile Missing</h2>
-            <p class="text-gray-500 max-w-sm mx-auto font-medium">Your user account is not linked to a doctor profile. Please contact the administrator to assign your profile.</p>
+            <p class="text-gray-500 max-w-sm mx-auto font-medium mb-6">Your user account is not linked to a doctor profile. Please contact the administrator to assign your profile.</p>
+
+            @if(\App\Models\HospitalOwner::isOwner(auth()->user()))
+                <button wire:click="assignMyselfAsDoctor" class="btn btn-primary px-8 py-3 rounded-2xl shadow-lg shadow-violet-500/20 font-black uppercase tracking-widest text-xs">
+                    Link Myself as Principal Doctor
+                </button>
+            @endif
         </div>
     @else
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-140px)]">

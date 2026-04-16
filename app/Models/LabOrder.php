@@ -22,14 +22,26 @@ class LabOrder extends Model
         'collected_at',
         'completed_at',
         'technician_id',
+        'verified_at',
+        'verified_by',
         'notes',
     ];
 
     protected $casts = [
-        'results'      => 'array',
         'collected_at' => 'datetime',
         'completed_at' => 'datetime',
+        'verified_at'  => 'datetime',
     ];
+
+    public function resultValues()
+    {
+        return $this->hasMany(LabResultValue::class);
+    }
+
+    public function verifiedBy()
+    {
+        return $this->belongsTo(User::class, 'verified_by');
+    }
 
     public function patient()
     {

@@ -156,6 +156,23 @@ class MedicationChart extends Component
         $this->dispatch('notify', ['type' => 'success', 'message' => 'Medication stopped']);
     }
 
+    public function administerDose($id, $status = 'Given', $notes = null)
+    {
+        $med = IpdMedicationChart::findOrFail($id);
+        
+        \App\Models\IpdMedicationAdministration::create([
+            'ipd_medication_chart_id' => $med->id,
+            'admission_id'           => $this->admission->id,
+            'patient_id'             => $this->admission->patient_id,
+            'administering_nurse_id' => Auth::id(),
+            'administered_at'        => now(),
+            'status'                 => $status,
+            'notes'                  => $notes,
+        ]);
+
+        $this->dispatch('notify', ['type' => 'success', 'message' => 'Dose administration recorded.']);
+    }
+
     public function markDispensed($id)
     {
         $med = IpdMedicationChart::findOrFail($id);

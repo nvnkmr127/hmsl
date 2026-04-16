@@ -18,4 +18,10 @@ class OpdController extends Controller
         $consultation = \App\Models\Consultation::with(['patient', 'doctor.department'])->findOrFail($id);
         return view('pages.counter.opd-slip', compact('consultation'));
     }
+
+    public function download($id, \App\Services\PdfService $pdfService)
+    {
+        $consultation = \App\Models\Consultation::with(['patient', 'doctor.department'])->findOrFail($id);
+        return $pdfService->stream('pages.counter.opd-slip-pdf', compact('consultation'), 'OPD-Slip-' . $consultation->token_number);
+    }
 }

@@ -10,11 +10,15 @@ class PatientService
 {
     public function generateUHID()
     {
-        $prefix = Setting::get('patient_prefix', 'PAT');
-        $lastPatient = Patient::latest('id')->first();
-        $nextId = $lastPatient ? $lastPatient->id + 1 : 1;
+        // Use a lock to prevent race conditions during UHID generation
+        // We look for the maximum numeric UHID to increment
+        $maxUhid = (int) Patient::whereRaw('uhid REGEXP "^[0-9]+$"')
+            ->lockForUpdate()
+            ->max('uhid');
+            
+        $nextId = $maxUhid > 0 ? $maxUhid + 1 : 1001;
         
-        return $prefix . '-' . date('Y') . '-' . str_pad($nextId, 5, '0', STR_PAD_LEFT);
+        return (string) $nextId;
     }
 
     public function getAll(?string $search = null, array $filters = [], string $sortBy = 'latest')
@@ -40,6 +44,16 @@ class PatientService
 
     public function create(array $data)
     {
+        // Duplicate check
+        $exists = Patient::where('phone', $data['phone'])
+            ->where('first_name', $data['first_name'])
+            ->where('last_name', $data['last_name'] ?? null)
+            ->exists();
+
+        if ($exists) {
+            throw new \Exception('A patient with this name and phone number is already registered.');
+        }
+
         return DB::transaction(function () use ($data) {
             $data['uhid'] = $this->generateUHID();
             $patient = Patient::create($data);

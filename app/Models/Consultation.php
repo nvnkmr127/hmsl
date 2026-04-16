@@ -31,12 +31,16 @@ class Consultation extends Model
         'general_examination',
         'systemic_examination',
         'examination_findings',
+        'diagnosis_notes',
+        'advice',
+        'follow_up_date',
         'created_by',
     ];
 
     protected $casts = [
         'consultation_date' => 'date',
         'valid_upto' => 'date',
+        'follow_up_date' => 'date',
         'fee' => 'decimal:2',
         'weight' => 'decimal:2',
         'temperature' => 'decimal:2',

@@ -133,5 +133,19 @@ class WebhookDispatcher implements ShouldQueue
                 'completed_at' => $event->order->completed_at?->toIso8601String(),
             ]);
         }
+        
+        if ($event instanceof \App\Events\OPD\AppointmentBooked) {
+            $this->service->dispatch('appointment.booked', [
+                'id' => $event->consultation->id,
+                'patient_id' => $event->consultation->patient_id,
+                'patient_name' => $event->consultation->patient->full_name,
+                'doctor_id' => $event->consultation->doctor_id,
+                'doctor_name' => $event->consultation->doctor?->full_name,
+                'token' => $event->consultation->token_number,
+                'fee' => $event->consultation->fee,
+                'consultation_date' => $event->consultation->consultation_date?->toIso8601String(),
+                'booked_at' => $event->consultation->created_at?->toIso8601String(),
+            ]);
+        }
     }
 }

@@ -58,6 +58,11 @@ class DischargeManagement extends Component
             ]);
 
             $this->reset(['selectedAdmissionId', 'dischargeNotes']);
+        } catch (\RuntimeException $e) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => $e->getMessage(),
+            ]);
         } catch (Throwable $e) {
             report($e);
             $this->dispatch('notify', [

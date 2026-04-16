@@ -309,14 +309,14 @@
 
 | ID | Task | Est. Hours | Status | Notes |
 |---|---|---|---|---|
-| MT-110.1 | DB: webhook_endpoints + webhook_logs migrations & models | 2h | ⬜ | |
-| MT-110.2 | WebhookService (dispatch, sign, log) | 3h | ⬜ | |
-| MT-110.3 | SendWebhookJob with exponential backoff retry | 3h | ⬜ | |
-| MT-110.4 | Laravel Events + WebhookDispatcher listener | 4h | ⬜ | |
-| MT-110.5 | Fire events from all services | 3h | ⬜ | |
-| MT-110.6 | Webhook management UI (Livewire) | 4h | ⬜ | |
-| MT-110.7 | Webhook logs UI (Livewire, retry button) | 3h | ⬜ | |
-| MT-110.8 | Webhook API endpoints | 2h | ⬜ | |
+| MT-110.1 | DB: webhook_endpoints + webhook_logs migrations & models | 2h | ✅ | |
+| MT-110.2 | WebhookService (dispatch, sign, log) | 3h | ✅ | |
+| MT-110.3 | SendWebhookJob with exponential backoff retry | 3h | ✅ | |
+| MT-110.4 | Laravel Events + WebhookDispatcher listener | 4h | ✅ | |
+| MT-110.5 | Fire events from all services | 3h | ✅ | |
+| MT-110.6 | Webhook management UI (Livewire) | 4h | ✅ | |
+| MT-110.7 | Webhook logs UI (Livewire, retry button) | 3h | ✅ | |
+| MT-110.8 | Webhook API endpoints | 2h | ✅ | |
 
 **Phase 5 Total:** 8 tasks | ~24 hours
 
@@ -326,22 +326,22 @@
 
 | ID | Task | Est. Hours | Status | Notes |
 |---|---|---|---|---|
-| MT-120.1 | Report Service architecture + ReportFilter DTO | 3h | ⬜ | |
-| MT-120.2 | OPD Report Livewire (charts, filters, export) | 3h | ⬜ | |
+| MT-120.1 | Report Service architecture + ReportFilter DTO | 3h | ✅ | |
+| MT-120.2 | OPD Report Livewire (charts, filters, export) | 3h | ✅ | |
 | MT-120.3 | IPD Report Livewire (occupancy, LOS, ward breakdown) | 3h | ⬜ | |
-| MT-120.4 | Revenue Report Livewire (trend chart, method breakdown) | 4h | ⬜ | |
-| MT-120.5 | Outstanding Dues Report (aging buckets) | 2h | ⬜ | |
+| MT-120.4 | Revenue Report Livewire (trend chart, method breakdown) | 4h | ✅ | |
+| MT-120.5 | Outstanding Dues Report (aging buckets) | 2h | ✅ | |
 | MT-120.6 | Patient Demographics Report | 3h | ⬜ | |
 | MT-120.7 | Diagnosis Frequency Report | 2h | ⬜ | |
 | MT-120.8 | Pharmacy Sales Report | 2h | ⬜ | |
 | MT-120.9 | Pharmacy Stock Report | 2h | ⬜ | |
 | MT-120.10 | Lab Analytics Report | 3h | ⬜ | |
 | MT-120.11 | Bed Occupancy Report | 3h | ⬜ | |
-| MT-120.12 | Doctor Performance Report | 3h | ⬜ | |
-| MT-120.13 | Export Service (PDF + CSV) | 3h | ⬜ | |
+| MT-120.12 | Doctor Performance Report | 3h | ✅ | |
+| MT-120.13 | Export Service (PDF + CSV) | 3h | ✅ | |
 | MT-120.14 | Scheduled Reports (save, email, job) | 4h | ⬜ | |
 | MT-120.15 | Chart.js integration (bar, pie, line) | 3h | ⬜ | |
-| MT-120.16 | Reports navigation + role permissions | 2h | ⬜ | |
+| MT-120.16 | Reports navigation + role permissions | 2h | ✅ | |
 
 **Phase 6 Total:** 16 tasks | ~45 hours
 

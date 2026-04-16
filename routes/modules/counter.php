@@ -25,6 +25,7 @@ Route::middleware(['auth'])->group(function () {
         // OPD
         Route::get('/opd', [OpdController::class, 'index'])->name('opd.index')->middleware('permission:view opd');
         Route::get('/opd/{id}/print', [OpdController::class, 'print'])->name('opd.print')->middleware('permission:view opd');
+        Route::get('/opd/{id}/download', [OpdController::class, 'download'])->name('opd.download')->middleware('permission:view opd');
         
         // IPD Routes
         Route::group(['middleware' => ['permission:view ipd']], function() {

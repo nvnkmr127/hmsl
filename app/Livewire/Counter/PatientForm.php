@@ -22,7 +22,7 @@ class PatientForm extends Component
     #[Validate('nullable|string|max:255')]
     public $father_name;
 
-    #[Validate('required|string|max:255')]
+    #[Validate('nullable|string|max:255')]
     public $mother_name;
 
     #[Validate('required|in:Male,Female,Other')]
@@ -132,10 +132,14 @@ class PatientForm extends Component
             $service->update($patient, $data);
             $message = 'Patient details updated successfully!';
         } else {
-            $patient = $service->create($data);
-            $message = 'Patient registered successfully with UHID!';
-            $this->dispatch('patient-registered', id: $patient->id);
-
+            try {
+                $patient = $service->create($data);
+                $message = 'Patient registered successfully with UHID!';
+                $this->dispatch('patient-registered', id: $patient->id);
+            } catch (\Exception $e) {
+                $this->dispatch('notify', type: 'error', message: $e->getMessage());
+                return;
+            }
         }
 
         $this->dispatch('close-modal', name: 'patient-modal');

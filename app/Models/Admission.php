@@ -80,6 +80,11 @@ class Admission extends Model
         return $this->hasMany(IpdMedicationChart::class);
     }
 
+    public function medicationAdministrations(): HasMany
+    {
+        return $this->hasMany(IpdMedicationAdministration::class);
+    }
+
     public function activeMedications()
     {
         return $this->hasMany(IpdMedicationChart::class)->where('status', 'Active');

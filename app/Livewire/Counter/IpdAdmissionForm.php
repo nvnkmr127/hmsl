@@ -116,10 +116,16 @@ class IpdAdmissionForm extends Component
             $data['reason_for_admission'] = 'EMERGENCY: ' . ($this->reason ?? 'Emergency admission');
         }
 
-        $admission = $service->admitPatient($data);
+        try {
+            $admission = $service->admitPatient($data);
 
-        $this->dispatch('notify', ['type' => 'success', 'message' => 'Patient admitted successfully!']);
-        return redirect()->route('counter.ipd.show', $admission->id);
+            $this->dispatch('notify', ['type' => 'success', 'message' => 'Patient admitted successfully!']);
+            return redirect()->route('counter.ipd.show', $admission->id);
+        } catch (\RuntimeException $e) {
+            $this->dispatch('notify', ['type' => 'error', 'message' => $e->getMessage()]);
+        } catch (\Exception $e) {
+            $this->dispatch('notify', ['type' => 'error', 'message' => 'An unexpected error occurred.']);
+        }
     }
 
     public function render()

@@ -15,10 +15,6 @@ class Prescription extends Model
         'patient_id',
         'doctor_id',
         'created_by',
-        'chief_complaint',
-        'diagnosis',
-        'advice',
-        'follow_up_date',
         'medicines',
         'is_dispensed',
         'dispensed_at',
@@ -27,7 +23,6 @@ class Prescription extends Model
 
     protected $casts = [
         'medicines'       => 'array',
-        'follow_up_date'  => 'date',
         'is_dispensed'    => 'boolean',
         'dispensed_at'    => 'datetime',
     ];

@@ -2,48 +2,31 @@
 
 namespace App\Services;
 
-use App\Models\Admission;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class PdfService
 {
-    public function generateDischargeSummaryPdf(Admission $admission)
+    /**
+     * Generate and return a PDF download response.
+     */
+    public function download(string $view, array $data, string $filename)
     {
-        $admission->load([
-            'patient',
-            'bed.ward',
-            'doctor.user',
-            'dischargeSummary.medications',
-            'ipdVitals' => fn($q) => $q->latest()->limit(5),
-            'ipdMedications' => fn($q) => $q->where('status', 'Active'),
-            'labOrders.labTest',
-            'finalBill.items',
-            'diagnoses',
-        ]);
+        $pdf = Pdf::loadView($view, $data);
+        
+        // Optional: Set paper size, orientation, etc.
+        $pdf->setPaper('a5', 'portrait');
 
-        $pdf = Pdf::loadView('pages.discharge.summary-print', [
-            'admission' => $admission,
-            'summary' => $admission->dischargeSummary,
-        ]);
-
-        $pdf->setPaper('A4', 'portrait');
-
-        return $pdf;
+        return $pdf->download($filename . '.pdf');
     }
 
-    public function downloadDischargeSummary(Admission $admission)
+    /**
+     * Generate and return a PDF stream (view in browser).
+     */
+    public function stream(string $view, array $data, string $filename)
     {
-        $pdf = $this->generateDischargeSummaryPdf($admission);
-
-        $filename = 'discharge_summary_' . $admission->admission_number . '.pdf';
-
-        return $pdf->download($filename);
-    }
-
-    public function streamDischargeSummary(Admission $admission)
-    {
-        $pdf = $this->generateDischargeSummaryPdf($admission);
-
-        return $pdf->stream();
+        $pdf = Pdf::loadView($view, $data);
+        $pdf->setPaper('a5', 'portrait');
+        
+        return $pdf->stream($filename . '.pdf');
     }
 }

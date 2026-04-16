@@ -105,4 +105,9 @@ class Patient extends Model
     {
         return $this->hasMany(PatientConsent::class);
     }
+
+    public function activeAdmission()
+    {
+        return $this->hasOne(Admission::class)->where('status', 'Admitted');
+    }
 }
