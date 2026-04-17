@@ -32,11 +32,12 @@
         <!-- OPD Quick Action -->
         @can('view opd')
         <button @click="$dispatch('quick-op-booking')" 
+                title="New OP Visit (Alt+N)"
            class="hidden md:flex items-center gap-2 px-4 py-2 bg-violet text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-violet-500/20 hover:bg-violet-dk transition-all">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
             </svg>
-            <span>New OP Visit</span>
+            <span>New OP Visit <span class="ml-1 opacity-60 text-[10px] font-bold">(Alt+N)</span></span>
         </button>
         @endcan
 

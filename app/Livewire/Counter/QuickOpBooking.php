@@ -25,6 +25,8 @@ class QuickOpBooking extends Component
     public $notes;
     public $isEditing = false;
     public $editingId;
+    public $isFollowUp = false;
+    public $latestConsultation;
 
     #[On('patient-registered')]
     public function handlePatientRegistered($id = null)
@@ -90,6 +92,29 @@ class QuickOpBooking extends Component
         $this->isEditing = false;
         $this->searchPatient = '';
         
+        // Check for recent consultations within validity period
+        $hasRecentVisit = false;
+        if ($this->valid_upto) {
+            $hasRecentVisit = Consultation::where('patient_id', $id)
+                ->where('status', '!=', 'Cancelled')
+                ->where('valid_upto', '>=', $this->consultation_date)
+                ->exists();
+        }
+
+        $this->isFollowUp = $hasRecentVisit;
+
+        if ($hasRecentVisit) {
+            $this->fee = 0;
+            $this->dispatch('notify', ['type' => 'success', 'message' => 'Follow-up visit: Free of charge.']);
+        } else {
+            $this->autoSelectDoctor();
+        }
+
+        $this->latestConsultation = Consultation::where('patient_id', $id)
+            ->with(['doctor', 'service'])
+            ->latest('consultation_date')
+            ->first();
+
         $latestVitals = $this->selectedPatient->vitals()->latest()->first();
         if ($latestVitals) {
             $this->weight = $latestVitals->weight;

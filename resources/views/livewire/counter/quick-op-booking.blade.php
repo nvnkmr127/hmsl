@@ -1,4 +1,4 @@
-<div>
+<div @open-modal.window="if($event.detail.name === 'quick-op-modal') $nextTick(() => $el.querySelector('input')?.focus())">
     <x-modal name="quick-op-modal" title="Quick Appointment" width="3xl">
         <div class="p-6">
             @if(!$selectedPatient)
@@ -44,9 +44,45 @@
                 </div>
             @else
                 <!-- Booking Section -->
-                <div class="mb-8">
+                <div class="mb-8 relative">
                    <x-clinical.patient-strip :patient="$selectedPatient" size="md" />
+                   @if($isFollowUp)
+                       <div class="absolute -top-3 -right-3">
+                           <span class="bg-emerald-500 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg border-2 border-white dark:border-gray-900 uppercase tracking-widest animate-pulse">
+                               Follow-up Visit
+                           </span>
+                       </div>
+                   @endif
                 </div>
+
+                @if($isFollowUp)
+                    <div class="mb-6 p-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-800/30 rounded-2xl flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-600">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Free Consultation</p>
+                            <p class="text-xs font-bold text-emerald-700 dark:text-emerald-300">This patient's previous visit is still within the {{ \App\Models\Setting::get('opd_validity_days', 7) }} day validity period.</p>
+                        </div>
+                    </div>
+                @if($latestConsultation)
+                    <div class="mb-6 grid grid-cols-2 gap-4">
+                        <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800/50">
+                            <p class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Previous Visit</p>
+                            <p class="text-sm font-black text-gray-700 dark:text-gray-200 uppercase tracking-tight">
+                                {{ $latestConsultation->consultation_date->format('d M Y') }}
+                            </p>
+                            <p class="text-[10px] font-bold text-gray-500 mt-0.5 truncate uppercase tracking-widest">{{ $latestConsultation->service?->name ?? 'OPD' }}</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800/50">
+                            <p class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Last Seen By</p>
+                            <p class="text-sm font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-tight truncate">
+                                Dr. {{ $latestConsultation->doctor?->full_name ?? 'N/A' }}
+                            </p>
+                            <p class="text-[10px] font-bold text-gray-500 mt-0.5 uppercase tracking-widest">{{ $latestConsultation->doctor?->specialization ?? 'Department' }}</p>
+                        </div>
+                    </div>
+                @endif
                 
                 <form wire:submit.prevent="book" class="space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -80,6 +116,17 @@
                                     @endforelse
                                 </select>
                                 @error('selectedDoctor') <p class="text-[10px] font-bold text-rose-500 mt-1 ml-1">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="space-y-1.5">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Weight (kg)</label>
+                                    <input type="number" step="0.1" wire:model="weight" placeholder="0.0" class="w-full bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 font-bold text-gray-900 dark:text-white outline-none transition-all" />
+                                </div>
+                                <div class="space-y-1.5">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Temp (°F)</label>
+                                    <input type="number" step="0.1" wire:model="temperature" placeholder="98.6" class="w-full bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 font-bold text-gray-900 dark:text-white outline-none transition-all" />
+                                </div>
                             </div>
                         </div>
 

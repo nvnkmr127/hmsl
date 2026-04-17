@@ -17,6 +17,8 @@
           $watch('darkMode', val => localStorage.setItem('darkMode', val));
           window.addEventListener('resize', () => handleResize());
       "
+      x-on:keydown.alt.n.window="$dispatch('quick-op-booking')"
+      x-on:keydown.alt.s.window="$dispatch('open-global-search')"
       :class="{ 'dark': darkMode }">
 <head>
     <meta charset="utf-8">
