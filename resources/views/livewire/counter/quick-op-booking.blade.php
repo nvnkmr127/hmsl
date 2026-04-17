@@ -65,6 +65,7 @@
                             <p class="text-xs font-bold text-emerald-700 dark:text-emerald-300">This patient's previous visit is still within the {{ \App\Models\Setting::get('opd_validity_days', 7) }} day validity period.</p>
                         </div>
                     </div>
+                @endif
                 @if($latestConsultation)
                     <div class="mb-6 grid grid-cols-2 gap-4">
                         <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800/50">
