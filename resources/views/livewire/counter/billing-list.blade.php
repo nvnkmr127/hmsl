@@ -71,7 +71,7 @@
     <div class="glass-card overflow-hidden">
         <div class="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
             @forelse($bills as $bill)
-                <div class="p-4">
+                <div wire:key="billing-mobile-{{ $bill->id }}" class="p-4">
                     <div class="flex items-start justify-between gap-3">
                         <div class="min-w-0">
                             <p class="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400 truncate">{{ $bill->bill_number }}</p>
@@ -99,11 +99,15 @@
                         <div class="flex items-center gap-2">
                             <button
                                wire:click="openPaymentModal({{ $bill->id }})"
+                               wire:loading.attr="disabled"
+                               wire:target="openPaymentModal({{ $bill->id }})"
                                class="btn btn-ghost px-3 py-2 text-xs">
                                 Collect
                             </button>
                             <button
                                wire:click="openDiscountModal({{ $bill->id }})"
+                               wire:loading.attr="disabled"
+                               wire:target="openDiscountModal({{ $bill->id }})"
                                class="btn btn-ghost text-violet-600 px-3 py-2 text-xs">
                                 Disc
                             </button>
@@ -144,7 +148,7 @@
             </thead>
             <tbody>
                 @forelse($bills as $bill)
-                    <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-700/20 transition-colors">
+                    <tr wire:key="billing-desktop-{{ $bill->id }}" class="hover:bg-gray-50/50 dark:hover:bg-gray-700/20 transition-colors">
                         <td class="px-4 py-3">
                             <span class="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">
                                 {{ $bill->bill_number }}
@@ -185,11 +189,15 @@
                             <div class="flex justify-end gap-1">
                                 <button
                                    wire:click="openPaymentModal({{ $bill->id }})"
+                                   wire:loading.attr="disabled"
+                                   wire:target="openPaymentModal({{ $bill->id }})"
                                    class="inline-flex items-center gap-1 text-xs font-bold text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900/20">
                                     Collect
                                 </button>
                                 <button
                                    wire:click="openDiscountModal({{ $bill->id }})"
+                                   wire:loading.attr="disabled"
+                                   wire:target="openDiscountModal({{ $bill->id }})"
                                    class="inline-flex items-center gap-1 text-xs font-bold text-violet-600 hover:text-violet-800 dark:text-violet-400 dark:hover:text-violet-200 transition-colors px-3 py-1.5 rounded-lg hover:bg-violet-50 dark:hover:bg-indigo-900/20">
                                     Discount
                                 </button>
@@ -232,7 +240,7 @@
                 <option value="UPI">UPI</option>
                 <option value="Insurance">Insurance</option>
             </x-form.select>
-            <x-form.input type="number" step="1" label="Amount" wire:model.live="paymentAmount" class="text-right" />
+            <x-form.input type="number" step="1" label="Amount" wire:model.live.debounce.300ms="paymentAmount" class="text-right" />
             <x-form.input type="text" label="Reference (Optional)" wire:model="paymentReference" />
             <div class="space-y-2">
                 <label class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest pl-1">Notes (Optional)</label>
@@ -240,7 +248,7 @@
             </div>
             <div class="flex justify-end gap-3 pt-2">
                 <button type="button" @click="$dispatch('close-modal', { name: 'billing-payment-modal' })" class="btn btn-ghost px-6">Cancel</button>
-                <button type="button" wire:click="submitPayment" class="btn btn-primary px-10">Save</button>
+                <button type="button" wire:click="submitPayment" wire:loading.attr="disabled" wire:target="submitPayment" class="btn btn-primary px-10">Save</button>
             </div>
         </div>
     </x-modal>
@@ -284,7 +292,7 @@
 
             <div class="flex justify-end gap-3 pt-4">
                 <button type="button" @click="$dispatch('close-modal', { name: 'bill-discount-modal' })" class="btn btn-ghost px-6">Cancel</button>
-                <button type="button" wire:click="submitDiscount" class="btn btn-primary px-10" style="background-color: #7c3aed">Apply Discount</button>
+                <button type="button" wire:click="submitDiscount" wire:loading.attr="disabled" wire:target="submitDiscount" class="btn btn-primary px-10" style="background-color: #7c3aed">Apply Discount</button>
             </div>
         </div>
     </x-modal>

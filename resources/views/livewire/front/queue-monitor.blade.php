@@ -5,7 +5,7 @@
 <div wire:poll.5s class="space-y-8">
     <div class="grid grid-cols-1 {{ count($stats) > 1 ? 'md:grid-cols-2 lg:grid-cols-3' : 'max-w-4xl mx-auto' }} gap-8">
         @foreach($stats as $stat)
-            <div class="bg-white dark:bg-gray-800 rounded-[3.5rem] border border-gray-100 dark:border-gray-700/50 shadow-2xl overflow-hidden group hover:scale-[1.01] transition-transform">
+            <div wire:key="queue-doctor-{{ data_get($stat, 'doctor.id', 'na') }}" class="bg-white dark:bg-gray-800 rounded-[3.5rem] border border-gray-100 dark:border-gray-700/50 shadow-2xl overflow-hidden group hover:scale-[1.01] transition-transform">
                 @if(!$singleDoctor)
                     <!-- Doctor Header (Only if multiple) -->
                     <div class="p-6 bg-indigo-600 text-white relative">

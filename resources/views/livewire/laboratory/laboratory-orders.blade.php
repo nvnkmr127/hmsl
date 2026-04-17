@@ -12,7 +12,7 @@
                 <div class="space-y-4">
                     <div class="space-y-2">
                         @foreach(['Pending', 'In Progress', 'Completed', 'Cancelled', 'All'] as $s)
-                            <label class="flex items-center gap-3 p-3 rounded-2xl border cursor-pointer transition-all {{ $status === $s ? 'bg-violet-50 border-violet-200 dark:bg-violet-950/20 dark:border-violet-900 shadow-sm' : 'border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900/50' }}">
+                            <label wire:key="lab-status-{{ \Illuminate\Support\Str::slug($s) }}" class="flex items-center gap-3 p-3 rounded-2xl border cursor-pointer transition-all {{ $status === $s ? 'bg-violet-50 border-violet-200 dark:bg-violet-950/20 dark:border-violet-900 shadow-sm' : 'border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900/50' }}">
                                 <input type="radio" wire:model.live="status" value="{{ $s }}" class="text-violet-600 focus:ring-violet-500">
                                 <span class="text-xs font-bold uppercase tracking-widest {{ $status === $s ? 'text-violet-700 dark:text-violet-400' : 'text-gray-500' }}">{{ $s }} Orders</span>
                             </label>
@@ -44,7 +44,7 @@
                     </thead>
                     <tbody>
                         @forelse($orders as $o)
-                            <tr>
+                            <tr wire:key="lab-order-{{ $o->id }}">
                                 <td>
                                     <x-patient-identity :patient="$o->patient" />
                                 </td>
@@ -118,13 +118,13 @@
 
                     <div class="space-y-4">
                         @foreach($selectedOrder->labTest?->parameters ?? [] as $p)
-                            <div class="grid grid-cols-3 items-center gap-4">
+                            <div wire:key="lab-param-{{ $p->id }}" class="grid grid-cols-3 items-center gap-4">
                                 <div class="col-span-1">
                                     <p class="text-xs font-bold text-gray-700 dark:text-gray-300">{{ $p->name }}</p>
                                     <p class="text-tiny text-gray-400">Range: {{ $p->reference_range }} {{ $p->unit }}</p>
                                 </div>
                                 <div class="col-span-2">
-                                    <x-form.input wire:model="results.{{ $p->id }}" placeholder="Value ({{ $p->unit }})" />
+                                    <x-form.input wire:model.live.debounce.300ms="results.{{ $p->id }}" placeholder="Value ({{ $p->unit }})" />
                                 </div>
                             </div>
                         @endforeach

@@ -59,9 +59,9 @@
                 @else
                     <div class="space-y-3">
                         @foreach($medicines as $idx => $med)
-                            <div class="grid grid-cols-12 gap-2 items-start p-3 bg-white dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50">
+                            <div wire:key="rx-med-{{ $idx }}" class="grid grid-cols-12 gap-2 items-start p-3 bg-white dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50">
                                 <div class="col-span-3">
-                                    <input wire:model="medicines.{{ $idx }}.name"
+                                    <input wire:model.live.debounce.300ms="medicines.{{ $idx }}.name"
                                         list="medicine-list-{{ $idx }}"
                                         placeholder="Medicine name"
                                         class="block w-full rounded-xl border-transparent bg-gray-100/50 dark:bg-gray-700/50 text-sm text-gray-800 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 px-3 py-2 transition-all" />
@@ -72,7 +72,7 @@
                                     </datalist>
                                 </div>
                                 <div class="col-span-2">
-                                    <input wire:model="medicines.{{ $idx }}.dose"
+                                    <input wire:model.live.debounce.300ms="medicines.{{ $idx }}.dose"
                                         placeholder="Dose (e.g. 500mg)"
                                         class="block w-full rounded-xl border-transparent bg-gray-100/50 dark:bg-gray-700/50 text-sm text-gray-800 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 px-3 py-2 transition-all" />
                                 </div>
@@ -88,24 +88,24 @@
                                     </select>
                                 </div>
                                 <div class="col-span-2">
-                                    <input wire:model="medicines.{{ $idx }}.duration"
+                                    <input wire:model.live.debounce.300ms="medicines.{{ $idx }}.duration"
                                         placeholder="Duration"
                                         class="block w-full rounded-xl border-transparent bg-gray-100/50 dark:bg-gray-700/50 text-sm text-gray-800 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 px-3 py-2 transition-all" />
                                 </div>
                                 <div class="col-span-1">
-                                    <input wire:model="medicines.{{ $idx }}.qty"
+                                    <input wire:model.live.debounce.300ms="medicines.{{ $idx }}.qty"
                                         type="number"
                                         min="1"
                                         placeholder="Qty"
                                         class="block w-full rounded-xl border-transparent bg-gray-100/50 dark:bg-gray-700/50 text-sm text-gray-800 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 px-3 py-2 transition-all" />
                                 </div>
                                 <div class="col-span-1">
-                                    <input wire:model="medicines.{{ $idx }}.instructions"
+                                    <input wire:model.live.debounce.300ms="medicines.{{ $idx }}.instructions"
                                         placeholder="Instructions (e.g. After food)"
                                         class="block w-full rounded-xl border-transparent bg-gray-100/50 dark:bg-gray-700/50 text-sm text-gray-800 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 px-3 py-2 transition-all" />
                                 </div>
                                 <div class="col-span-1 flex justify-center pt-2">
-                                    <button type="button" wire:click="removeMedicine({{ $idx }})"
+                                    <button type="button" wire:click="removeMedicine({{ $idx }})" wire:loading.attr="disabled" wire:target="removeMedicine({{ $idx }})"
                                             class="text-gray-300 hover:text-rose-500 transition-colors">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -159,7 +159,7 @@
                             class="btn btn-ghost px-6">
                         Cancel
                     </button>
-                    <button type="submit" class="btn btn-primary px-10">
+                    <button type="submit" wire:loading.attr="disabled" wire:target="save" class="btn btn-primary px-10">
                         {{ $existingPrescription ? 'Update Prescription' : 'Save Prescription' }}
                     </button>
                 </div>

@@ -2,13 +2,20 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}"
       x-data="{
           darkMode: localStorage.getItem('darkMode') === 'true',
-          sidebarOpen: window.innerWidth >= 1024
+          sidebarOpen: window.innerWidth >= 1024,
+          resizeTicking: false,
+          handleResize() {
+              if (this.resizeTicking) return;
+              this.resizeTicking = true;
+              requestAnimationFrame(() => {
+                  if (window.innerWidth >= 1024) this.sidebarOpen = true;
+                  this.resizeTicking = false;
+              });
+          }
       }"
       x-init="
           $watch('darkMode', val => localStorage.setItem('darkMode', val));
-          window.addEventListener('resize', () => {
-              if (window.innerWidth >= 1024) sidebarOpen = true;
-          });
+          window.addEventListener('resize', () => handleResize());
       "
       :class="{ 'dark': darkMode }">
 <head>
@@ -27,7 +34,7 @@
     <style>
         [x-cloak] { display: none !important; }
         *, body { font-family: 'Inter', sans-serif; }
-        -webkit-tap-highlight-color: transparent;
+        html, body { -webkit-tap-highlight-color: transparent; }
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 antialiased">
@@ -77,8 +84,6 @@
     @livewireScripts
     <script>
         document.addEventListener('livewire:initialized', () => {
-            console.log('Global Livewire System Ready');
-
             Livewire.on('print-op-slip', (event) => {
                 const id = event.id ?? event[0].id ?? event[0];
                 if (!id) return;

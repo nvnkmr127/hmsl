@@ -16,9 +16,9 @@
             @endif
         </div>
     @else
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-140px)]">
+        <div class="grid grid-cols-1 xl:grid-cols-4 gap-6 xl:h-[calc(100vh-140px)]">
             <!-- Left Side: Queue -->
-            <div class="lg:col-span-1 flex flex-col h-full overflow-hidden">
+            <div class="xl:col-span-1 flex flex-col h-full overflow-hidden">
                 <div class="bg-white dark:bg-gray-950 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col h-full">
                     <div class="p-5 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/10">
                         <h3 class="text-xs font-black text-gray-900 dark:text-white uppercase tracking-widest">Today's Queue</h3>
@@ -34,7 +34,7 @@
                                     <span class="text-tiny font-black uppercase tracking-widest {{ $selectedConsultation && $selectedConsultation->id == $item->id ? 'text-violet-200' : 'text-gray-400' }}">
                                         Token #{{ str_pad($item->token_number, 2, '0', STR_PAD_LEFT) }}
                                     </span>
-                                    <span class="text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter {{ $item->status === 'Ongoing' ? 'bg-sky-500 text-white' : 'bg-gray-200 text-gray-500' }}">
+                                    <span class="text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter shrink-0 whitespace-nowrap {{ $item->status === 'Ongoing' ? 'bg-sky-500 text-white' : 'bg-gray-200 text-gray-500' }}">
                                         {{ $item->status === 'Ongoing' ? 'With Doctor' : 'Waiting' }}
                                     </span>
                                 </div>
@@ -69,33 +69,37 @@
             </div>
 
             <!-- Right Side: Selected Patient Details -->
-            <div class="lg:col-span-3">
+            <div class="xl:col-span-3">
                 @if($selectedConsultation)
                     <div class="h-full flex flex-col bg-slate-50/50 dark:bg-gray-900/10 rounded-mega border border-gray-100 dark:border-gray-800 shadow-xl overflow-hidden animate-in fade-in slide-in-from-right-4 duration-500">
                         
                         <!-- Top Bar: Quick Actions & Profile -->
-                        <div class="p-8 bg-white dark:bg-gray-950 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
-                            <div class="flex items-center gap-6">
+                        <div class="p-6 sm:p-8 bg-white dark:bg-gray-950 border-b border-gray-100 dark:border-gray-800">
+                            <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-6">
+                            <div class="flex items-center gap-4 sm:gap-6 min-w-0">
                                 <div class="w-16 h-16 rounded-[1.5rem] bg-violet-600 flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-violet-500/20">
                                     {{ strtoupper(substr($selectedConsultation->patient->first_name, 0, 1)) }}
                                 </div>
-                                <div>
-                                    <h2 class="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tight leading-none mb-1">{{ $selectedConsultation->patient->full_name }}</h2>
-                                    <div class="flex items-center gap-4">
+                                <div class="min-w-0">
+                                    <h2 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tight leading-tight mb-1 break-words">{{ $selectedConsultation->patient->full_name }}</h2>
+                                    <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
                                         <span class="text-tiny font-black text-violet-600 uppercase tracking-[0.2em]">{{ $selectedConsultation->patient->age }} | {{ $selectedConsultation->patient->gender }}</span>
                                         <span class="w-1 h-1 rounded-full bg-gray-300"></span>
                                         <span class="text-tiny font-black text-gray-400 uppercase tracking-widest">{{ $selectedConsultation->patient->uhid }}</span>
                                     </div>
                                 </div>
                             </div>
-                            <button wire:click="completeAndNext" class="btn btn-primary px-10 py-5 rounded-3xl shadow-2xl shadow-violet-500/30 text-lg font-black uppercase tracking-[0.1em] flex items-center gap-3 group ring-8 ring-violet-600/5">
-                                <span>Finish & Next</span>
-                                <svg class="w-6 h-6 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
-                            </button>
-                            <a href="{{ route('counter.ipd.create', ['patient_id' => $selectedConsultation->patient_id]) }}" class="btn btn-secondary px-6 py-5 rounded-3xl shadow-xl text-sm font-black uppercase tracking-wider flex items-center gap-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
-                                Admit Patient
-                            </a>
+                            <div class="flex flex-wrap items-center gap-3 justify-start xl:justify-end">
+                                <button wire:click="completeAndNext" class="btn btn-primary px-6 py-4 sm:px-8 sm:py-4 xl:px-10 xl:py-5 rounded-3xl shadow-2xl shadow-violet-500/30 text-sm sm:text-base xl:text-lg font-black uppercase tracking-[0.1em] flex items-center gap-3 group ring-8 ring-violet-600/5 whitespace-nowrap">
+                                    <span>Finish & Next</span>
+                                    <svg class="w-6 h-6 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                                </button>
+                                <a href="{{ route('counter.ipd.create', ['patient_id' => $selectedConsultation->patient_id]) }}" class="btn btn-secondary px-5 py-4 sm:px-6 sm:py-4 xl:px-6 xl:py-5 rounded-3xl shadow-xl text-xs sm:text-sm font-black uppercase tracking-wider flex items-center gap-2 whitespace-nowrap">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                                    Admit Patient
+                                </a>
+                            </div>
+                            </div>
                         </div>
 
                         <!-- Structured Clinical View -->
@@ -106,7 +110,7 @@
                                 <div class="xl:col-span-2 space-y-8">
                                     
                                     {{-- B. Current Visit (OP Details) --}}
-                                    <div class="grid grid-cols-4 gap-6">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
                                         <div class="p-6 bg-white dark:bg-gray-950 rounded-ultra border border-gray-100 dark:border-gray-800 shadow-sm">
                                             <p class="text-dense font-black text-orange-500 uppercase tracking-widest mb-2">Weight</p>
                                             <div class="flex items-baseline gap-1">
@@ -127,10 +131,10 @@
                                                 <span class="text-3xl font-black text-gray-900 dark:text-white">#{{ $selectedConsultation->token_number }}</span>
                                             </div>
                                         </div>
-                                        <button wire:click="openDiscountModal" class="p-6 bg-white dark:bg-gray-950 rounded-ultra border border-violet-200 dark:border-violet-900/50 shadow-lg shadow-violet-500/5 text-left transition-all hover:bg-violet-50 dark:hover:bg-violet-900/20 group">
+                                        <button wire:click="openDiscountModal" class="p-6 bg-white dark:bg-gray-950 rounded-ultra border border-violet-200 dark:border-violet-900/50 shadow-lg shadow-violet-500/5 text-left transition-all hover:bg-violet-50 dark:hover:bg-violet-900/20 group min-w-0">
                                             <p class="text-dense font-black text-violet-600 uppercase tracking-widest mb-2 group-hover:scale-105 origin-left transition-transform">Fee Discount</p>
                                             <div class="flex items-baseline gap-1">
-                                                <span class="text-3xl font-black text-violet-600">₹{{ number_format($discount, 2) }}</span>
+                                                <span class="text-2xl sm:text-3xl font-black text-violet-600 truncate">₹{{ number_format($discount, 2) }}</span>
                                                 <svg class="w-4 h-4 text-violet-300 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                                             </div>
                                         </button>

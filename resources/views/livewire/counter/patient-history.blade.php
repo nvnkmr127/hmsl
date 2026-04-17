@@ -107,7 +107,7 @@
                                 default => 'bg-gray-50 dark:bg-gray-950/10 border-gray-100 dark:border-gray-800/30 text-gray-700 dark:text-gray-300',
                             };
                         @endphp
-                        <div class="p-3 rounded-2xl border {{ $alertClasses }}">
+                        <div wire:key="patient-alert-{{ $loop->index }}" class="p-3 rounded-2xl border {{ $alertClasses }}">
                             <p class="text-tiny font-black uppercase tracking-widest opacity-80">{{ $alert['label'] }}</p>
                             <p class="text-sm font-semibold mt-1">{{ $alert['msg'] }}</p>
                         </div>
@@ -124,18 +124,18 @@
 
     <div class="overflow-x-auto mb-4 scrollbar-hide">
         <div class="inline-flex gap-2 p-1.5 rounded-[1.5rem] bg-gray-100/60 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-800">
-            <button wire:click="$set('tab','overview')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'overview' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Overview</button>
-            <button wire:click="$set('tab','treatment')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'treatment' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">History ({{ $counts['treatments'] }})</button>
-            <button wire:click="$set('tab','visits')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'visits' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">OPD Visits ({{ $counts['visits'] }})</button>
-            <button wire:click="$set('tab','admissions')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'admissions' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Admissions ({{ $counts['admissions'] }})</button>
-            <button wire:click="$set('tab','appointments')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'appointments' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Sched. ({{ $counts['appointments'] }})</button>
-            <button wire:click="$set('tab','discharges')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'discharges' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Discharges ({{ $counts['discharges'] }})</button>
-            <button wire:click="$set('tab','prescriptions')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'prescriptions' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Rx ({{ $counts['prescriptions'] }})</button>
-            <button wire:click="$set('tab','labs')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'labs' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Labs ({{ $counts['labs'] }})</button>
-            <button wire:click="$set('tab','billing')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'billing' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Bills ({{ $counts['bills'] }})</button>
-            <button wire:click="$set('tab','vitals')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'vitals' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Vitals</button>
-            <button wire:click="$set('tab','vaccinations')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'vaccinations' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Vaccines</button>
-            <button wire:click="$set('tab','consents')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'consents' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Consents ({{ $counts['consents'] ?? 0 }})</button>
+            <button wire:click="$set('tab','overview')" wire:loading.attr="disabled" wire:target="$set('tab','overview')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'overview' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Overview</button>
+            <button wire:click="$set('tab','treatment')" wire:loading.attr="disabled" wire:target="$set('tab','treatment')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'treatment' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">History ({{ $counts['treatments'] }})</button>
+            <button wire:click="$set('tab','visits')" wire:loading.attr="disabled" wire:target="$set('tab','visits')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'visits' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">OPD Visits ({{ $counts['visits'] }})</button>
+            <button wire:click="$set('tab','admissions')" wire:loading.attr="disabled" wire:target="$set('tab','admissions')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'admissions' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Admissions ({{ $counts['admissions'] }})</button>
+            <button wire:click="$set('tab','appointments')" wire:loading.attr="disabled" wire:target="$set('tab','appointments')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'appointments' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Sched. ({{ $counts['appointments'] }})</button>
+            <button wire:click="$set('tab','discharges')" wire:loading.attr="disabled" wire:target="$set('tab','discharges')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'discharges' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Discharges ({{ $counts['discharges'] }})</button>
+            <button wire:click="$set('tab','prescriptions')" wire:loading.attr="disabled" wire:target="$set('tab','prescriptions')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'prescriptions' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Rx ({{ $counts['prescriptions'] }})</button>
+            <button wire:click="$set('tab','labs')" wire:loading.attr="disabled" wire:target="$set('tab','labs')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'labs' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Labs ({{ $counts['labs'] }})</button>
+            <button wire:click="$set('tab','billing')" wire:loading.attr="disabled" wire:target="$set('tab','billing')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'billing' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Bills ({{ $counts['bills'] }})</button>
+            <button wire:click="$set('tab','vitals')" wire:loading.attr="disabled" wire:target="$set('tab','vitals')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'vitals' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Vitals</button>
+            <button wire:click="$set('tab','vaccinations')" wire:loading.attr="disabled" wire:target="$set('tab','vaccinations')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'vaccinations' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Vaccines</button>
+            <button wire:click="$set('tab','consents')" wire:loading.attr="disabled" wire:target="$set('tab','consents')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'consents' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Consents ({{ $counts['consents'] ?? 0 }})</button>
         </div>
     </div>
 
@@ -153,10 +153,10 @@
                     </div>
                 </div>
                 <div class="md:col-span-3">
-                    <input type="date" wire:model.live="dateFrom" class="w-full px-4 py-3 rounded-2xl border-transparent bg-gray-50/50 dark:bg-gray-900/50 text-xs font-bold text-gray-500 focus:ring-violet-500/20">
+                    <input type="date" wire:model.live.debounce.300ms="dateFrom" class="w-full px-4 py-3 rounded-2xl border-transparent bg-gray-50/50 dark:bg-gray-900/50 text-xs font-bold text-gray-500 focus:ring-violet-500/20">
                 </div>
                 <div class="md:col-span-3">
-                    <input type="date" wire:model.live="dateTo" class="w-full px-4 py-3 rounded-2xl border-transparent bg-gray-50/50 dark:bg-gray-900/50 text-xs font-bold text-gray-500 focus:ring-violet-500/20">
+                    <input type="date" wire:model.live.debounce.300ms="dateTo" class="w-full px-4 py-3 rounded-2xl border-transparent bg-gray-50/50 dark:bg-gray-900/50 text-xs font-bold text-gray-500 focus:ring-violet-500/20">
                 </div>
             </div>
         </x-card>
@@ -192,7 +192,7 @@
             <x-card title="Clinical Timeline">
                 <div class="space-y-6 relative before:absolute before:left-[17px] before:top-2 before:bottom-2 before:w-0.5 before:bg-gray-100 dark:before:bg-gray-800">
                     @forelse($overview['timeline'] as $item)
-                        <div class="relative pl-12">
+                        <div wire:key="patient-timeline-{{ $item->type }}-{{ \Illuminate\Support\Carbon::parse($item->date)->format('Ymd') }}-{{ $loop->index }}" class="relative pl-12">
                             <div class="absolute left-0 top-0 w-9 h-9 rounded-2xl bg-{{ $item->color }}-100 dark:bg-{{ $item->color }}-900/30 flex items-center justify-center border-4 border-white dark:border-gray-900">
                                 @if($item->type === 'Visit')
                                     <svg class="w-3.5 h-3.5 text-{{ $item->color }}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -223,7 +223,7 @@
             <x-card title="Financial Summary">
                 <div class="space-y-3">
                     @forelse($overview['latestBills'] as $b)
-                        <div class="p-4 rounded-ultra bg-gray-50 dark:bg-white/5 flex items-center justify-between gap-4 border border-transparent hover:border-gray-100 dark:hover:border-white/10 transition-all">
+                        <div wire:key="patient-overview-bill-{{ $b->id }}" class="p-4 rounded-ultra bg-gray-50 dark:bg-white/5 flex items-center justify-between gap-4 border border-transparent hover:border-gray-100 dark:hover:border-white/10 transition-all">
                             <div class="min-w-0">
                                 <p class="text-tiny font-black text-indigo-500 uppercase tracking-widest">{{ $b->created_at?->format('d M Y') }}</p>
                                 <p class="text-sm font-black text-gray-900 dark:text-white truncate mt-0.5">{{ $b->bill_number }}</p>

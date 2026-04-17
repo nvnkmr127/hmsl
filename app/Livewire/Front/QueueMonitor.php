@@ -14,19 +14,19 @@ class QueueMonitor extends Component
             ->where(fn($q) => $q->where('is_active', '=', true))
             ->get();
 
+        $consultationsByDoctor = Consultation::with('patient')
+            ->whereIn('doctor_id', $doctors->pluck('id'))
+            ->whereDate('consultation_date', date('Y-m-d'))
+            ->whereIn('status', ['Ongoing', 'Pending'])
+            ->orderBy('token_number')
+            ->get()
+            ->groupBy('doctor_id');
+
         $doctorStats = [];
         foreach ($doctors as $doctor) {
-            $ongoing = Consultation::with('patient')
-                ->where(fn($q) => $q->where('doctor_id', '=', $doctor->id))
-                ->whereDate('consultation_date', date('Y-m-d'))
-                ->where(fn($q) => $q->where('status', '=', 'Ongoing'))
-                ->first();
-
-            $next = Consultation::where(fn($q) => $q->where('doctor_id', '=', $doctor->id))
-                ->whereDate('consultation_date', date('Y-m-d'))
-                ->where(fn($q) => $q->where('status', '=', 'Pending'))
-                ->orderBy('token_number')
-                ->value('token_number');
+            $doctorConsultations = $consultationsByDoctor->get($doctor->id, collect());
+            $ongoing = $doctorConsultations->firstWhere('status', 'Ongoing');
+            $next = optional($doctorConsultations->firstWhere('status', 'Pending'))->token_number;
 
             $doctorStats[] = [
                 'doctor' => $doctor,

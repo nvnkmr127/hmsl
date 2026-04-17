@@ -5,6 +5,7 @@ namespace App\Livewire\IPD;
 use App\Models\Admission;
 use App\Models\IpdMedicationChart;
 use App\Models\Medicine;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
@@ -196,37 +197,38 @@ class MedicationChart extends Component
 
     public function getActiveMedicationsProperty()
     {
-        return IpdMedicationChart::withCount('medicationAdministrations')
-            ->where('admission_id', $this->admission->id)
-            ->where('status', 'Active')
-            ->orderBy('start_date', 'desc')
-            ->get();
+        return $this->getAllMedications()->where('status', 'Active')->values();
     }
 
     public function getStoppedMedicationsProperty()
     {
-        return IpdMedicationChart::withCount('medicationAdministrations')
-            ->where('admission_id', $this->admission->id)
-            ->where('status', 'Stopped')
-            ->orderBy('stopped_at', 'desc')
-            ->get();
+        return $this->getAllMedications()->where('status', 'Stopped')->sortByDesc('stopped_at')->values();
     }
 
     public function getCompletedMedicationsProperty()
     {
-        return IpdMedicationChart::withCount('medicationAdministrations')
-            ->where('admission_id', $this->admission->id)
-            ->where('status', 'Completed')
-            ->orderBy('end_date', 'desc')
-            ->get();
+        return $this->getAllMedications()->where('status', 'Completed')->sortByDesc('end_date')->values();
     }
 
     public function getAllMedicationsProperty()
     {
-        return IpdMedicationChart::withCount('medicationAdministrations')
+        return $this->getAllMedications();
+    }
+
+    private function getAllMedications(): Collection
+    {
+        static $medications = null;
+
+        if ($medications instanceof Collection) {
+            return $medications;
+        }
+
+        $medications = IpdMedicationChart::withCount('medicationAdministrations')
             ->where('admission_id', $this->admission->id)
             ->orderBy('start_date', 'desc')
             ->get();
+
+        return $medications;
     }
 
     public function render()

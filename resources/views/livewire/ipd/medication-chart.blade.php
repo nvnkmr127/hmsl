@@ -2,7 +2,7 @@
     <div class="flex items-center justify-between mb-4">
         <h3 class="text-lg font-bold text-gray-900 dark:text-white">Medication Chart</h3>
         @unless($admission->status === 'Discharged')
-            <button wire:click="$toggle('showForm')" class="btn btn-primary text-xs" wire:loading.attr="disabled">
+            <button wire:click="$toggle('showForm')" class="btn btn-primary text-xs" wire:loading.attr="disabled" wire:target="$toggle('showForm')">
                 <svg wire:loading class="w-4 h-4 animate-spin mr-1" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                 Add Medicine
             </button>
@@ -11,16 +11,16 @@
 
     <div class="mb-4 border-b border-gray-100 dark:border-gray-800">
         <nav class="flex gap-1">
-            <button wire:click="setTab('active')" class="px-3 py-2 text-xs font-bold border-b-2 {{ $activeTab === 'active' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500' }}">
+            <button wire:click="setTab('active')" wire:loading.attr="disabled" wire:target="setTab('active')" class="px-3 py-2 text-xs font-bold border-b-2 {{ $activeTab === 'active' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500' }}">
                 Active ({{ $this->activeMedications->count() }})
             </button>
-            <button wire:click="setTab('stopped')" class="px-3 py-2 text-xs font-bold border-b-2 {{ $activeTab === 'stopped' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500' }}">
+            <button wire:click="setTab('stopped')" wire:loading.attr="disabled" wire:target="setTab('stopped')" class="px-3 py-2 text-xs font-bold border-b-2 {{ $activeTab === 'stopped' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500' }}">
                 Stopped ({{ $this->stoppedMedications->count() }})
             </button>
-            <button wire:click="setTab('completed')" class="px-3 py-2 text-xs font-bold border-b-2 {{ $activeTab === 'completed' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500' }}">
+            <button wire:click="setTab('completed')" wire:loading.attr="disabled" wire:target="setTab('completed')" class="px-3 py-2 text-xs font-bold border-b-2 {{ $activeTab === 'completed' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500' }}">
                 Completed ({{ $this->completedMedications->count() }})
             </button>
-            <button wire:click="setTab('all')" class="px-3 py-2 text-xs font-bold border-b-2 {{ $activeTab === 'all' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500' }}">
+            <button wire:click="setTab('all')" wire:loading.attr="disabled" wire:target="setTab('all')" class="px-3 py-2 text-xs font-bold border-b-2 {{ $activeTab === 'all' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500' }}">
                 All ({{ $this->allMedications->count() }})
             </button>
         </nav>
@@ -33,7 +33,7 @@
             <div class="mb-3">
                 <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Medicine Name</label>
                 <div class="relative">
-                    <input type="text" wire:model.live="searchMedicine" wire:focus="$set('showMedicineSearch', true)" class="w-full rounded-lg border-gray-200 dark:border-gray-700 text-sm" placeholder="Search medicine...">
+                    <input type="text" wire:model.live.debounce.300ms="searchMedicine" wire:focus="$set('showMedicineSearch', true)" class="w-full rounded-lg border-gray-200 dark:border-gray-700 text-sm" placeholder="Search medicine...">
                     @if($this->showMedicineSearch && strlen($this->searchMedicine) >= 2 && $medicines && $medicines->count() > 0)
                         <div class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 shadow-xl max-h-48 overflow-y-auto">
                             @foreach($medicines as $med)
@@ -90,8 +90,8 @@
             </div>
 
             <div class="flex justify-end gap-2">
-                <button wire:click="resetForm" class="btn btn-secondary text-xs">Cancel</button>
-                <button wire:click="save" class="btn btn-primary text-xs">{{ $editingId ? 'Update' : 'Add' }} Medicine</button>
+                <button wire:click="resetForm" wire:loading.attr="disabled" wire:target="resetForm" class="btn btn-secondary text-xs">Cancel</button>
+                <button wire:click="save" wire:loading.attr="disabled" wire:target="save" class="btn btn-primary text-xs">{{ $editingId ? 'Update' : 'Add' }} Medicine</button>
             </div>
         </div>
     @endif
@@ -103,7 +103,7 @@
                 <textarea wire:model="stopReason" rows="3" class="w-full rounded-lg border-gray-200 dark:border-gray-700 text-sm" placeholder="Enter reason..."></textarea>
                 <div class="flex justify-end gap-2 mt-4">
                     <button @click="$dispatch('close-modal', { name: 'stop-medication-modal' })" class="btn btn-secondary">Cancel</button>
-                    <button wire:click="stopMedication" class="btn btn-rose">Stop Medication</button>
+                    <button wire:click="stopMedication" wire:loading.attr="disabled" wire:target="stopMedication" class="btn btn-rose">Stop Medication</button>
                 </div>
             </div>
         </x-modal>
@@ -111,7 +111,7 @@
 
     <div class="space-y-3">
         @forelse(($activeTab === 'active' ? $this->activeMedications : ($activeTab === 'stopped' ? $this->stoppedMedications : ($activeTab === 'completed' ? $this->completedMedications : $this->allMedications))) as $med)
-            <div class="p-4 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl {{ $med->status === 'Stopped' ? 'opacity-60' : '' }}">
+            <div wire:key="ipd-medication-{{ $med->id }}" class="p-4 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl {{ $med->status === 'Stopped' ? 'opacity-60' : '' }}">
                 <div class="flex items-start justify-between">
                     <div class="flex-1">
                         <div class="flex items-center gap-2 mb-1">
@@ -150,13 +150,13 @@
                     </div>
                     @if($med->status === 'Active' && $admission->status !== 'Discharged')
                         <div class="flex items-center gap-2">
-                            <button wire:click="administerDose({{ $med->id }})" class="btn btn-emerald text-[10px] py-1 px-2" title="Record Administration">
+                            <button wire:click="administerDose({{ $med->id }})" wire:loading.attr="disabled" wire:target="administerDose({{ $med->id }})" class="btn btn-emerald text-[10px] py-1 px-2" title="Record Administration">
                                 Administer
                             </button>
-                            <button wire:click="editMedication({{ $med->id }})" class="p-2 text-gray-400 hover:text-indigo-600">
+                            <button wire:click="editMedication({{ $med->id }})" wire:loading.attr="disabled" wire:target="editMedication({{ $med->id }})" class="p-2 text-gray-400 hover:text-indigo-600">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                             </button>
-                            <button wire:click="confirmStop({{ $med->id }})" class="p-2 text-gray-400 hover:text-rose-600">
+                            <button wire:click="confirmStop({{ $med->id }})" wire:loading.attr="disabled" wire:target="confirmStop({{ $med->id }})" class="p-2 text-gray-400 hover:text-rose-600">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                             </button>
                         </div>
