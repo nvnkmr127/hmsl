@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\IPD;
+namespace App\Livewire\Ipd;
 
 use App\Models\Admission;
 use App\Models\ClinicalTemplate;

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\OPD;
+namespace App\Livewire\Opd;
 
 use App\Models\Consultation;
 use App\Models\Medicine;
