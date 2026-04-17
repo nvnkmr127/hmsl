@@ -22,4 +22,8 @@ class Service extends Model
         return $this->belongsTo(Department::class);
     }
 
+    public function consultations()
+    {
+        return $this->hasMany(Consultation::class);
+    }
 }

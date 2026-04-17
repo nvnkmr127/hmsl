@@ -52,9 +52,12 @@ class RevenueDashboard extends Component
         $totalRefunded = (clone $baseQuery)->where('type', 'refund')->sum('amount');
         $totalRevenue = $totalReceived - $totalRefunded;
 
-        $totalBills = Bill::whereBetween('created_at', [$this->startDate . ' 00:00:00', $this->endDate . ' 23:59:59'])->count();
-        $totalDiscount = Bill::whereBetween('created_at', [$this->startDate . ' 00:00:00', $this->endDate . ' 23:59:59'])->sum('discount_amount');
-        $totalTax = Bill::whereBetween('created_at', [$this->startDate . ' 00:00:00', $this->endDate . ' 23:59:59'])->sum('tax_amount');
+        $billQuery = Bill::query()
+            ->whereBetween('created_at', [$this->startDate . ' 00:00:00', $this->endDate . ' 23:59:59']);
+
+        $totalBills = (clone $billQuery)->count();
+        $totalDiscount = (clone $billQuery)->sum('discount_amount');
+        $totalTax = (clone $billQuery)->sum('tax_amount');
 
         $paymentMethodSplit = (clone $baseQuery)
             ->select('method as payment_method', DB::raw('SUM(CASE WHEN type = "payment" THEN amount ELSE -amount END) as total'))
@@ -71,13 +74,13 @@ class RevenueDashboard extends Component
             ->get();
 
         // Daily trend for the current range (max 30 days)
-        $dailyTrend = (clone $query)
+        $dailyTrend = (clone $billQuery)
             ->select(DB::raw('DATE(created_at) as date'), DB::raw('SUM(total_amount) as total'))
             ->groupBy('date')
             ->orderBy('date')
             ->get();
 
-        $recentBills = (clone $query)
+        $recentBills = (clone $billQuery)
             ->with(['patient'])
             ->latest()
             ->limit(10)

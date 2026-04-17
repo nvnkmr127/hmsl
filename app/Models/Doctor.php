@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Consultation;
 
 class Doctor extends Model
 {
@@ -29,6 +30,11 @@ class Doctor extends Model
         'consultation_fee' => 'decimal:2',
         'is_active' => 'boolean',
     ];
+
+    public function consultations()
+    {
+        return $this->hasMany(Consultation::class);
+    }
 
 
     public function scopeActive($query)
