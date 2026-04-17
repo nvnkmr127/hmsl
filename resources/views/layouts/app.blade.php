@@ -11,7 +11,8 @@
                   if (window.innerWidth >= 1024) this.sidebarOpen = true;
                   this.resizeTicking = false;
               });
-          }
+          },
+          isMac: /Mac|iPod|iPhone|iPad/.test(navigator.platform || '')
       }"
       x-init="
           $watch('darkMode', val => localStorage.setItem('darkMode', val));
@@ -19,6 +20,8 @@
       "
       x-on:keydown.alt.n.window="$dispatch('quick-op-booking')"
       x-on:keydown.alt.s.window="$dispatch('open-global-search')"
+      x-on:keydown.meta.alt.n.window="$dispatch('quick-op-booking')"
+      x-on:keydown.meta.alt.s.window="$dispatch('open-global-search')"
       :class="{ 'dark': darkMode }">
 <head>
     <meta charset="utf-8">
