@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Consultation;
 use App\Models\Doctor;
+use App\Models\Bill;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -57,7 +58,9 @@ class OpdService
                 ->where('service_id', $data['service_id'])
                 ->whereDate('consultation_date', $data['consultation_date'])
                 ->where('status', '!=', 'Cancelled')
-                ->sharedLock() // Shared lock ensures no concurrent inserts of the same row
+                ->when(isset($data['doctor_id']), fn($q) => $q->where('doctor_id', $data['doctor_id']))
+                ->when(isset($data['id']), fn($q) => $q->where('id', '!=', $data['id']))
+                ->sharedLock()
                 ->exists();
 
             if ($exists) {

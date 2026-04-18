@@ -10,6 +10,8 @@ use Livewire\Component;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Computed;
 
+use App\Services\GrowthChartService;
+
 class QuickOpBooking extends Component
 {
     public $searchPatient = '';
@@ -18,6 +20,7 @@ class QuickOpBooking extends Component
     public $consultation_date;
     public $valid_upto;
     public $weight;
+    public $height;
     public $temperature;
     public $fee;
     public $paymentMode = 'Cash';
@@ -27,6 +30,8 @@ class QuickOpBooking extends Component
     public $editingId;
     public $isFollowUp = false;
     public $latestConsultation;
+    public $growthStatus;
+    public $growthForecast;
 
     #[On('patient-registered')]
     public function handlePatientRegistered($id = null)
@@ -82,13 +87,15 @@ class QuickOpBooking extends Component
     #[On('quick-op-booking')]
     public function open()
     {
-        $this->reset(['searchPatient', 'selectedPatient', 'selectedService', 'weight', 'temperature', 'notes', 'isEditing']);
+        $this->reset(['searchPatient', 'selectedPatient', 'selectedService', 'weight', 'height', 'temperature', 'notes', 'isEditing']);
         $this->dispatch('open-modal', name: 'quick-op-modal');
     }
 
     public function selectPatient($id)
     {
         $this->selectedPatient = Patient::findOrFail($id);
+        $service = app(GrowthChartService::class);
+        $this->growthForecast = $service->getGrowthForecast($this->selectedPatient);
         $this->isEditing = false;
         $this->searchPatient = '';
         
@@ -118,10 +125,15 @@ class QuickOpBooking extends Component
         $latestVitals = $this->selectedPatient->vitals()->latest()->first();
         if ($latestVitals) {
             $this->weight = $latestVitals->weight;
+            $this->height = $latestVitals->height;
             $this->temperature = $latestVitals->temperature;
         }
 
         $this->dispatch('open-modal', name: 'quick-op-modal');
+
+        if ($this->weight || $this->height) {
+            $this->updateGrowthStatus();
+        }
     }
 
     public function updatedSelectedService($id)
@@ -141,6 +153,27 @@ class QuickOpBooking extends Component
             if ($doctor) {
                 $this->fee = $doctor->consultation_fee;
             }
+        }
+    }
+
+    public function updatedWeight($value)
+    {
+        $this->updateGrowthStatus();
+    }
+
+    public function updatedHeight($value)
+    {
+        $this->updateGrowthStatus();
+    }
+
+    protected function updateGrowthStatus()
+    {
+        if ($this->selectedPatient && ($this->weight || $this->height)) {
+            $service = app(GrowthChartService::class);
+            $this->growthStatus = $service->getGrowthStatus($this->selectedPatient, $this->weight, $this->height);
+            $this->dispatch('growth-status-updated', $this->growthStatus);
+        } else {
+            $this->growthStatus = null;
         }
     }
 
@@ -167,6 +200,7 @@ class QuickOpBooking extends Component
                 'service_id' => $this->selectedService,
                 'doctor_id' => $this->selectedDoctor,
                 'weight' => $this->weight,
+                'height' => $this->height,
                 'temperature' => $this->temperature,
                 'fee' => $this->fee,
                 'consultation_date' => $this->consultation_date,

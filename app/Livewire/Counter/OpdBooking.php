@@ -17,6 +17,8 @@ use Livewire\WithPagination;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Computed;
 
+use App\Services\GrowthChartService;
+
 class OpdBooking extends Component
 {
     use WithPagination;
@@ -38,6 +40,7 @@ class OpdBooking extends Component
     public $consultation_date;
     public $valid_upto;
     public $weight;
+    public $height;
     public $temperature;
     public $fee;
     public $paymentMode = 'Cash';
@@ -51,6 +54,8 @@ class OpdBooking extends Component
     public $isEditing = false;
     public $editingId;
     public $lastConsultationId;
+    public $growthStatus;
+    public $growthForecast;
 
     public $showBookingForm = false;
 
@@ -92,6 +97,8 @@ class OpdBooking extends Component
         $this->dispatch('notify', ['type' => 'info', 'message' => 'Initiating booking...']);
 
         $this->selectedPatient = Patient::findOrFail($id);
+        $service = app(GrowthChartService::class);
+        $this->growthForecast = $service->getGrowthForecast($this->selectedPatient);
         $this->showBookingForm = true;
         $this->isEditing = false;
         $this->searchPatient = ''; // Clear search
@@ -128,12 +135,17 @@ class OpdBooking extends Component
         $latestVitals = $this->selectedPatient->vitals()->latest()->first();
         if ($latestVitals) {
             $this->weight = $latestVitals->weight;
+            $this->height = $latestVitals->height;
             $this->temperature = $latestVitals->temperature;
         } else {
-            $this->reset(['weight', 'temperature']);
+            $this->reset(['weight', 'height', 'temperature']);
         }
 
         $this->dispatch('open-modal', name: 'booking-modal');
+
+        if ($this->weight || $this->height) {
+            $this->updateGrowthStatus();
+        }
     }
 
     public function updatedSelectedService($id)
@@ -155,6 +167,27 @@ class OpdBooking extends Component
                     }
                 }
             }
+        }
+    }
+
+    public function updatedWeight($value)
+    {
+        $this->updateGrowthStatus();
+    }
+
+    public function updatedHeight($value)
+    {
+        $this->updateGrowthStatus();
+    }
+
+    protected function updateGrowthStatus()
+    {
+        if ($this->selectedPatient && ($this->weight || $this->height)) {
+            $service = app(GrowthChartService::class);
+            $this->growthStatus = $service->getGrowthStatus($this->selectedPatient, $this->weight, $this->height);
+            $this->dispatch('growth-status-updated', $this->growthStatus);
+        } else {
+            $this->growthStatus = null;
         }
     }
 
@@ -228,6 +261,7 @@ class OpdBooking extends Component
         $this->selectedDoctor = $consultation->doctor_id;
 
         $this->weight = $consultation->weight;
+        $this->height = $consultation->height;
         $this->temperature = $consultation->temperature;
         $this->consultation_date = \Carbon\Carbon::parse($consultation->consultation_date)->format('Y-m-d');
         $this->valid_upto = $consultation->valid_upto ? \Carbon\Carbon::parse($consultation->valid_upto)->format('Y-m-d') : null;
@@ -315,6 +349,7 @@ class OpdBooking extends Component
             'consultation_date' => 'required|date',
             'fee' => 'required|numeric|min:0',
             'weight' => 'nullable|numeric|min:0|max:500',
+            'height' => 'nullable|numeric|min:0|max:300',
             'temperature' => 'nullable|numeric|min:70|max:120',
             'paymentMode' => 'required|in:Cash,UPI,Card',
             'paymentStatus' => 'required|in:Paid,Unpaid,Partially Paid',
@@ -357,6 +392,7 @@ class OpdBooking extends Component
                 'service_id' => $this->selectedService,
                 'doctor_id' => $this->selectedDoctor,
                 'weight' => $this->weight,
+                'height' => $this->height,
                 'temperature' => $this->temperature,
                 'fee' => $this->fee,
                 'notes' => $this->notes,
@@ -425,6 +461,7 @@ class OpdBooking extends Component
                     'service_id' => $this->selectedService,
                     'doctor_id' => $this->selectedDoctor,
                     'weight' => $this->weight,
+                    'height' => $this->height,
                     'temperature' => $this->temperature,
                     'fee' => $this->fee,
                     'consultation_date' => $this->consultation_date,
@@ -456,7 +493,7 @@ class OpdBooking extends Component
         $this->dispatch('notify', ['type' => 'success', 'message' => $message]);
 
 
-        $this->reset(['selectedPatient', 'selectedService', 'selectedDoctor', 'fee', 'notes', 'showBookingForm', 'isEditing', 'editingId', 'weight', 'temperature', 'paymentMode', 'paymentStatus', 'amountPaid', 'searchPatient', 'lastConsultationId', 'isFollowUp']);
+        $this->reset(['selectedPatient', 'selectedService', 'selectedDoctor', 'fee', 'notes', 'showBookingForm', 'isEditing', 'editingId', 'weight', 'height', 'temperature', 'paymentMode', 'paymentStatus', 'amountPaid', 'searchPatient', 'lastConsultationId', 'isFollowUp']);
 
         $validityDays = \App\Models\Setting::get('opd_validity_days', 7);
         $this->consultation_date = date('Y-m-d');

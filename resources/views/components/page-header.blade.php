@@ -1,7 +1,7 @@
 @props([
     'title',
     'subtitle' => null,
-    'back'     => null,   {{-- url for back link --}}
+    'back'     => null,   /* url for back link */
     'backLabel'=> 'Back',
 ])
 

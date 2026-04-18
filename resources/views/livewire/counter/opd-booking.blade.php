@@ -457,20 +457,129 @@
                             <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500 flex items-center gap-2">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                 Health Check
-                            </h4>
-                            <div class="grid grid-cols-2 gap-4">
+                                         <div class="grid grid-cols-3 gap-3">
                                 <div class="space-y-2">
-                                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Weight (kg)</label>
-                                    <input type="number" step="0.1" wire:model="weight" x-ref="weightInput" class="w-full bg-white dark:bg-gray-950 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 outline-none transition-all font-black text-gray-900 dark:text-white text-sm shadow-sm" placeholder="---">
+                                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">WT (kg)</label>
+                                    <input type="number" step="0.1" wire:model.live.debounce.500ms="weight" x-ref="weightInput" class="w-full bg-white dark:bg-gray-950 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-3 py-4 outline-none transition-all font-black text-gray-900 dark:text-white text-sm shadow-sm" placeholder="0.0">
                                     @error('weight') <span class="text-[10px] font-bold text-rose-500 ml-1">{{ $message }}</span> @enderror
                                 </div>
 
                                 <div class="space-y-2">
+                                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">HT (cm)</label>
+                                    <input type="number" step="0.1" wire:model.live.debounce.500ms="height" class="w-full bg-white dark:bg-gray-950 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-3 py-4 outline-none transition-all font-black text-gray-900 dark:text-white text-sm shadow-sm" placeholder="0.0">
+                                    @error('height') <span class="text-[10px] font-bold text-rose-500 ml-1">{{ $message }}</span> @enderror
+                                </div>
+
+                                <div class="space-y-2">
                                     <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Temp (°F)</label>
-                                    <input type="number" step="0.1" wire:model="temperature" class="w-full bg-white dark:bg-gray-950 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 outline-none transition-all font-black text-gray-900 dark:text-white text-sm shadow-sm" placeholder="98.6">
+                                    <input type="number" step="0.1" wire:model="temperature" class="w-full bg-white dark:bg-gray-950 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-3 py-4 outline-none transition-all font-black text-gray-900 dark:text-white text-sm shadow-sm" placeholder="98.6">
                                     @error('temperature') <span class="text-[10px] font-bold text-rose-500 ml-1">{{ $message }}</span> @enderror
                                 </div>
                             </div>
+               </div>
+
+                            @if($growthStatus)
+                            <div class="p-4 bg-white dark:bg-gray-950 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h5 class="text-[10px] font-black uppercase tracking-widest text-gray-400">Growth Tracking: {{ $growthStatus['age_label'] }}</h5>
+                                    <div class="flex gap-2">
+                                        <span class="px-2 py-0.5 rounded text-[8px] font-black uppercase {{ str_replace('text-', 'bg-', str_replace('600', '100', $growthStatus['weight']['status_color'])) }} {{ $growthStatus['weight']['status_color'] }}">
+                                            WT: {{ $growthStatus['weight']['status'] }}
+                                        </span>
+                                        <span class="px-2 py-0.5 rounded text-[8px] font-black uppercase {{ str_replace('text-', 'bg-', str_replace('600', '100', $growthStatus['height']['status_color'])) }} {{ $growthStatus['height']['status_color'] }}">
+                                            HT: {{ $growthStatus['height']['status'] }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4 mb-4">
+                                    <div class="p-2 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
+                                        <p class="text-[8px] font-black text-gray-400 uppercase tracking-widest">W. Range (kg)</p>
+                                        <p class="text-[11px] font-black text-gray-700 dark:text-gray-300">{{ $growthStatus['weight']['expected_range'] }}</p>
+                                    </div>
+                                    <div class="p-2 bg-gray-50 dark:bg-gray-900/50 rounded-xl text-right">
+                                        <p class="text-[8px] font-black text-gray-400 uppercase tracking-widest">H. Range (cm)</p>
+                                        <p class="text-[11px] font-black text-gray-700 dark:text-gray-300">{{ $growthStatus['height']['expected_range'] }}</p>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4 h-32" wire:ignore>
+                                    <canvas id="growthWeightCanvasFull"></canvas>
+                                    <canvas id="growthHeightCanvasFull"></canvas>
+                                </div>
+
+                                @if($growthForecast)
+                                <div class="mt-4 pt-4 border-t border-dashed border-gray-100 dark:border-gray-800">
+                                    <h6 class="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2">Growth Forecast (Expected Median)</h6>
+                                    <div class="flex gap-2">
+                                        @foreach($growthForecast as $milestone)
+                                        <div class="flex-1 p-2 bg-indigo-50/30 dark:bg-indigo-900/10 rounded-xl text-center">
+                                            <p class="text-[8px] font-black text-indigo-500 uppercase">{{ $milestone['label'] }}</p>
+                                            <p class="text-[10px] font-black text-gray-700 dark:text-gray-300">{{ number_format($milestone['data']['weight'], 1) }}kg</p>
+                                            <p class="text-[8px] font-bold text-gray-500">{{ number_format($milestone['data']['height'], 1) }}cm</p>
+                                        </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                                @endif
+                                <script>
+                                    document.addEventListener('livewire:initialized', () => {
+                                        let weightChart = null;
+                                        let heightChart = null;
+
+                                        const initChart = (data) => {
+                                            const wCtx = document.getElementById('growthWeightCanvasFull');
+                                            const hCtx = document.getElementById('growthHeightCanvasFull');
+                                            if (!wCtx || !hCtx) return;
+
+                                            if (weightChart) weightChart.destroy();
+                                            if (heightChart) heightChart.destroy();
+
+                                            const commonOptions = {
+                                                responsive: true, maintainAspectRatio: false,
+                                                plugins: { legend: { display: false } },
+                                                scales: { 
+                                                    y: { display: false },
+                                                    x: { display: true, grid: { display: false }, ticks: { font: { size: 7 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 3 } }
+                                                }
+                                            };
+
+                                            weightChart = new Chart(wCtx, {
+                                                type: 'line',
+                                                data: {
+                                                    labels: data.labels,
+                                                    datasets: [
+                                                        { label: 'Actual', data: data.weight.actual, borderColor: '#4f46e5', backgroundColor: '#4f46e5', pointRadius: 6, pointHoverRadius: 8, showLine: false, zIndex: 10 },
+                                                        { label: 'Median (P50)', data: data.weight.median, borderColor: '#10b981', borderWidth: 2, pointRadius: 0, fill: false },
+                                                        { label: 'Max (P97)', data: data.weight.max, borderColor: '#fca5a5', borderWidth: 1, pointRadius: 0, borderDash: [5, 5], fill: false },
+                                                        { label: 'Min (P3)', data: data.weight.min, borderColor: '#fca5a5', borderWidth: 1, pointRadius: 0, borderDash: [5, 5], fill: false }
+                                                    ]
+                                                },
+                                                options: commonOptions
+                                            });
+
+                                            heightChart = new Chart(hCtx, {
+                                                type: 'line',
+                                                data: {
+                                                    labels: data.labels,
+                                                    datasets: [
+                                                        { label: 'Actual', data: data.height.actual, borderColor: '#059669', backgroundColor: '#059669', pointRadius: 6, pointHoverRadius: 8, showLine: false, zIndex: 10 },
+                                                        { label: 'Median (P50)', data: data.height.median, borderColor: '#0ea5e9', borderWidth: 2, pointRadius: 0, fill: false },
+                                                        { label: 'Max (P97)', data: data.height.max, borderColor: '#fca5a5', borderWidth: 1, pointRadius: 0, borderDash: [5, 5], fill: false },
+                                                        { label: 'Min (P3)', data: data.height.min, borderColor: '#fca5a5', borderWidth: 1, pointRadius: 0, borderDash: [5, 5], fill: false }
+                                                    ]
+                                                },
+                                                options: commonOptions
+                                            });
+                                        };
+
+                                        if (@json($growthStatus)) initChart(@json($growthStatus['chart_data'] ?? null));
+
+                                        Livewire.on('growth-status-updated', (event) => {
+                                            initChart(event[0].chart_data);
+                                        });
+                                    });
+                                </script>
+                            </div>
+                            @endif
 
                             <div class="p-6 mt-4 rounded-3xl bg-violet-600 text-white shadow-2xl shadow-violet-500/30 relative overflow-hidden group">
                                 <div class="relative z-10">

@@ -1,7 +1,7 @@
 @props([
     'title'   => 'No records found',
     'message' => null,
-    'icon'    => 'document',  {{-- document | calendar | chart | users | box --}}
+    'icon'    => 'document',  /* document | calendar | chart | users | box */
 ])
 
 @php

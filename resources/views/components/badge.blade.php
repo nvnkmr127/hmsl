@@ -1,6 +1,6 @@
 @props([
-    'color'   => 'violet',   {{-- violet | success | warning | danger | gray --}}
-    'rounded' => 'full',     {{-- full | md --}}
+    'color'   => 'violet',   /* violet | success | warning | danger | gray */
+    'rounded' => 'full',     /* full | md */
 ])
 @php
     $cls = match($color) {
