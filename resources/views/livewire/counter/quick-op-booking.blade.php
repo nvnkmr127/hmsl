@@ -1,4 +1,4 @@
-<div @open-modal.window="if($event.detail.name === 'quick-op-modal') $nextTick(() => $el.querySelector('input')?.focus())">
+<div x-data="{}" @open-modal.window="if($event.detail.name === 'quick-op-modal') { setTimeout(() => { ($refs.weightInput || $refs.searchInput)?.focus(); }, 150); }">
     <x-modal name="quick-op-modal" title="Quick Appointment" width="3xl">
         <div class="p-6">
             @if(!$selectedPatient)
@@ -8,6 +8,8 @@
                     <input 
                         type="text"
                         wire:model.live.debounce.300ms="searchPatient"
+                        x-ref="searchInput"
+                        id="quick-appointment-search"
                         placeholder="Search by name or mobile..."
                         class="w-full bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-6 py-4 text-gray-900 dark:text-white outline-none transition-all font-bold uppercase tracking-widest text-sm"
                     />
@@ -35,7 +37,7 @@
                                 <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-width="1.5"/></svg>
                             </div>
                             <p class="text-sm font-black uppercase tracking-widest text-gray-400 mb-4 italic">No matching patient found in our registry.</p>
-                            <button @click="$dispatch('create-patient', { phone: '{{ $searchPatient }}' })" 
+                            <button @click="$dispatch('close-modal', { name: 'quick-op-modal' }); $dispatch('create-patient', { phone: '{{ $searchPatient }}' })" 
                                     class="btn btn-primary px-8 py-3 rounded-xl shadow-lg shadow-indigo-500/20">
                                 Register New Patient
                             </button>
@@ -78,7 +80,7 @@
                         <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800/50">
                             <p class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Last Seen By</p>
                             <p class="text-sm font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-tight truncate">
-                                Dr. {{ $latestConsultation->doctor?->full_name ?? 'N/A' }}
+                                {{ $latestConsultation->doctor?->full_name ?? 'N/A' }}
                             </p>
                             <p class="text-[10px] font-bold text-gray-500 mt-0.5 uppercase tracking-widest">{{ $latestConsultation->doctor?->specialization ?? 'Department' }}</p>
                         </div>
@@ -106,23 +108,15 @@
                                 @error('selectedService') <p class="text-[10px] font-bold text-rose-500 mt-1 ml-1">{{ $message }}</p> @enderror
                             </div>
 
-                            <div class="space-y-1.5">
-                                <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Select Doctor</label>
-                                <select wire:model.live="selectedDoctor" class="w-full bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 font-bold text-gray-900 dark:text-white appearance-none transition-all outline-none">
-                                    <option value="">Select Doctor</option>
-                                    @forelse($doctors as $doctor)
-                                        <option value="{{ $doctor->id }}">Dr. {{ $doctor->user?->name ?? 'Unknown' }} @if($doctor->department) · {{ $doctor->department->name }} @endif @if($doctor->consultation_fee) (₹{{ number_format($doctor->consultation_fee, 0) }}) @endif</option>
-                                    @empty
-                                        <option value="">No doctors available</option>
-                                    @endforelse
-                                </select>
-                                @error('selectedDoctor') <p class="text-[10px] font-bold text-rose-500 mt-1 ml-1">{{ $message }}</p> @enderror
+                            <div class="p-4 bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100/50 dark:border-indigo-800/20 rounded-2xl">
+                                <p class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] mb-1">Assigned Doctor</p>
+                                <p class="text-sm font-black text-gray-800 dark:text-gray-200 uppercase tracking-tight">{{ $this->assignedDoctorName }}</p>
                             </div>
 
                             <div class="grid grid-cols-3 gap-3">
                                 <div class="space-y-1.5">
                                     <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">WT (kg)</label>
-                                    <input type="number" step="0.1" wire:model.live.debounce.500ms="weight" placeholder="0.0" class="w-full bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-3 py-4 font-bold text-gray-900 dark:text-white outline-none transition-all text-sm" />
+                                    <input type="number" step="0.1" wire:model.live.debounce.500ms="weight" x-ref="weightInput" placeholder="0.0" class="w-full bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-3 py-4 font-bold text-gray-900 dark:text-white outline-none transition-all text-sm" />
                                 </div>
                                 <div class="space-y-1.5">
                                     <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">HT (cm)</label>

@@ -209,5 +209,4 @@
         @endif
     </x-card>
 
-    <livewire:counter.patient-form />
 </div>

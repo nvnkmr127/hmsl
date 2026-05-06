@@ -176,7 +176,7 @@
                             <select wire:model="doctorId" class="w-full bg-gray-50 dark:bg-gray-950 border-2 border-transparent focus:border-violet-500 rounded-2xl px-6 py-5 outline-none transition-all font-black text-gray-900 dark:text-white appearance-none text-sm shadow-sm ring-4 ring-gray-100/50 dark:ring-gray-900/50">
                                 <option value="">Select Doctor...</option>
                                 @foreach($doctors as $doctor)
-                                    <option value="{{ $doctor->id }}">Dr. {{ $doctor->full_name }} ({{ $doctor->department?->name ?? 'None' }})</option>
+                                    <option value="{{ $doctor->id }}">{{ $doctor->full_name }} ({{ $doctor->department?->name ?? 'None' }})</option>
                                 @endforeach
                             </select>
                             @error('doctorId') <span class="text-[10px] font-bold text-rose-500 ml-1">{{ $message }}</span> @enderror
@@ -337,8 +337,6 @@
             </div>
         </div>
     </form>
-
-    <livewire:counter.patient-form />
 
     <style>
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }

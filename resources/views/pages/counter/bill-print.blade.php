@@ -4,300 +4,235 @@
 
 @section('content')
 
+{{-- 1. Space for Pre-printed Letterhead (7cm as per system style in OPD slip) --}}
+<div style="height: 7cm; width: 100%;"></div>
+
+<link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+128&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
 <style>
-    /* Print Aesthetics */
+    /* System Style Print Aesthetics */
     @media print {
-        body { font-size: 10pt; background: #fff !important; pointer-events: none; }
-        .print-container { padding: 0 !important; margin: 0 !important; width: 100% !important; }
+        body { font-size: 8pt; background: #fff !important; color: #000; font-family: 'Inter', sans-serif; }
+        .print-container { padding: 5mm !important; margin: 0 !important; width: 100% !important; }
         .no-print { display: none !important; }
-        .section-box { border: 1px solid #e2e8f0 !important; }
-        .table th { background: #f8fafc !important; -webkit-print-color-adjust: exact; }
+        .table th { background: #f8fafc !important; -webkit-print-color-adjust: exact; border: 1.5px solid #000 !important; }
+        .table td { border: 1px solid #e2e8f0 !important; }
         tr { page-break-inside: avoid; }
-        .group-header { page-break-after: avoid; }
     }
 
-    body { font-family: 'Outfit', sans-serif; }
-    .bill-header { border-bottom: 3px solid #0f172a; padding-bottom: 20px; margin-bottom: 30px; }
-    .hospital-name { font-size: 26pt; font-weight: 900; color: #0f172a; margin: 0; line-height: 1; }
-    .bill-type { font-size: 14pt; font-weight: 800; background: #0f172a; color: white !important; padding: 4px 12px; display: inline-block; margin-top: 10px; }
+    body { font-family: 'Inter', sans-serif; color: #0f172a; line-height: 1.1; font-size: 8.5pt; }
     
-    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 30px; }
-    .info-section h3 { font-size: 9pt; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px; }
-    .info-row { display: flex; margin-bottom: 4px; font-size: 10pt; }
-    .info-label { width: 120px; color: #64748b; font-weight: 500; }
-    .info-value { font-weight: 700; color: #1e293b; }
+    .bill-title-container { border-bottom: 2px solid #000; margin-bottom: 8px; padding-bottom: 4px; display: flex; justify-content: space-between; align-items: flex-end; }
+    .bill-title-container h2 { font-size: 11pt; font-weight: 900; text-transform: uppercase; margin: 0; letter-spacing: 0.5px; }
+    .gst-info { font-size: 7.5pt; font-weight: 700; color: #475569; }
 
-    .summary-bar { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; display: flex; justify-content: space-between; margin-bottom: 30px; }
-    .summary-item { text-align: center; }
-    .summary-label { font-size: 8pt; color: #64748b; text-transform: uppercase; font-weight: 600; }
-    .summary-value { font-size: 11pt; font-weight: 800; color: #0f172a; }
+    /* Patient Info Grid */
+    .patient-details-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; border: 1.5px solid #000; padding: 10px; margin-bottom: 10px; background: #fff; }
+    .info-line { display: flex; font-size: 9pt; margin-bottom: 1px; }
+    .info-label { width: 115px; font-weight: 600; color: #475569; }
+    .info-colon { width: 15px; text-align: center; }
+    .info-value { font-weight: 800; color: #000; flex: 1; text-transform: uppercase; }
 
-    .group-header { background: #f1f5f9; padding: 6px 12px; font-weight: 800; font-size: 9pt; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; }
+    /* Table Styles (Dwarakamai Style) */
+    .billing-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+    .billing-table th { background: #f1f5f9; border: 1.5px solid #000; padding: 6px 4px; font-size: 8.5pt; text-align: left; text-transform: uppercase; font-weight: 900; color: #000; }
+    .billing-table td { padding: 4px; font-size: 9pt; border: 1px solid #e2e8f0; vertical-align: top; }
     
-    .total-section { margin-top: 30px; display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
-    .amount-in-words { font-style: italic; color: #64748b; font-size: 9pt; padding-top: 10px; }
-    .total-table { width: 100%; border-collapse: collapse; }
-    .total-table td { padding: 6px 0; }
-    .total-table .label { color: #64748b; font-weight: 500; }
-    .total-table .value { text-align: right; font-weight: 700; color: #1e293b; }
-    .final-row { border-top: 2px solid #0f172a; margin-top: 8px; padding-top: 8px !important; }
-    .final-amount { font-size: 18pt; font-weight: 900; color: #0f172a; }
+    .group-header-row td { background: #f8fafc; font-weight: 900; font-size: 9pt; color: #4f46e5; border-top: 1.5px solid #000; border-bottom: 1.5px solid #000; padding: 6px 6px; }
+    .group-total-row td { background: #fff; border-top: 1px solid #000; font-weight: 900; text-align: right; padding: 5px; font-size: 9pt; text-transform: uppercase; }
 
-    .footer-sections { margin-top: 60px; display: grid; grid-template-columns: 1fr 1fr; gap: 100px; }
-    .signature-box { text-align: center; border-top: 1px solid #cbd5e1; padding-top: 8px; }
-    .signature-label { font-size: 9pt; font-weight: 600; color: #475569; }
+    /* Amount in Words Area */
+    .amount-words-section { margin: 10px 0; font-size: 9pt; font-weight: 700; padding: 5px; border: 1px dashed #cbd5e1; }
 
-    .payment-badge { padding: 2px 8px; border-radius: 4px; font-size: 8pt; font-weight: 800; }
-    .badge-paid { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-    .badge-pending { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    /* Summary & Receipts (Split Layout) */
+    .summary-grid { display: grid; grid-template-columns: 1fr 280px; gap: 15px; }
+    
+    .receipts-box { border: 1.5px solid #000; height: fit-content; }
+    .receipts-table { width: 100%; border-collapse: collapse; }
+    .receipts-table th { background: #f8fafc; border-bottom: 1.5px solid #000; font-size: 7.5pt; font-weight: 800; text-align: left; padding: 4px; text-transform: uppercase; }
+    .receipts-table td { padding: 3px 5px; border-bottom: 1px solid #f1f5f9; font-size: 8pt; vertical-align: middle; }
+    
+    .totals-column { display: flex; flex-direction: column; gap: 0; border: 1.5px solid #000; background: #fff; }
+    .total-row { display: flex; padding: 4px 10px; font-size: 9.5pt; border-bottom: 1px solid #f1f5f9; }
+    .total-label { flex: 1; font-weight: 600; color: #475569; }
+    .total-colon { width: 15px; text-align: center; }
+    .total-value { width: 110px; text-align: right; font-weight: 800; color: #000; }
+    .total-row.grand { background: #f8fafc; border-top: 2px solid #000; border-bottom: none; font-weight: 900; padding: 8px 10px; }
+
+    /* Barcodes and Signatures */
+    .bottom-identity { margin-top: 15px; display: flex; justify-content: space-between; align-items: flex-end; }
+    .barcode-group { display: flex; gap: 40px; }
+    .barcode-item { text-align: center; }
+    .barcode-display { font-family: 'Libre Barcode 128', cursive; font-size: 32pt; line-height: 1; margin: 0; color: #000; }
+    .barcode-label { font-size: 7pt; font-weight: 700; margin-top: -2px; text-transform: uppercase; color: #475569; }
+
+    .signature-area { text-align: center; min-width: 180px; }
+    .sig-line { border-top: 2px solid #000; padding-top: 4px; font-weight: 900; font-size: 9pt; text-transform: uppercase; margin-top: 40px; }
+    .staff-name { font-size: 7.5pt; font-weight: 700; color: #475569; margin-bottom: 2px; }
+
+    /* Print Specific Spacing */
+    @page { margin: 15mm; }
 </style>
 
-<div class="bill-header">
-    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-        <div>
-            <h1 class="hospital-name">{{ \App\Models\Setting::get('hospital_name', 'City Care Hospital') }}</h1>
-            <p style="margin: 4px 0; font-weight: 500; color: #64748b;">
-                {{ \App\Models\Setting::get('hospital_address', 'Hospital Main Road') }}<br>
-                Phone: {{ \App\Models\Setting::get('hospital_phone', '+91 1234567890') }} | Email: {{ \App\Models\Setting::get('hospital_email', 'contact@hospital.com') }}<br>
-                @if($gst = \App\Models\Setting::get('hospital_gst'))
-                    GSTIN: <strong>{{ $gst }}</strong>
-                @endif
-            </p>
-            <div class="bill-type">
-                @if($bill->admission_id)
-                    FINAL INPATIENT BILL
-                @else
-                    OUTPATIENT BILL
-                @endif
-            </div>
-        </div>
-        <div style="text-align: right;">
-            @if($logo = \App\Models\Setting::get('hospital_logo'))
-                <img src="{{ Storage::url($logo) }}" alt="Logo" style="max-height: 80px; margin-bottom: 10px;">
-            @else
-                <div style="width: 60px; height: 60px; background: #0f172a; color: white; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 24pt; border-radius: 12px; margin-left: auto; margin-bottom: 10px;">
-                    H
-                </div>
-            @endif
-        </div>
+<div class="bill-title-container">
+    <h2>FINAL BILL - IP/OP DETAILS</h2>
+    <div class="gst-info">GSTIN: {{ \App\Models\Setting::get('hospital_gst', '36AAPPD1234F1Z1') }}</div>
+</div>
+
+<div class="patient-details-grid">
+    <div class="info-group">
+        <div class="info-line"><span class="info-label">Patient Name</span><span class="info-colon">:</span><span class="info-value">{{ strtoupper($bill->patient->full_name) }}</span></div>
+        <div class="info-line"><span class="info-label">Gender / Age</span><span class="info-colon">:</span><span class="info-value">{{ $bill->patient->gender }} / {{ $bill->patient->age }}</span></div>
+        <div class="info-line"><span class="info-label">Guardian Info</span><span class="info-colon">:</span><span class="info-value">
+            @if($bill->patient->mother_name) MOTHER: {{ strtoupper($bill->patient->mother_name) }} @elseif($bill->patient->father_name) FATHER: {{ strtoupper($bill->patient->father_name) }} @else SELF @endif
+        </span></div>
+        <div class="info-line"><span class="info-label">Contact No</span><span class="info-colon">:</span><span class="info-value">{{ $bill->patient->phone ?? '—' }}</span></div>
+        <div class="info-line"><span class="info-label">Admitting Unit</span><span class="info-colon">:</span><span class="info-value">DR. {{ strtoupper($bill->admission?->doctor?->full_name ?? $bill->consultation?->doctor?->full_name ?? 'MEDICAL TEAM') }}</span></div>
+        <div class="info-line"><span class="info-label">Patient Address</span><span class="info-colon">:</span><span class="info-value">{{ strtoupper($bill->patient->address) }}, {{ strtoupper($bill->patient->city) }}</span></div>
+    </div>
+    <div class="info-group">
+        <div class="info-line"><span class="info-label">UHID (MR No)</span><span class="info-colon">:</span><span class="info-value">{{ $bill->patient->uhid ?? '—' }}</span></div>
+        <div class="info-line"><span class="info-label">IP Number</span><span class="info-colon">:</span><span class="info-value">{{ $bill->admission?->admission_number ?? '—' }}</span></div>
+        <div class="info-line"><span class="info-label">Invoice Number</span><span class="info-colon">:</span><span class="info-value">{{ $bill->bill_number }}</span></div>
+        <div class="info-line"><span class="info-label">Invoice Date</span><span class="info-colon">:</span><span class="info-value">{{ $bill->created_at->format('d/m/Y h:i A') }}</span></div>
+        <div class="info-line"><span class="info-label">IP Admn. Date</span><span class="info-colon">:</span><span class="info-value">{{ $bill->admission?->admission_date?->format('d/m/Y h:i A') ?? '—' }}</span></div>
+        <div class="info-line"><span class="info-label">Ward / Bed</span><span class="info-colon">:</span><span class="info-value">{{ strtoupper($bill->admission?->ward_name ?? 'OPD SERVICE') }}</span></div>
     </div>
 </div>
 
-<div class="summary-bar">
-    <div class="summary-item">
-        <div class="summary-label">Bill Number</div>
-        <div class="summary-value">#{{ $bill->bill_number }}</div>
-    </div>
-    <div class="summary-item">
-        <div class="summary-label">Bill Date</div>
-        <div class="summary-value">{{ $bill->created_at->format('d/m/Y h:i A') }}</div>
-    </div>
-    <div class="summary-item">
-        <div class="summary-label">Payment Status</div>
-        <div class="summary-value">
-            <span class="payment-badge {{ $bill->payment_status === 'paid' ? 'badge-paid' : 'badge-pending' }}">
-                {{ strtoupper($bill->payment_status) }}
-            </span>
-        </div>
-    </div>
-    <div class="summary-item">
-        <div class="summary-label">Payment Mode</div>
-        <div class="summary-value">{{ $bill->payment_method ?? '—' }}</div>
-    </div>
-</div>
-
-<div class="info-grid">
-    <div class="info-section">
-        <h3>Patient Information</h3>
-        <div class="info-row"><span class="info-label">Patient Name:</span> <span class="info-value">{{ $bill->patient->full_name }}</span></div>
-        <div class="info-row"><span class="info-label">Patient ID:</span> <span class="info-value">{{ $bill->patient->uhid ?? '—' }}</span></div>
-        <div class="info-row"><span class="info-label">Age / Gender:</span> <span class="info-value">{{ $bill->patient->age }} / {{ $bill->patient->gender }}</span></div>
-        <div class="info-row"><span class="info-label">Phone:</span> <span class="info-value">{{ $bill->patient->phone ?? '—' }}</span></div>
-    </div>
-    <div class="info-section">
-        <h3>Visit Details</h3>
-        @if($bill->admission)
-            <div class="info-row"><span class="info-label">IP Number:</span> <span class="info-value">{{ $bill->admission->admission_number }}</span></div>
-            <div class="info-row"><span class="info-label">Doctor:</span> <span class="info-value">{{ $bill->admission->doctor?->full_name ?? '—' }}</span></div>
-            <div class="info-row"><span class="info-label">Ward / Bed:</span> <span class="info-value">{{ $bill->admission->bed?->ward?->name ?? '—' }} / {{ $bill->admission->bed?->bed_number ?? '—' }}</span></div>
-            <div class="info-row"><span class="info-label">Adm. Date:</span> <span class="info-value">{{ $bill->admission->admission_date?->format('d/m/Y H:i') ?? '—' }}</span></div>
-            @if($bill->admission->discharge_date)
-                <div class="info-row"><span class="info-label">Disch. Date:</span> <span class="info-value">{{ $bill->admission->discharge_date?->format('d/m/Y H:i') ?? '—' }}</span></div>
-            @endif
-        @else
-            <div class="info-row"><span class="info-label">OP Number:</span> <span class="info-value">{{ $bill->consultation->token_number ?? '—' }}</span></div>
-            <div class="info-row"><span class="info-label">Doctor:</span> <span class="info-value">{{ $bill->consultation->doctor?->full_name ?? 'Resident Medical Officer' }}</span></div>
-            <div class="info-row"><span class="info-label">Department:</span> <span class="info-value">{{ $bill->consultation->doctor?->department?->name ?? 'OPD' }}</span></div>
-            <div class="info-row"><span class="info-label">Visit Date:</span> <span class="info-value">{{ $bill->created_at->format('d/m/Y') }}</span></div>
-        @endif
-    </div>
-</div>
-
-<table class="table" style="width: 100%; border: 1px solid #e2e8f0;">
+<table class="billing-table">
     <thead>
         <tr>
-            <th style="width: 40px;">#</th>
-            <th>Description</th>
-            <th style="text-align: center; width: 60px;">Qty</th>
-            <th style="text-align: right; width: 100px;">Rate</th>
-            <th style="text-align: right; width: 120px;">Amount</th>
+            <th style="width: 85px;">Date</th>
+            <th>Description of Services</th>
+            <th style="width: 80px; text-align: right;">Unit Rate</th>
+            <th style="width: 40px; text-align: center;">Qty</th>
+            <th style="width: 80px; text-align: right;">Total (₹)</th>
         </tr>
     </thead>
     <tbody>
         @php
-            $groupedItems = $bill->items->groupBy('item_type');
-            $rowNum = 1;
+            $groupNames = [
+                'Room' => 'ACCOMODATION',
+                'Procedure' => 'SURGERY / PROCEDURES',
+                'Package' => 'PACKAGE',
+                'Surgery' => 'SURGERY CHARGES',
+                'Consultation' => 'CONSULTATION',
+                'Lab' => 'INVESTIGATIONS',
+                'Service' => 'SERVICES',
+                'Medicine' => 'PHARMACY AND CONSUMABLES',
+                'Return' => 'PHARMACY RETURNS',
+            ];
+            
+            $groupedItems = $bill->items->groupBy(function($item) {
+                return $item->item_type ?? 'Service';
+            });
         @endphp
 
         @foreach($groupedItems as $type => $items)
-            <tr>
-                <td colspan="5" class="group-header">{{ strtoupper($type) }}</td>
-            </tr>
-            @php
-                // Aggregate identical items within the group
-                $aggregatedItems = $items->groupBy(fn($item) => $item->item_name . '_' . $item->unit_price)
-                    ->map(fn($subItems) => (object)[
-                        'item_name' => $subItems->first()->item_name,
-                        'unit_price' => (float)$subItems->first()->unit_price,
-                        'quantity' => $subItems->sum('quantity'),
-                        'total_price' => $subItems->sum('total_price'),
-                        'created_at' => $subItems->first()->created_at
-                    ]);
-                $groupSubtotal = $items->sum('total_price');
+            @php 
+                $label = $groupNames[$type] ?? strtoupper($type);
             @endphp
-            @foreach($aggregatedItems as $item)
+            <tr class="group-header-row">
+                <td colspan="5">{{ $label }}</td>
+            </tr>
+            @foreach($items as $item)
                 <tr>
-                    <td style="text-align: center; color: #64748b;">{{ $rowNum++ }}</td>
-                    <td>
-                        <div style="font-weight: 600;">{{ $item->item_name }}</div>
-                        <div style="font-size: 8pt; color: #94a3b8;">{{ $item->created_at->format('d/m/Y') }}</div>
-                    </td>
-                    <td style="text-align: center;">{{ $item->quantity }}</td>
-                    <td style="text-align: right;">{{ number_format($item->unit_price, 2) }}</td>
-                    <td style="text-align: right; font-weight: 700;">{{ number_format($item->total_price, 2) }}</td>
+                    <td style="font-size: 8pt; color: #000; border: 1px solid #e2e8f0;">{{ $item->created_at->format('d/m/Y') }}</td>
+                    <td style="font-weight: 500; border: 1px solid #e2e8f0;">{{ strtoupper($item->item_name) }}</td>
+                    <td style="text-align: right; border: 1px solid #e2e8f0;">{{ number_format($item->unit_price, 2) }}</td>
+                    <td style="text-align: center; border: 1px solid #e2e8f0;">{{ $item->quantity }}.0</td>
+                    <td style="text-align: right; font-weight: 800; border: 1px solid #e2e8f0;">{{ number_format($item->total_price, 2) }}</td>
                 </tr>
             @endforeach
-            <tr style="background: #f8fafc;">
-                <td colspan="4" style="text-align: right; font-size: 8.5pt; font-weight: 700; color: #64748b; padding-right: 14px;">SUBTOTAL {{ strtoupper($type) }}:</td>
-                <td style="text-align: right; font-weight: 800; color: #475569;">{{ number_format($groupSubtotal, 2) }}</td>
+            <tr class="group-total-row">
+                <td colspan="4" style="border: none; padding-right: 15px;">{{ $label }} TOTAL:</td>
+                <td style="border: 1px solid #000; background: #fff;">{{ number_format($items->sum('total_price'), 2) }}</td>
             </tr>
         @endforeach
     </tbody>
 </table>
 
-<div class="total-section">
-    <div class="amount-in-words">
-        <strong>Amount in words:</strong><br>
-        {{ ucfirst($bill->amount_in_words) }} Only
-        
-        @if($bill->notes)
-            <div style="margin-top: 20px; border-left: 2px solid #e2e8f0; padding-left: 15px;">
-                <span style="font-size: 8pt; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Medical Notes / Remarks:</span><br>
-                <span style="font-style: normal; color: #475569;">{{ $bill->notes }}</span>
-            </div>
-        @endif
-    </div>
-    
-    <div>
-        <table class="total-table">
-            <tr>
-                <td class="label">Gross Total</td>
-                <td class="value">₹{{ number_format($bill->subtotal, 2) }}</td>
-            </tr>
-            
-            @if($bill->discount_amount > 0)
-                @php $discount = $bill->discounts()->latest()->first(); @endphp
-                <tr>
-                    <td class="label">
-                        Discount 
-                        @if($discount && $discount->discount_value > 0)
-                            ({{ $discount->discount_type === 'percentage' ? number_format($discount->discount_value, 0).'%' : 'Flat' }})
-                        @endif
-                    </td>
-                    <td class="value" style="color: #b91c1c;">- ₹{{ number_format($bill->discount_amount, 2) }}</td>
-                </tr>
-                @if($discount && $discount->reason)
-                    <tr>
-                        <td colspan="2" style="font-size: 7.5pt; color: #94a3b8; text-align: right; font-style: italic;">
-                            Reason: {{ $discount->reason }} (Auth: {{ $discount->doctor?->full_name ?? $discount->appliedBy->name }})
-                        </td>
-                    </tr>
-                @endif
-            @endif
-
-            @if($bill->tax_amount > 0)
-                <tr>
-                    <td class="label">CGST ({{ (\App\Models\Setting::get('tax_percentage', 18) / 2) }}%)</td>
-                    <td class="value">₹{{ number_format($bill->tax_amount / 2, 2) }}</td>
-                </tr>
-                <tr>
-                    <td class="label">SGST ({{ (\App\Models\Setting::get('tax_percentage', 18) / 2) }}%)</td>
-                    <td class="value">₹{{ number_format($bill->tax_amount / 2, 2) }}</td>
-                </tr>
-            @endif
-
-            <tr>
-                <td class="label">Paid Amount</td>
-                <td class="value">₹{{ number_format($bill->paid_amount, 2) }}</td>
-            </tr>
-
-            @if($bill->balance_amount > 0)
-                <tr>
-                    <td class="label" style="color: #b91c1c;">Due Amount</td>
-                    <td class="value" style="color: #b91c1c;">₹{{ number_format($bill->balance_amount, 2) }}</td>
-                </tr>
-            @endif
-
-            <tr class="final-row">
-                <td class="label" style="font-weight: 800; color: #0f172a;">NET PAYABLE</td>
-                <td class="value final-amount">₹{{ number_format($bill->total_amount, 2) }}</td>
-            </tr>
-        </table>
-    </div>
+<div class="amount-words-section">
+    IN WORDS: RUPEES {{ strtoupper($bill->amount_in_words) }} ONLY
 </div>
 
-@if($bill->payments->count() > 1)
-    <div style="margin-top: 30px;">
-        <h3 style="font-size: 9pt; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px;">Payment History</h3>
-        <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+<div class="summary-grid">
+    <div class="receipts-box">
+        <table class="receipts-table">
             <thead>
-                <tr style="color: #64748b; border-bottom: 1px solid #e2e8f0;">
-                    <th style="text-align: left; padding: 4px 0;">Date</th>
-                    <th style="text-align: left; padding: 4px 0;">Mode</th>
-                    <th style="text-align: left; padding: 4px 0;">Reference</th>
-                    <th style="text-align: right; padding: 4px 0;">Amount</th>
+                <tr>
+                    <th style="width: 30px;">#</th>
+                    <th>Record Date</th>
+                    <th>Ref No.</th>
+                    <th>Payment Source</th>
+                    <th style="text-align: right;">Amount (₹)</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($bill->payments as $payment)
-                    <tr style="border-bottom: 1px solid #f8fafc;">
-                        <td style="padding: 4px 0;">{{ $payment->received_at?->format('d/m/Y') ?? $payment->created_at->format('d/m/Y') }}</td>
-                        <td style="padding: 4px 0; text-transform: capitalize;">{{ $payment->method }}</td>
-                        <td style="padding: 4px 0; color: #94a3b8;">{{ $payment->reference ?? '—' }}</td>
-                        <td style="padding: 4px 0; text-align: right; font-weight: 600;">₹{{ number_format($payment->amount, 2) }}</td>
+                @foreach($bill->payments as $index => $payment)
+                    <tr>
+                        <td style="text-align: center; color: #64748b;">{{ $index + 1 }}</td>
+                        <td>{{ $payment->created_at->format('d/m/Y') }}</td>
+                        <td style="font-family: monospace;">{{ $payment->transaction_id ?? $payment->id + 1000 }}</td>
+                        <td style="text-transform: uppercase; font-weight: 600;">{{ $payment->method }}</td>
+                        <td style="text-align: right; font-weight: 800;">{{ number_format($payment->amount, 2) }}</td>
                     </tr>
                 @endforeach
             </tbody>
+            <tfoot>
+                <tr style="background: #f8fafc; font-weight: 900; border-top: 1.5px solid #000;">
+                    <td colspan="4" style="text-align: right; padding: 6px;">Total Collections:</td>
+                    <td style="text-align: right; padding: 6px;">{{ number_format($bill->paid_amount, 2) }}</td>
+                </tr>
+            </tfoot>
         </table>
     </div>
-@endif
 
-<div class="footer-sections">
-    <div class="signature-box">
-        <div style="height: 60px;"></div>
-        <div class="signature-label">Billing Executive</div>
-        <div style="font-size: 8pt; color: #94a3b8; margin-top: 4px;">{{ $bill->creator?->name ?? 'System' }}</div>
-    </div>
-    <div class="signature-box">
-        <div style="height: 60px;"></div>
-        <div class="signature-label">Authorized Signatory</div>
-        <div style="font-size: 8pt; color: #94a3b8; margin-top: 4px;">(Seal & Signature)</div>
+    <div class="totals-column">
+        <div class="total-row">
+            <span class="total-label">Gross Amount</span><span class="total-colon">:</span>
+            <span class="total-value">{{ number_format($bill->subtotal, 2) }}</span>
+        </div>
+        <div class="total-row">
+            <span class="total-label">Total Tax Amount</span><span class="total-colon">:</span>
+            <span class="total-value">{{ number_format($bill->tax_amount, 2) }}</span>
+        </div>
+        <div class="total-row">
+            <span class="total-label">Discounts</span><span class="total-colon">:</span>
+            <span class="total-value">{{ number_format($bill->discount_amount, 2) }}</span>
+        </div>
+        <div class="total-row">
+            <span class="total-label">Total Net Bill</span><span class="total-colon">:</span>
+            <span class="total-value">{{ number_format($bill->total_amount, 2) }}</span>
+        </div>
+        <div class="total-row">
+            <span class="total-label">Amount Paid</span><span class="total-colon">:</span>
+            <span class="total-value">{{ number_format($bill->paid_amount, 2) }}</span>
+        </div>
+        <div class="total-row grand">
+            <span class="total-label" style="font-size: 10pt;">Balance Payable</span><span class="total-colon">:</span>
+            <span class="total-value" style="font-size: 11pt;">{{ number_format($bill->balance_amount, 2) }}</span>
+        </div>
     </div>
 </div>
 
-<div style="margin-top: 40px; border-top: 1px dashed #e2e8f0; padding-top: 15px; font-size: 8pt; color: #64748b; text-align: center;">
-    <p style="margin: 0;">{{ \App\Models\Setting::get('invoice_footer', '1. This is a computer-generated bill and does not require a physical signature for validity. 2. Please keep this bill for future reference and insurance claims.') }}</p>
-    <p style="margin: 5px 0 0;">Printed on: {{ now()->format('d/m/Y h:i:s A') }}</p>
+<div class="bottom-identity">
+    <div class="barcode-group">
+        <div class="barcode-item">
+            <p class="barcode-display">*{{ $bill->patient->uhid ?? '2024001' }}*</p>
+            <p class="barcode-label">UHID (MR NO)</p>
+        </div>
+        <div class="barcode-item">
+            <p class="barcode-display">*{{ $bill->bill_number }}*</p>
+            <p class="barcode-label">Invoice Number</p>
+        </div>
+    </div>
+    
+    <div class="signature-area">
+        <div class="staff-name">Auth. User: {{ strtoupper($bill->creator?->name ?? 'Admin') }}</div>
+        <div class="sig-line">Authorized Signatory</div>
+    </div>
 </div>
 
 @endsection

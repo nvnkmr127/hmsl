@@ -32,6 +32,7 @@ class LabOrder extends Model
         'collected_at' => 'datetime',
         'completed_at' => 'datetime',
         'verified_at'  => 'datetime',
+        'results'      => 'json',
     ];
 
     public function resultValues()

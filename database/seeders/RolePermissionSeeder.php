@@ -53,6 +53,7 @@ class RolePermissionSeeder extends Seeder
             'receptionist' => [
                 'view patients', 'create patients', 'update patients',
                 'view opd', 'create opd visits',
+                'view ipd', 'admit patients',
                 'view billing', 'create invoices', 'manage payments'
             ],
             

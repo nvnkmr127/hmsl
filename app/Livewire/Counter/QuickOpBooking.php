@@ -146,16 +146,6 @@ class QuickOpBooking extends Component
         }
     }
 
-    public function updatedSelectedDoctor($id)
-    {
-        if ($id && !$this->isEditing && !$this->selectedService) {
-            $doctor = Doctor::find($id);
-            if ($doctor) {
-                $this->fee = $doctor->consultation_fee;
-            }
-        }
-    }
-
     public function updatedWeight($value)
     {
         $this->updateGrowthStatus();
@@ -175,6 +165,14 @@ class QuickOpBooking extends Component
         } else {
             $this->growthStatus = null;
         }
+    }
+
+    #[Computed]
+    public function assignedDoctorName()
+    {
+        if (!$this->selectedDoctor) return 'Not Assigned';
+        $doctor = Doctor::find($this->selectedDoctor);
+        return $doctor ? ($doctor->full_name ?? 'Not Assigned') : 'Not Assigned';
     }
 
     public function book($shouldPrint = true)
@@ -238,12 +236,10 @@ class QuickOpBooking extends Component
             $patients = Patient::search($this->searchPatient)->limit(5)->get();
         }
 
-        $doctors = Doctor::active()->with(['user', 'department'])->get();
         $services = \App\Models\Service::where('is_active', true)->where('category', 'OPD')->get();
 
         return view('livewire.counter.quick-op-booking', [
             'patients' => $patients,
-            'doctors' => $doctors,
             'services' => $services,
         ]);
     }

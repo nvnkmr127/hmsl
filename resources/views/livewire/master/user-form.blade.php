@@ -1,13 +1,13 @@
 <div>
     <x-modal name="user-modal" :title="$isEditing ? 'Edit User' : 'Add New User'" width="xl">
         <form wire:submit="save" class="space-y-6">
-            <x-form.input label="Full Name" wire:model="name" placeholder="Enter user's full name" id="user-name" />
+            <x-form.input label="Full Name" name="name" wire:model="name" placeholder="Enter user's full name" id="user-name" />
             
-            <x-form.input type="email" label="Email Address" wire:model="email" placeholder="email@hospital.com" id="user-email" />
+            <x-form.input type="email" label="Email Address" name="email" wire:model="email" placeholder="email@hospital.com" id="user-email" />
             
-            <x-form.input type="password" label="Password" wire:model="password" placeholder="{{ $isEditing ? 'Leave blank to keep current' : 'Enter strong password' }}" id="user-password" />
+            <x-form.input type="password" label="Password" name="password" wire:model="password" placeholder="{{ $isEditing ? 'Leave blank to keep current' : 'Enter strong password' }}" id="user-password" />
             
-            <x-form.select label="User Role" wire:model="role" id="user-role">
+            <x-form.select label="User Role" name="role" wire:model="role" id="user-role">
                 <option value="">Select a role</option>
                 @foreach($roles as $r)
                     <option value="{{ $r->name }}">{{ ucfirst(str_replace('_', ' ', $r->name)) }}</option>

@@ -16,8 +16,6 @@
         </x-slot>
     </x-page-header>
 
-    <livewire:counter.patient-form />
-
     <!-- Quick Stats Hub -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-10 mt-8">
         <!-- Total Booked -->
@@ -200,7 +198,7 @@
                                         {{ $consult->patient->full_name }}
                                     </p>
                                     <p class="text-tiny font-black tracking-widest text-violet-600 dark:text-violet-400 uppercase truncate mt-0.5">
-                                        {{ $consult->service?->name ?? 'OPD Visit' }} · Dr. {{ $consult->doctor?->full_name ?? 'Any' }}
+                                        {{ $consult->service?->name ?? 'OPD Visit' }} · {{ $consult->doctor?->full_name ?? 'Any' }}
                                     </p>
 
                                     <p class="text-tiny font-black tracking-widest text-gray-400 uppercase truncate mt-0.5">
@@ -457,7 +455,9 @@
                             <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500 flex items-center gap-2">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                 Health Check
-                                         <div class="grid grid-cols-3 gap-3">
+                            </h4>
+
+                            <div class="grid grid-cols-3 gap-3">
                                 <div class="space-y-2">
                                     <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">WT (kg)</label>
                                     <input type="number" step="0.1" wire:model.live.debounce.500ms="weight" x-ref="weightInput" class="w-full bg-white dark:bg-gray-950 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-3 py-4 outline-none transition-all font-black text-gray-900 dark:text-white text-sm shadow-sm" placeholder="0.0">
@@ -476,7 +476,7 @@
                                     @error('temperature') <span class="text-[10px] font-bold text-rose-500 ml-1">{{ $message }}</span> @enderror
                                 </div>
                             </div>
-               </div>
+                        </div>
 
                             @if($growthStatus)
                             <div class="p-4 bg-white dark:bg-gray-950 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800">
@@ -622,7 +622,6 @@
                                 <svg class="absolute -right-8 -bottom-8 w-32 h-32 text-white/10 rotate-12" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L1 12l11 10 11-10L12 2zm0 18.5L2.5 12 12 3.5l9.5 8.5L12 20.5z"/></svg>
                             </div>
                         </div>
-                    </div>
 
                     <!-- Clinical Presentation -->
                     <div class="space-y-3">

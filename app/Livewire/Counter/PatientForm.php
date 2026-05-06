@@ -68,8 +68,11 @@ class PatientForm extends Component
         $this->resetValidation();
         $this->isEditing = false;
         
-        if ($phone) {
-            $this->phone = $phone;
+        // Handle both named array ['phone' => '...'] and direct argument
+        $phoneValue = is_array($phone) ? ($phone['phone'] ?? null) : $phone;
+        
+        if ($phoneValue) {
+            $this->phone = $phoneValue;
         }
 
         $this->dispatch('open-modal', name: 'patient-modal');

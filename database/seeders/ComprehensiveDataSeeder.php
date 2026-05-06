@@ -94,6 +94,9 @@ class ComprehensiveDataSeeder extends Seeder
                     'status' => 'Completed',
                     'payment_status' => 'Paid',
                     'payment_method' => $faker->randomElement(['Cash', 'UPI', 'Google Pay', 'PhonePe']),
+                    'chief_complaints' => [$faker->randomElement(['Fever for 2 days', 'Loose motions', 'Cough and cold', 'Loss of appetite'])],
+                    'diagnosis_notes' => $faker->randomElement(['Viral Infection', 'Upper Respiratory Tract Infection', 'Acute Gastroenteritis']),
+                    'advice' => 'Plenty of fluids, soft diet, and rest.',
                 ]);
 
                 // 4. Bills for Consultations
@@ -137,9 +140,6 @@ class ComprehensiveDataSeeder extends Seeder
                     'consultation_id' => $consultant->id,
                     'patient_id' => $patient->id,
                     'doctor_id' => $doctor->id,
-                    'chief_complaint' => $faker->randomElement(['Fever for 2 days', 'Loose motions', 'Cough and cold', 'Loss of appetite']),
-                    'diagnosis' => $faker->randomElement(['Viral Infection', 'Upper Respiratory Tract Infection', 'Acute Gastroenteritis']),
-                    'advice' => 'Plenty of fluids, soft diet, and rest.',
                     'medicines' => $prescMedicines,
                     'created_by' => $admin->id,
                     'created_at' => $visitDate,

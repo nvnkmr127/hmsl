@@ -14,6 +14,5 @@
         </div>
         
         <livewire:counter.patient-list />
-        <livewire:counter.patient-form />
     </div>
 @endsection

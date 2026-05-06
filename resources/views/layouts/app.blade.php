@@ -84,6 +84,7 @@
         </div>
     </div>
 
+    <livewire:counter.patient-form />
     <livewire:counter.quick-op-booking />
     <x-toast />
 
