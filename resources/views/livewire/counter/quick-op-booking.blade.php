@@ -1,18 +1,50 @@
-<div x-data="{}" @open-modal.window="if($event.detail.name === 'quick-op-modal') { setTimeout(() => { ($refs.weightInput || $refs.searchInput)?.focus(); }, 150); }">
+<div x-data="{}" @open-modal.window="if($event.detail.name === 'quick-op-modal') { setTimeout(() => { (document.getElementById('quick-appointment-weight') || document.getElementById('quick-appointment-search'))?.focus(); }, 200); }">
     <x-modal name="quick-op-modal" title="Quick Appointment" width="3xl">
         <div class="p-6">
             @if(!$selectedPatient)
                 <!-- Search Section -->
                 <div class="mb-6">
-                    <label class="block text-sm font-black uppercase tracking-widest text-gray-400 mb-2">Search Patient</label>
-                    <input 
-                        type="text"
-                        wire:model.live.debounce.300ms="searchPatient"
-                        x-ref="searchInput"
-                        id="quick-appointment-search"
-                        placeholder="Search by name or mobile..."
-                        class="w-full bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-6 py-4 text-gray-900 dark:text-white outline-none transition-all font-bold uppercase tracking-widest text-sm"
-                    />
+                    <div class="mb-4">
+                        <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-3">Search By</label>
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                            @foreach([
+                                'all' => 'General',
+                                'uhid' => 'UHID',
+                                'phone' => 'Mobile',
+                                'name' => 'Name',
+                                'mother_name' => 'Mother'
+                            ] as $value => $label)
+                                <button 
+                                    type="button"
+                                    wire:click="$set('searchType', '{{ $value }}')"
+                                    @click="setTimeout(() => { document.getElementById('quick-appointment-search')?.focus(); }, 50)"
+                                    class="px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border-2 {{ $searchType === $value ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-gray-50 dark:bg-gray-900 border-transparent text-gray-500 hover:border-gray-200 dark:hover:border-gray-700' }}"
+                                >
+                                    {{ $label }}
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <div class="relative group">
+                        <input 
+                            type="text"
+                            wire:model.live.debounce.300ms="searchPatient"
+                            x-ref="searchInput"
+                            id="quick-appointment-search"
+                            placeholder="Search by {{ [
+                                'all' => 'name or mobile',
+                                'uhid' => 'UHID',
+                                'phone' => 'mobile number',
+                                'name' => 'patient name',
+                                'mother_name' => 'mother\'s name'
+                            ][$searchType] ?? $searchType }}..."
+                            class="w-full bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-6 py-4 text-gray-900 dark:text-white outline-none transition-all font-bold uppercase tracking-widest text-sm"
+                        />
+                        <div class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                            <kbd class="hidden sm:inline-block px-2 py-1 text-[8px] font-black bg-gray-200 dark:bg-gray-800 text-gray-500 rounded-lg">ESC</kbd>
+                        </div>
+                    </div>
                     
                     @if(count($patients))
                         <div class="mt-4 space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
@@ -24,7 +56,12 @@
                                         </div>
                                         <div>
                                             <p class="font-black text-gray-900 dark:text-white uppercase tracking-tight">{{ $p->full_name }}</p>
-                                            <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">ID: {{ $p->uhid }} · {{ $p->phone }}</p>
+                                            <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                                                ID: {{ $p->uhid }} · {{ $p->phone }}
+                                                @if($p->mother_name)
+                                                    <span class="text-indigo-500/70 dark:text-indigo-400/70"> · MOTHER: {{ $p->mother_name }}</span>
+                                                @endif
+                                            </p>
                                         </div>
                                     </div>
                                     <svg class="w-5 h-5 text-gray-300 group-hover:text-violet transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -116,7 +153,7 @@
                             <div class="grid grid-cols-3 gap-3">
                                 <div class="space-y-1.5">
                                     <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">WT (kg)</label>
-                                    <input type="number" step="0.1" wire:model.live.debounce.500ms="weight" x-ref="weightInput" placeholder="0.0" class="w-full bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-3 py-4 font-bold text-gray-900 dark:text-white outline-none transition-all text-sm" />
+                                    <input type="number" step="0.1" id="quick-appointment-weight" wire:model.live.debounce.500ms="weight" x-ref="weightInput" placeholder="0.0" class="w-full bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-3 py-4 font-bold text-gray-900 dark:text-white outline-none transition-all text-sm" />
                                 </div>
                                 <div class="space-y-1.5">
                                     <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">HT (cm)</label>

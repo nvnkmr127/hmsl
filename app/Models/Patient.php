@@ -92,7 +92,8 @@ class Patient extends Model
             $q->where('phone', 'like', "%{$term}%")
               ->orWhere('uhid', 'like', "%{$term}%")
               ->orWhere('first_name', 'like', "%{$term}%")
-              ->orWhere('last_name', 'like', "%{$term}%");
+              ->orWhere('last_name', 'like', "%{$term}%")
+              ->orWhere('mother_name', 'like', "%{$term}%");
         });
     }
 

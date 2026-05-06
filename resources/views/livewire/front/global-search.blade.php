@@ -36,7 +36,7 @@
                     <div class="p-2">
                         <p class="text-[10px] font-black uppercase tracking-widest text-gray-400 px-3 py-2">Patients</p>
                         @foreach($results['patients'] as $patient)
-                            <a href="{{ route('counter.patients.show', $patient->id) }}" class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all group">
+                            <a href="{{ route('counter.patients.history', $patient->id) }}" class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all group">
                                 <div class="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                                 </div>

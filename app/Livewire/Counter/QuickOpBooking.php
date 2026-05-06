@@ -15,6 +15,7 @@ use App\Services\GrowthChartService;
 class QuickOpBooking extends Component
 {
     public $searchPatient = '';
+    public $searchType = 'all';
     public $selectedPatient;
     public $selectedDoctor;
     public $consultation_date;
@@ -52,8 +53,8 @@ class QuickOpBooking extends Component
 
     public function updatedSearchPatient($value)
     {
-        // Auto search/select or trigger registration after 10 digits
-        if (strlen($value) === 10 && is_numeric($value)) {
+        // Auto search/select or trigger registration after 10 digits for phone search
+        if (strlen($value) === 10 && is_numeric($value) && ($this->searchType === 'all' || $this->searchType === 'phone')) {
             $patient = Patient::where('phone', $value)->first();
             if ($patient) {
                 $this->selectPatient($patient->id);
@@ -233,7 +234,24 @@ class QuickOpBooking extends Component
     {
         $patients = [];
         if (strlen($this->searchPatient) >= 3) {
-            $patients = Patient::search($this->searchPatient)->limit(5)->get();
+            $patients = Patient::query();
+            
+            if ($this->searchType === 'uhid') {
+                $patients->where('uhid', 'like', "%{$this->searchPatient}%");
+            } elseif ($this->searchType === 'phone') {
+                $patients->where('phone', 'like', "%{$this->searchPatient}%");
+            } elseif ($this->searchType === 'mother_name') {
+                $patients->where('mother_name', 'like', "%{$this->searchPatient}%");
+            } elseif ($this->searchType === 'name') {
+                $patients->where(function($q) {
+                    $q->where('first_name', 'like', "%{$this->searchPatient}%")
+                      ->orWhere('last_name', 'like', "%{$this->searchPatient}%");
+                });
+            } else {
+                $patients->search($this->searchPatient);
+            }
+
+            $patients = $patients->limit(5)->get();
         }
 
         $services = \App\Models\Service::where('is_active', true)->where('category', 'OPD')->get();

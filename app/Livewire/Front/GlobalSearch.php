@@ -24,9 +24,7 @@ class GlobalSearch extends Component
         $this->isOpen = true;
         
         $patients = Patient::search($value)->limit(5)->get();
-        $doctors = Doctor::where('first_name', 'like', "%{$value}%")
-            ->orWhere('last_name', 'like', "%{$value}%")
-            ->limit(5)->get();
+        $doctors = Doctor::search($value)->limit(5)->get();
         
         $consultations = Consultation::with('patient')
             ->where('token_number', 'like', "%{$value}%")
