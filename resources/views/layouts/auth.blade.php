@@ -40,10 +40,10 @@
                 All systems operational
             </div>
             <h2 class="text-4xl font-extrabold text-white leading-tight mb-4" style="letter-spacing:-0.03em">
-                Hospital Management<br><span style="color:#7c3aed">Intelligence Suite</span>
+                Specialized<br><span style="color:#7c3aed">Pediatric Care</span>
             </h2>
             <p class="text-slate-400 text-sm leading-relaxed max-w-xs">
-                Unified platform for clinical operations, billing, stats, and patient lifecycle management.
+                Unified platform for clinical operations, child health monitoring, and hospital lifecycle management.
             </p>
 
             <!-- Stats -->
