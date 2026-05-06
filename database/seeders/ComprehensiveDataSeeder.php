@@ -27,7 +27,7 @@ class ComprehensiveDataSeeder extends Seeder
     public function run(): void
     {
         // Use Indian Locale for realistic names
-        $faker = fake('en_IN');
+        $faker = \Faker\Factory::create('en_IN');
         $patientService = new PatientService();
         $doctor = Doctor::first();
         $admin = User::first();
