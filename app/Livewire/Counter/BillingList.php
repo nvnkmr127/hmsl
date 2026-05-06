@@ -15,6 +15,15 @@ class BillingList extends Component
     public $search = '';
     public $statusFilter = '';
     public $methodFilter = '';
+    public $dateFilter = '';
+    public $activeTab = 'bills';
+
+    // OP Filters
+    public $opSearch = '';
+    public $opStatusFilter = '';
+    public $opDoctorFilter = '';
+    public $opDateFilter = '';
+
     public ?int $selectedBillId = null;
     public string $paymentType = 'payment';
     public string $paymentMethod = 'Cash';
@@ -34,11 +43,28 @@ class BillingList extends Component
         'search' => ['except' => ''],
         'statusFilter' => ['except' => ''],
         'methodFilter' => ['except' => ''],
+        'dateFilter' => ['except' => ''],
+        'activeTab' => ['except' => 'bills'],
+        'opSearch' => ['except' => ''],
+        'opStatusFilter' => ['except' => ''],
+        'opDoctorFilter' => ['except' => ''],
+        'opDateFilter' => ['except' => ''],
     ];
 
     public function updatedSearch()    { $this->resetPage(); }
     public function updatedStatusFilter() { $this->resetPage(); }
     public function updatedMethodFilter() { $this->resetPage(); }
+    public function updatedDateFilter() { $this->resetPage(); }
+    public function updatedOpSearch() { $this->resetPage(); }
+    public function updatedOpStatusFilter() { $this->resetPage(); }
+    public function updatedOpDoctorFilter() { $this->resetPage(); }
+    public function updatedOpDateFilter() { $this->resetPage(); }
+
+    public function setTab($tab)
+    {
+        $this->activeTab = $tab;
+        $this->resetPage();
+    }
 
     public function sendEmail($billId)
     {
@@ -149,7 +175,7 @@ class BillingList extends Component
 
     public function render()
     {
-        $bills = Bill::with(['patient', 'consultation.doctor', 'payments', 'discounts'])
+        $bills = \App\Models\Bill::with(['patient', 'consultation.doctor', 'payments', 'discounts'])
             ->when($this->search, function ($q) {
                 $q->where('bill_number', 'like', "%{$this->search}%")
                   ->orWhereHas('patient', fn($pq) =>
@@ -160,8 +186,23 @@ class BillingList extends Component
             })
             ->when($this->statusFilter, fn($q) => $q->where('payment_status', $this->statusFilter))
             ->when($this->methodFilter, fn($q) => $q->where('payment_method', $this->methodFilter))
+            ->when($this->dateFilter, fn($q) => $q->whereDate('created_at', $this->dateFilter))
             ->latest()
-            ->paginate(15);
+            ->paginate(15, pageName: 'bills-page');
+
+        $ops = \App\Models\Consultation::with(['patient', 'doctor', 'bill'])
+            ->when($this->opSearch, function ($q) {
+                $q->whereHas('patient', fn($pq) =>
+                    $pq->where('first_name', 'like', "%{$this->opSearch}%")
+                       ->orWhere('last_name', 'like', "%{$this->opSearch}%")
+                       ->orWhere('uhid', 'like', "%{$this->opSearch}%")
+                );
+            })
+            ->when($this->opStatusFilter, fn($q) => $q->where('status', $this->opStatusFilter))
+            ->when($this->opDoctorFilter, fn($q) => $q->where('doctor_id', $this->opDoctorFilter))
+            ->when($this->opDateFilter, fn($q) => $q->whereDate('consultation_date', $this->opDateFilter))
+            ->latest()
+            ->paginate(15, pageName: 'ops-page');
 
         $paidTotal = (float) BillPayment::where('type', 'payment')->sum('amount');
         $refundTotal = (float) BillPayment::where('type', 'refund')->sum('amount');
@@ -172,8 +213,12 @@ class BillingList extends Component
             'total_paid'    => $paidTotal - $refundTotal,
             'total_unpaid'  => Bill::whereIn('payment_status', ['Unpaid', 'Partially Paid'])->count(),
             'today_revenue' => $todayPaid - $todayRefund,
+            'op_count'      => \App\Models\Consultation::count(),
+            'op_today'      => \App\Models\Consultation::whereDate('consultation_date', today())->count(),
         ];
 
-        return view('livewire.counter.billing-list', compact('bills', 'stats'));
+        $doctors = \App\Models\Doctor::all();
+
+        return view('livewire.counter.billing-list', compact('bills', 'ops', 'stats', 'doctors'));
     }
 }

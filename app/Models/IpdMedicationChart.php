@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class IpdMedicationChart extends Model
 {
@@ -41,6 +42,11 @@ class IpdMedicationChart extends Model
         'dispensed_at' => 'datetime',
         'is_dispensed' => 'boolean',
     ];
+
+    public function medicationAdministrations(): HasMany
+    {
+        return $this->hasMany(IpdMedicationAdministration::class, 'ipd_medication_chart_id');
+    }
 
     public function admission(): BelongsTo
     {
