@@ -14,6 +14,7 @@ class VisitReport extends Component
     public $dateFrom;
     public $dateTo;
     public $status = 'all';
+    public $visitType = 'all';
 
     public function mount()
     {
@@ -26,6 +27,7 @@ class VisitReport extends Component
         $visits = Consultation::with(['patient', 'doctor', 'service'])
             ->whereBetween('consultation_date', [$this->dateFrom, $this->dateTo])
             ->when($this->status !== 'all', fn($q) => $q->where('status', $this->status))
+            ->when($this->visitType !== 'all', fn($q) => $q->where('visit_type', $this->visitType))
             ->latest('consultation_date')
             ->paginate(15);
 
