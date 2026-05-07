@@ -124,6 +124,12 @@ class OpdBooking extends Component
             }
         }
 
+        $hasRecentVisit = false;
+        if ($this->latestConsultation && $this->latestConsultation->valid_upto) {
+            $hasRecentVisit = Carbon::parse($this->latestConsultation->valid_upto)->isAfter(Carbon::parse($this->consultation_date)) || 
+                              Carbon::parse($this->latestConsultation->valid_upto)->isSameDay(Carbon::parse($this->consultation_date));
+        }
+
         $this->isFollowUp = $hasRecentVisit || $this->isReview;
 
         if ($this->isFollowUp) {
