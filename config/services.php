@@ -43,4 +43,8 @@ return [
         'autosuggest_max_query_length' => (int) env('MAPPLS_AUTOSUGGEST_MAX_QUERY_LENGTH', 45),
     ],
 
+    'google' => [
+        'maps_api_key' => env('GOOGLE_MAPS_API_KEY'),
+    ],
+
 ];

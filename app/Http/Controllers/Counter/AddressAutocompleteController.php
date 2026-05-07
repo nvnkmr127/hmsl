@@ -23,13 +23,14 @@ class AddressAutocompleteController extends Controller
             return response()->json([]);
         }
 
-        $cacheKey = 'address_autocomplete:v5:mappls:' . md5(mb_strtolower($q));
+        $cacheKey = 'address_autocomplete:v6:google:' . md5(mb_strtolower($q));
 
         $items = Cache::remember($cacheKey, now()->addHours(6), function () use ($q) {
             $localResults = Patient::where('address', 'like', "%{$q}%")
                 ->orWhere('city', 'like', "%{$q}%")
                 ->limit(5)
                 ->get()
+                ->toBase()
                 ->map(function($p) {
                     return [
                         'place_id' => 'local_' . $p->id,
@@ -43,25 +44,21 @@ class AddressAutocompleteController extends Controller
                     ];
                 });
 
-            $authHeader = $this->mapplsAuthHeader();
-            if ($authHeader === null) {
+            $apiKey = (string) config('services.google.maps_api_key');
+            if ($apiKey === '') {
                 return $localResults->all();
             }
 
-            $filter = (string) config('services.mappls.autosuggest_bounds_filter', '');
-            $tokenizeAddress = (bool) config('services.mappls.autosuggest_tokenize_address', false);
-
             $response = Http::timeout(5)
-                ->withHeaders([
-                    'User-Agent' => config('app.name') . ' (' . config('app.url') . ')',
-                    'Accept' => 'application/json',
-                    'Authorization' => $authHeader,
-                ])
-                ->get('https://atlas.mappls.com/api/places/search/json', [
-                    'query' => $q,
-                    'region' => 'IND',
-                    'filter' => $filter !== '' ? $filter : null,
-                    'tokenizeAddress' => $tokenizeAddress ? 1 : null,
+                ->get('https://maps.googleapis.com/maps/api/place/autocomplete/json', [
+                    'input' => $q,
+                    'key' => $apiKey,
+                    'components' => 'country:in',
+                    'location' => '18.1124,79.0193', // Center of Telangana
+                    'radius' => '250000',           // 250km radius to cover Telangana
+                    'strictbounds' => 'true',
+                    'types' => 'geocode',           // Better for villages, towns and specific addresses
+                    'language' => 'en',
                 ]);
 
             if (!$response->successful()) {
@@ -69,52 +66,29 @@ class AddressAutocompleteController extends Controller
             }
 
             $payload = (array) $response->json();
-            $rows = collect($payload['suggestedLocations'] ?? [])
-                ->merge($payload['userAddedLocations'] ?? []);
+            $predictions = collect($payload['predictions'] ?? []);
 
-            $mapplsResults = $rows
+            $googleResults = $predictions
                 ->map(function ($row) {
-                    $placeAddress = (string) ($row['placeAddress'] ?? '');
-                    $placeName = (string) ($row['placeName'] ?? '');
-                    $addressTokens = (array) ($row['addressTokens'] ?? []);
+                    $description = (string) ($row['description'] ?? '');
+                    $mainText = (string) ($row['structured_formatting']['main_text'] ?? $description);
+                    $placeId = (string) ($row['place_id'] ?? '');
 
-                    $parsed = $this->parsePlaceAddress($placeAddress);
-
-                    $city = $addressTokens['city']
-                        ?? $addressTokens['locality']
-                        ?? $addressTokens['village']
-                        ?? $addressTokens['subDistrict']
-                        ?? $addressTokens['district']
-                        ?? $parsed['city']
-                        ?? null;
-
-                    $state = $addressTokens['state'] ?? $parsed['state'] ?? null;
-                    $pincode = $addressTokens['pincode'] ?? $parsed['pincode'] ?? null;
-
-                    $label = $placeName !== '' ? $placeName : $placeAddress;
-                    $subLabel = $placeAddress;
-                    $fullAddress = $placeAddress;
-                    if ($placeName !== '' && $placeAddress !== '') {
-                        $name = trim($placeName);
-                        $addr = trim($placeAddress);
-                        if ($name !== '' && $addr !== '' && !str_starts_with(mb_strtolower($addr), mb_strtolower($name . ',')) && mb_strtolower($addr) !== mb_strtolower($name)) {
-                            $fullAddress = $name . ', ' . $addr;
-                        }
-                    }
+                    $parsed = $this->parsePlaceAddress($description);
 
                     return [
-                        'place_id' => $row['eLoc'] ?? ($row['mapplsPin'] ?? $subLabel),
-                        'label' => $label,
-                        'subLabel' => $subLabel,
-                        'address' => $fullAddress,
-                        'city' => $city,
-                        'state' => $state,
-                        'pincode' => $pincode,
-                        'source' => 'mappls'
+                        'place_id' => $placeId,
+                        'label' => $mainText,
+                        'subLabel' => $description,
+                        'address' => $description,
+                        'city' => $parsed['city'],
+                        'state' => $parsed['state'],
+                        'pincode' => $parsed['pincode'],
+                        'source' => 'google'
                     ];
                 });
 
-            return $localResults->merge($mapplsResults)
+            return $localResults->merge($googleResults)
                 ->unique('address')
                 ->take(6)
                 ->values()
@@ -124,50 +98,80 @@ class AddressAutocompleteController extends Controller
         return response()->json($items);
     }
 
-    private function mapplsAuthHeader(): ?string
+    public function details(Request $request)
     {
-        $cacheKey = 'mappls:oauth:auth_header';
-        $cached = Cache::get($cacheKey);
-        if (is_string($cached) && $cached !== '') {
-            return $cached;
+        $placeId = (string) $request->query('place_id', '');
+        if ($placeId === '' || str_starts_with($placeId, 'local_')) {
+            return response()->json([]);
         }
 
-        $clientId = (string) config('services.mappls.client_id');
-        $clientSecret = (string) config('services.mappls.client_secret');
-        if ($clientId === '' || $clientSecret === '') {
-            return null;
+        $apiKey = (string) config('services.google.maps_api_key');
+        if ($apiKey === '') {
+            return response()->json([]);
         }
 
-        $response = Http::asForm()
-            ->timeout(5)
-            ->withHeaders([
-                'User-Agent' => config('app.name') . ' (' . config('app.url') . ')',
-                'Accept' => 'application/json',
-            ])
-            ->post('https://outpost.mappls.com/api/security/oauth/token', [
-                'grant_type' => 'client_credentials',
-                'client_id' => $clientId,
-                'client_secret' => $clientSecret,
-            ]);
+        $cacheKey = 'address_details:v1:' . md5($placeId);
 
-        if (!$response->successful()) {
-            return null;
-        }
+        $details = Cache::remember($cacheKey, now()->addDays(7), function () use ($placeId, $apiKey) {
+            $response = Http::timeout(5)
+                ->get('https://maps.googleapis.com/maps/api/place/details/json', [
+                    'place_id' => $placeId,
+                    'key' => $apiKey,
+                    'fields' => 'address_component,formatted_address',
+                    'language' => 'en',
+                ]);
 
-        $data = (array) $response->json();
-        $accessToken = (string) ($data['access_token'] ?? '');
-        $tokenType = (string) ($data['token_type'] ?? 'bearer');
-        $expiresIn = (int) ($data['expires_in'] ?? 0);
+            if (!$response->successful()) {
+                return null;
+            }
 
-        if ($accessToken === '') {
-            return null;
-        }
+            $payload = (array) $response->json();
+            $result = $payload['result'] ?? null;
+            if (!$result) return null;
 
-        $headerValue = trim($tokenType . ' ' . $accessToken);
-        $ttl = $expiresIn > 120 ? $expiresIn - 60 : 300;
-        Cache::put($cacheKey, $headerValue, now()->addSeconds($ttl));
+            $components = collect($result['address_components'] ?? []);
+            
+            $pincode = null;
+            foreach ($components as $component) {
+                if (in_array('postal_code', $component['types'])) {
+                    $pincode = $component['long_name'];
+                    break;
+                }
+            }
 
-        return $headerValue;
+            $city = null;
+            foreach ($components as $component) {
+                if (in_array('locality', $component['types'])) {
+                    $city = $component['long_name'];
+                    break;
+                }
+            }
+            if (!$city) {
+                foreach ($components as $component) {
+                    if (in_array('administrative_area_level_2', $component['types'])) {
+                        $city = $component['long_name'];
+                        break;
+                    }
+                }
+            }
+
+            $state = null;
+            foreach ($components as $component) {
+                if (in_array('administrative_area_level_1', $component['types'])) {
+                    $state = $component['long_name'];
+                    break;
+                }
+            }
+
+            return [
+                'address' => $result['formatted_address'] ?? '',
+                'city' => $city,
+                'state' => $state,
+                'pincode' => $pincode,
+            ];
+        });
+
+        return response()->json($details);
     }
 
     private function parsePlaceAddress(string $placeAddress): array

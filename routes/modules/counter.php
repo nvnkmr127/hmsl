@@ -20,6 +20,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/patients/{id}/consents/high-risk/en', [ConsentController::class, 'highRiskEnglish'])->name('patients.consents.high-risk.en');
             Route::get('/patients/{id}/consents/high-risk/print/en', [ConsentController::class, 'highRiskPrintEnglish'])->name('patients.consents.high-risk.print.en');
             Route::get('/address-autocomplete', AddressAutocompleteController::class)->name('address.autocomplete')->middleware('throttle:30,1');
+            Route::get('/address-details', [AddressAutocompleteController::class, 'details'])->name('address.details');
         });
         
         // OPD

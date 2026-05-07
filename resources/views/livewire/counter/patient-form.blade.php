@@ -76,7 +76,29 @@
                                 this.loading = false;
                             }
                         },
-                        select(item) {
+                        async select(item) {
+                            if (item.source === 'google' && item.place_id) {
+                                try {
+                                    const url = new URL('{{ route('counter.address.details') }}', window.location.origin);
+                                    url.searchParams.set('place_id', item.place_id);
+                                    const res = await fetch(url.toString(), { headers: { 'Accept': 'application/json' } });
+                                    if (res.ok) {
+                                        const details = await res.json();
+                                        if (details && details.address) {
+                                            $wire.set('address', details.address || item.address);
+                                            $wire.set('city', details.city || item.city);
+                                            $wire.set('state', details.state || item.state);
+                                            $wire.set('pincode', details.pincode || item.pincode);
+                                            this.open = false;
+                                            this.results = [];
+                                            return;
+                                        }
+                                    }
+                                } catch (e) {
+                                    console.error('Failed to fetch address details', e);
+                                }
+                            }
+                            
                             $wire.set('address', item.address || '');
                             $wire.set('city', item.city || '');
                             $wire.set('state', item.state || '');
@@ -90,7 +112,7 @@
                             wire:model="address"
                             name="address"
                             placeholder="Start typing street address or landmark..."
-                            x-on:input.debounce.300ms="search($event.target.value)"
+                            x-on:input.debounce.150ms="search($event.target.value)"
                             autocomplete="off"
                         />
                         @error('address') <p class="text-tiny text-rose-500 font-black uppercase mt-1">{{ $message }}</p> @enderror
