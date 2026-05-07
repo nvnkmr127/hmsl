@@ -87,6 +87,7 @@ class QuickOpBooking extends Component
         }
     }
 
+    #[On('quick-op-booking')]
     public function open()
     {
         $this->reset(['searchPatient', 'selectedPatient', 'selectedService', 'weight', 'height', 'temperature', 'notes', 'isEditing', 'isReview', 'isFollowUp']);
