@@ -51,4 +51,5 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/billing', [App\Http\Controllers\Counter\BillController::class, 'index'])->name('billing.index')->middleware('permission:view billing');
     Route::get('/billing/bills/{bill}/print', [App\Http\Controllers\Counter\BillController::class, 'print'])->whereNumber('bill')->name('billing.bills.print')->middleware('permission:view billing');
+    Route::get('/billing/bills/{bill}/pdf', [App\Http\Controllers\Counter\BillController::class, 'pdf'])->whereNumber('bill')->name('billing.bills.pdf');
 });

@@ -6,6 +6,7 @@ use App\Models\Patient;
 use App\Models\Consultation;
 use App\Models\Admission;
 use App\Models\Bill;
+use App\Models\BillPayment;
 use App\Events\System\DailySummaryGenerated;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -43,7 +44,7 @@ class DailySummaryReport extends Command
                 'opd_review' => Consultation::whereDate('consultation_date', $date)->whereIn('visit_type', ['Review', 'Follow-up'])->count(),
                 'ipd_admissions' => Admission::whereDate('admission_date', $date)->count(),
                 'revenue' => [
-                    'total_collected' => Bill::whereDate('created_at', $date)->where('payment_status', 'Paid')->sum('total_amount'),
+                    'total_collected' => BillPayment::whereDate('received_at', $date)->sum('amount'),
                     'total_invoiced' => Bill::whereDate('created_at', $date)->sum('total_amount'),
                     'discounts' => Bill::whereDate('created_at', $date)->sum('discount_amount'),
                 ],

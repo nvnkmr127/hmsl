@@ -42,7 +42,7 @@ class ProcessWebhookJob implements ShouldQueue
             // }
 
             $this->webhook->update([
-                'status' => 'processed',
+                'status' => 'completed',
                 'processed_at' => now(),
             ]);
         } catch (\Exception $e) {

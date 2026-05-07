@@ -32,10 +32,16 @@ class WebhookEndpoints extends Component
 
     protected $availableEvents = [
         'patient.registered' => 'Patient Registered',
-        'admission.created' => 'IPD Admission',
-        'invoice.paid' => 'Invoice Paid',
-        'daily.summary' => 'System: Daily Summary',
+        'appointment.booked' => 'OPD Appointment Booked',
         'consultation.completed' => 'OPD Consultation Completed',
+        'admission.created' => 'IPD Admission Created',
+        'invoice.paid' => 'Invoice Paid',
+        'payment.received' => 'Payment Received',
+        'prescription.dispensed' => 'Prescription Dispensed',
+        'medicine.low_stock' => 'Medicine Low Stock',
+        'lab.order_created' => 'Lab Order Created',
+        'lab.order_completed' => 'Lab Order Completed',
+        'daily.summary' => 'System: Daily Summary',
     ];
 
     public function mount()

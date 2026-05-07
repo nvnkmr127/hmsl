@@ -61,5 +61,9 @@ class AppServiceProvider extends ServiceProvider
             \App\Events\Laboratory\LabOrderCompleted::class,
             \App\Listeners\WebhookDispatcher::class
         );
+        \Illuminate\Support\Facades\Event::listen(
+            \App\Events\OPD\AppointmentBooked::class,
+            \App\Listeners\WebhookDispatcher::class
+        );
     }
 }

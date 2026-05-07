@@ -11,6 +11,8 @@ use App\Events\Pharmacy\PrescriptionDispensed;
 use App\Events\Pharmacy\MedicineLowStock;
 use App\Events\Laboratory\LabOrderCreated;
 use App\Events\Laboratory\LabOrderCompleted;
+use App\Events\OPD\ConsultationCompleted;
+use App\Events\OPD\AppointmentBooked;
 use App\Services\WebhookService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
@@ -64,6 +66,11 @@ class WebhookDispatcher implements ShouldQueue
                 'patient_name' => $event->bill->patient->full_name,
                 'amount' => $event->bill->total_amount,
                 'method' => $event->bill->payment_method,
+                'pdf_url' => \Illuminate\Support\Facades\URL::temporarySignedRoute(
+                    'billing.bills.pdf',
+                    now()->addDays(7),
+                    ['bill' => $event->bill->id]
+                ),
                 'paid_at' => $event->bill->updated_at->toIso8601String(),
             ]);
         }
@@ -81,12 +88,17 @@ class WebhookDispatcher implements ShouldQueue
             ]);
         }
 
-        if ($event instanceof \App\Events\OPD\ConsultationCompleted) {
+        if ($event instanceof ConsultationCompleted) {
             $this->service->dispatch('consultation.completed', [
                 'id' => $event->consultation->id,
                 'patient_name' => $event->consultation->patient->full_name,
                 'doctor_name' => $event->consultation->doctor->full_name,
                 'token' => $event->consultation->token_number,
+                'diagnoses' => $event->consultation->diagnoses->map(fn($d) => [
+                    'name' => $d->diagnosis_name,
+                    'code' => $d->icd_code,
+                    'type' => $d->type
+                ])->toArray(),
                 'completed_at' => now()->toIso8601String(),
             ]);
         }
@@ -130,11 +142,22 @@ class WebhookDispatcher implements ShouldQueue
                 'order_number' => $event->order->order_number,
                 'patient_name' => $event->order->patient?->full_name,
                 'test_name' => $event->order->labTest?->name,
+                'results' => $event->order->results,
+                'verified_by' => $event->order->verifiedBy?->name,
                 'completed_at' => $event->order->completed_at?->toIso8601String(),
             ]);
         }
         
-        if ($event instanceof \App\Events\OPD\AppointmentBooked) {
+        if ($event instanceof AppointmentBooked) {
+            $pdfUrl = null;
+            if ($event->consultation->bill) {
+                $pdfUrl = \Illuminate\Support\Facades\URL::temporarySignedRoute(
+                    'billing.bills.pdf',
+                    now()->addDays(7),
+                    ['bill' => $event->consultation->bill->id]
+                );
+            }
+
             $this->service->dispatch('appointment.booked', [
                 'id' => $event->consultation->id,
                 'patient_id' => $event->consultation->patient_id,
@@ -143,6 +166,7 @@ class WebhookDispatcher implements ShouldQueue
                 'doctor_name' => $event->consultation->doctor?->full_name,
                 'token' => $event->consultation->token_number,
                 'fee' => $event->consultation->fee,
+                'pdf_url' => $pdfUrl,
                 'consultation_date' => $event->consultation->consultation_date?->toIso8601String(),
                 'booked_at' => $event->consultation->created_at?->toIso8601String(),
             ]);
