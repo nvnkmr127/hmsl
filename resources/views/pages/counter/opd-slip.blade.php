@@ -54,7 +54,7 @@
 
         .pos-weight {
             top: 5.5cm;
-            left: 9.5cm;
+            left: 9.3cm;
         }
 
         .pos-temp {
@@ -69,7 +69,7 @@
 
         /* LINE 3: Financials */
         .pos-fee {
-            top: 6cm;
+            top: 6.2cm;
             left: 17.0cm;
             font-size: 10pt;
             color: #333;
