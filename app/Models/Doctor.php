@@ -26,6 +26,15 @@ class Doctor extends Model
         'is_active',
     ];
 
+    /**
+     * Normalize doctor name by stripping "Dr." prefix if present.
+     */
+    public function setFullNameAttribute($value)
+    {
+        $normalized = preg_replace('/^(Dr\.?|Doctor)\s+/i', '', trim($value));
+        $this->attributes['full_name'] = $normalized;
+    }
+
     protected $casts = [
         'consultation_fee' => 'decimal:2',
         'is_active' => 'boolean',

@@ -61,8 +61,9 @@ class OpdBooking extends Component
     public $latestConsultation;
 
     public $showBookingForm = false;
+    public $activeBookingFound = false;
 
-    public function mount($patient_id = null, OpdService $service)
+    public function mount(OpdService $service, $patient_id = null)
     {
         $this->consultation_date = now()->toDateString();
         $this->valid_upto = $service->getValidityDate($this->consultation_date);
@@ -102,56 +103,11 @@ class OpdBooking extends Component
         $this->dispatch('notify', ['type' => 'info', 'message' => 'Initiating booking...']);
 
         $this->selectedPatient = Patient::findOrFail($id);
-        $service = app(GrowthChartService::class);
-        $this->growthForecast = $service->getGrowthForecast($this->selectedPatient);
         $this->showBookingForm = true;
         $this->isEditing = false;
         $this->searchPatient = ''; // Clear search
-        
-        $this->latestConsultation = Consultation::where('patient_id', $id)
-            ->with(['doctor', 'service'])
-            ->latest('consultation_date')
-            ->first();
 
-        // Review logic: Use service-specific validity or fallback to global setting
-        $this->isReview = false;
-        if ($this->latestConsultation) {
-            $serviceValidity = $this->latestConsultation->service?->validity_days ?? \App\Models\Setting::get('opd_validity_days', 7);
-            $daysSinceLastVisit = Carbon::parse($this->latestConsultation->consultation_date)->diffInDays(Carbon::parse($this->consultation_date));
-            if ($daysSinceLastVisit <= $serviceValidity) {
-                $this->isReview = true;
-                $this->selectedService = $this->latestConsultation->service_id;
-                $this->selectedDoctor = $this->latestConsultation->doctor_id;
-                $this->fee = 0;
-            }
-        }
-
-        $hasRecentVisit = false;
-        if ($this->latestConsultation && $this->latestConsultation->valid_upto) {
-            $hasRecentVisit = Carbon::parse($this->latestConsultation->valid_upto)->isAfter(Carbon::parse($this->consultation_date)) || 
-                              Carbon::parse($this->latestConsultation->valid_upto)->isSameDay(Carbon::parse($this->consultation_date));
-        }
-
-        $this->isFollowUp = $hasRecentVisit || $this->isReview;
-
-        if ($this->isFollowUp) {
-            if (!$this->isReview) {
-                $this->fee = 0;
-                $this->paymentStatus = 'Paid';
-                $this->amountPaid = 0;
-                $this->dispatch('notify', ['type' => 'success', 'message' => 'Follow-up visit: Free of charge.']);
-            }
-        } else {
-            // Re-select doctor or service to get current fee
-            if ($this->selectedService) {
-                $service = \App\Models\Service::find($this->selectedService);
-                if ($service) {
-                    $this->fee = $service->price;
-                }
-            } else {
-                $this->autoSelectDoctor();
-            }
-        }
+        $this->recalculateDetails();
 
         // Auto-fill from latest vitals if available
         $latestVitals = $this->selectedPatient->vitals()->latest()->first();
@@ -163,87 +119,76 @@ class OpdBooking extends Component
             $this->reset(['weight', 'height', 'temperature']);
         }
 
-        $this->recalculateFee();
-
         $this->dispatch('open-modal', name: 'booking-modal');
 
         if ($this->weight || $this->height) {
             $this->updateGrowthStatus();
         }
+    }
 
-        $this->recalculateFee();
-        $this->refreshValidity();
+    public function recalculateDetails()
+    {
+        if (!$this->selectedPatient) return;
+
+        $opdService = app(OpdService::class);
+        $details = $opdService->calculateBookingDetails(
+            $this->selectedPatient,
+            $this->selectedService ?: null,
+            $this->selectedDoctor ?: null,
+            $this->consultation_date
+        );
+
+        $this->isReview = $details['is_review'];
+        $this->isFollowUp = $details['is_follow_up'];
+        $this->fee = $details['suggested_fee'];
+        $this->valid_upto = $details['valid_upto'];
+        $this->latestConsultation = $details['latest_consultation'];
+
+        $growthService = app(GrowthChartService::class);
+        $this->growthForecast = $growthService->getGrowthForecast($this->selectedPatient);
+
+        $this->updatedFee($this->fee);
+        $this->checkActiveBooking();
     }
 
     public function recalculateFee()
     {
-        if (!$this->selectedPatient) return;
+        $this->recalculateDetails();
+    }
 
-        $service = null;
-        if ($this->selectedService) {
-            $service = \App\Models\Service::find($this->selectedService);
+    private function checkActiveBooking()
+    {
+        if (!$this->selectedPatient || !$this->selectedService) {
+            $this->activeBookingFound = false;
+            return;
         }
 
-        if ($service && $service->validity_days > 0) {
-            // Check if within service-specific validity
-            $hasRecentVisit = Consultation::where('patient_id', $this->selectedPatient->id)
-                ->where('status', '!=', 'Cancelled')
-                ->where('service_id', $service->id)
-                ->whereDate('consultation_date', '>=', Carbon::parse($this->consultation_date)->subDays($service->validity_days))
-                ->exists();
-            
-            $this->isFollowUp = $hasRecentVisit;
-            if ($hasRecentVisit) {
-                $this->fee = 0;
-            } else {
-                $this->fee = $service->price;
-            }
-        } else {
-            // Default logic
-            $hasRecentVisit = Consultation::where('patient_id', $this->selectedPatient->id)
-                ->where('status', '!=', 'Cancelled')
-                ->where('valid_upto', '>=', $this->consultation_date)
-                ->exists();
-
-            $this->isFollowUp = $hasRecentVisit;
-
-            if ($this->isReview) {
-                $this->fee = 0;
-                if ($this->latestConsultation) {
-                    $this->selectedService = $this->latestConsultation->service_id;
-                }
-            } elseif ($hasRecentVisit) {
-                $this->fee = 0;
-            } else {
-                if ($service) {
-                    $this->fee = $service->price;
-                } else {
-                    $this->autoSelectDoctor();
-                }
-            }
-        }
-
-        $this->updatedFee($this->fee);
-        $this->refreshValidity();
+        $this->activeBookingFound = Consultation::where('patient_id', $this->selectedPatient->id)
+            ->where('service_id', $this->selectedService)
+            ->whereDate('consultation_date', $this->consultation_date)
+            ->whereIn('status', ['Pending', 'In Progress'])
+            ->when($this->selectedDoctor, fn($q) => $q->where('doctor_id', $this->selectedDoctor))
+            ->exists();
     }
 
     public function refreshValidity()
     {
-        $service = null;
-        if ($this->selectedService) {
-            $service = \App\Models\Service::find($this->selectedService);
-        }
-
-        $days = ($service && $service->validity_days > 0) 
-            ? $service->validity_days 
-            : \App\Models\Setting::get('opd_validity_days', 7);
-
-        $this->valid_upto = Carbon::parse($this->consultation_date)->addDays((int)$days)->toDateString();
+        $opdService = app(OpdService::class);
+        $this->valid_upto = $opdService->getValidityDate($this->consultation_date, $this->selectedService ?: null);
     }
 
     public function updatedSelectedService($id)
     {
         $this->recalculateFee();
+        $this->checkActiveBooking();
+    }
+
+
+
+    public function updatedConsultationDate($value)
+    {
+        $this->checkActiveBooking();
+        $this->refreshValidity();
     }
 
     public function updatedWeight($value)
@@ -288,6 +233,7 @@ class OpdBooking extends Component
                 }
             }
         }
+        $this->checkActiveBooking();
     }
 
     public function updatedFee($value)

@@ -1,13 +1,18 @@
-@props(['name', 'title' => null, 'maxWidth' => '2xl'])
+@props(['name', 'title' => null, 'width' => '2xl', 'persistent' => false])
 
 @php
-$maxWidth = [
+$width = [
     'sm' => 'sm:max-w-sm',
     'md' => 'sm:max-w-md',
     'lg' => 'sm:max-w-lg',
     'xl' => 'sm:max-w-xl',
     '2xl' => 'sm:max-w-2xl',
-][$maxWidth] ?? 'sm:max-w-2xl';
+    '3xl' => 'sm:max-w-3xl',
+    '4xl' => 'sm:max-w-4xl',
+    '5xl' => 'sm:max-w-5xl',
+    '6xl' => 'sm:max-w-6xl',
+    '7xl' => 'sm:max-w-7xl',
+][$width] ?? 'sm:max-w-2xl';
 @endphp
 
 <div x-data="{ show: false }"
@@ -27,7 +32,7 @@ $maxWidth = [
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
          class="fixed inset-0 transform transition-all" 
-         @click="show = false">
+         @click="{{ $persistent ? '' : 'show = false' }}">
         <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-md"></div>
     </div>
 
@@ -38,14 +43,14 @@ $maxWidth = [
          x-transition:leave="ease-in duration-200"
          x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
          x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-         class="px-4 py-8 mb-6 bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700/50 transform transition-all sm:w-full {{ $maxWidth }} sm:mx-auto mt-10">
+         class="px-4 py-8 mb-6 bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700/50 transform transition-all sm:w-full {{ $width }} sm:mx-auto mt-10">
         
         <div class="px-6 py-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-6 mb-6">
             @if($title)
                 <h3 class="text-xl font-black text-gray-800 dark:text-white uppercase tracking-tight">{{ $title }}</h3>
             @endif
             <button @click="show = false" class="p-2 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l18 18" /></svg>
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
         </div>
 

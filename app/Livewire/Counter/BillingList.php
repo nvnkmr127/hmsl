@@ -5,6 +5,7 @@ namespace App\Livewire\Counter;
 use App\Models\Bill;
 use App\Models\BillPayment;
 use App\Services\BillingService;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -22,7 +23,9 @@ class BillingList extends Component
     public $opSearch = '';
     public $opStatusFilter = '';
     public $opDoctorFilter = '';
-    public $opDateFilter = '';
+    public $opVisitTypeFilter = '';
+    public $opFromDate = '';
+    public $opToDate = '';
 
     public ?int $selectedBillId = null;
     public string $paymentType = 'payment';
@@ -39,6 +42,11 @@ class BillingList extends Component
     public $isAuthorizedByDoctor = false;
     public $authorizedLimit = 0;
 
+    // OP Discount Properties
+    public $selectedOpId = null;
+    public $opDiscountAmount = 0;
+    public $opDiscountReason = '';
+
     protected $queryString = [
         'search' => ['except' => ''],
         'statusFilter' => ['except' => ''],
@@ -48,7 +56,9 @@ class BillingList extends Component
         'opSearch' => ['except' => ''],
         'opStatusFilter' => ['except' => ''],
         'opDoctorFilter' => ['except' => ''],
-        'opDateFilter' => ['except' => ''],
+        'opVisitTypeFilter' => ['except' => ''],
+        'opFromDate' => ['except' => ''],
+        'opToDate' => ['except' => ''],
     ];
 
     public function updatedSearch()    { $this->resetPage(); }
@@ -58,11 +68,19 @@ class BillingList extends Component
     public function updatedOpSearch() { $this->resetPage(); }
     public function updatedOpStatusFilter() { $this->resetPage(); }
     public function updatedOpDoctorFilter() { $this->resetPage(); }
-    public function updatedOpDateFilter() { $this->resetPage(); }
+    public function updatedOpVisitTypeFilter() { $this->resetPage(); }
+    public function updatedOpFromDate() { $this->resetPage(); }
+    public function updatedOpToDate() { $this->resetPage(); }
 
     public function setTab($tab)
     {
         $this->activeTab = $tab;
+        $this->resetPage();
+    }
+
+    public function resetOpFilters()
+    {
+        $this->reset(['opSearch', 'opStatusFilter', 'opDoctorFilter', 'opVisitTypeFilter', 'opFromDate', 'opToDate']);
         $this->resetPage();
     }
 
@@ -173,6 +191,60 @@ class BillingList extends Component
         }
     }
 
+    public function openOpDiscountModal($opId)
+    {
+        $op = \App\Models\Consultation::findOrFail($opId);
+        $this->selectedOpId = $opId;
+        $this->opDiscountAmount = 0;
+        $this->opDiscountReason = '';
+        $this->dispatch('open-modal', name: 'op-discount-modal');
+    }
+
+    public function submitOpDiscount()
+    {
+        $this->validate([
+            'selectedOpId' => 'required|exists:consultations,id',
+            'opDiscountAmount' => 'required|numeric|min:0.01',
+            'opDiscountReason' => 'required|string|max:255',
+        ]);
+
+        $op = \App\Models\Consultation::with('bill.items')->findOrFail($this->selectedOpId);
+        
+        if ($this->opDiscountAmount > $op->fee) {
+            $this->dispatch('notify', ['type' => 'error', 'message' => 'Discount cannot be more than the fee.']);
+            return;
+        }
+
+        DB::transaction(function () use ($op) {
+            $op->discount_amount = ($op->discount_amount ?? 0) + $this->opDiscountAmount;
+            $op->fee = $op->fee - $this->opDiscountAmount;
+            $op->notes = ($op->notes ? $op->notes . ' ' : '') . "[Discount: ₹{$this->opDiscountAmount} - {$this->opDiscountReason}]";
+            $op->save();
+
+            // Sync with Bill if it exists
+            $bill = $op->bill;
+            if ($bill) {
+                // Find the consultation item in the bill
+                $billItem = $bill->items()
+                    ->where('item_type', 'Consultation')
+                    ->first();
+                
+                if ($billItem) {
+                    $billItem->unit_price = $op->fee;
+                    $billItem->total_price = $op->fee; // Quantity is 1
+                    $billItem->save();
+                    
+                    // Recalculate bill totals
+                    app(BillingService::class)->recalculatePaymentStatus($bill);
+                }
+            }
+        });
+
+        $this->dispatch('close-modal', name: 'op-discount-modal');
+        $this->dispatch('notify', ['type' => 'success', 'message' => 'Discount applied to OP booking and Bill updated.']);
+        $this->reset(['selectedOpId', 'opDiscountAmount', 'opDiscountReason']);
+    }
+
     public function render()
     {
         $bills = \App\Models\Bill::with(['patient', 'consultation.doctor', 'payments', 'discounts'])
@@ -190,7 +262,7 @@ class BillingList extends Component
             ->latest()
             ->paginate(15, pageName: 'bills-page');
 
-        $ops = \App\Models\Consultation::with(['patient', 'doctor', 'bill'])
+        $opBaseQuery = \App\Models\Consultation::query()
             ->when($this->opSearch, function ($q) {
                 $q->whereHas('patient', fn($pq) =>
                     $pq->where('first_name', 'like', "%{$this->opSearch}%")
@@ -200,7 +272,12 @@ class BillingList extends Component
             })
             ->when($this->opStatusFilter, fn($q) => $q->where('status', $this->opStatusFilter))
             ->when($this->opDoctorFilter, fn($q) => $q->where('doctor_id', $this->opDoctorFilter))
-            ->when($this->opDateFilter, fn($q) => $q->whereDate('consultation_date', $this->opDateFilter))
+            ->when($this->opVisitTypeFilter, fn($q) => $q->where('visit_type', $this->opVisitTypeFilter))
+            ->when($this->opFromDate, fn($q) => $q->whereDate('consultation_date', '>=', $this->opFromDate))
+            ->when($this->opToDate, fn($q) => $q->whereDate('consultation_date', '<=', $this->opToDate))
+            ->when(!$this->opFromDate && !$this->opToDate, fn($q) => $q->whereDate('consultation_date', today()));
+
+        $ops = (clone $opBaseQuery)->with(['patient', 'doctor', 'bill'])
             ->latest()
             ->paginate(15, pageName: 'ops-page');
 
@@ -217,8 +294,17 @@ class BillingList extends Component
             'op_today'      => \App\Models\Consultation::whereDate('consultation_date', today())->count(),
         ];
 
+        // Specific OP Reports Stats
+        $opStats = [
+            'total' => (clone $opBaseQuery)->count(),
+            'review' => (clone $opBaseQuery)->where('visit_type', 'Review')->count(),
+            'paid' => (clone $opBaseQuery)->where('payment_status', 'Paid')->where('fee', '>', 0)->count(),
+            'revenue' => (float) (clone $opBaseQuery)->sum('fee'),
+            'discount' => (float) (clone $opBaseQuery)->sum('discount_amount'),
+        ];
+
         $doctors = \App\Models\Doctor::all();
 
-        return view('livewire.counter.billing-list', compact('bills', 'ops', 'stats', 'doctors'));
+        return view('livewire.counter.billing-list', compact('bills', 'ops', 'stats', 'opStats', 'doctors'));
     }
 }

@@ -84,8 +84,8 @@
         </div>
     </div>
 
-    <livewire:counter.patient-form />
     <livewire:counter.quick-op-booking />
+    <livewire:counter.patient-form />
     <x-toast />
 
     @livewireScripts

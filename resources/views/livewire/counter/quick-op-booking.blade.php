@@ -1,5 +1,5 @@
 <div x-data="{}" @open-modal.window="if($event.detail.name === 'quick-op-modal') { setTimeout(() => { (document.getElementById('quick-appointment-weight') || document.getElementById('quick-appointment-search'))?.focus(); }, 200); }">
-    <x-modal name="quick-op-modal" title="Quick Appointment" width="3xl">
+    <x-modal name="quick-op-modal" title="Quick Appointment" width="3xl" persistent>
         <div class="p-6">
             @if(!$selectedPatient)
                 <!-- Search Section -->
@@ -101,9 +101,20 @@
                 </div>
             @else
                 <!-- Booking Section -->
-                <div class="mb-8 relative">
-                   <x-clinical.patient-strip :patient="$selectedPatient" size="md" />
-                   @if($isReview)
+                 <div class="mb-8 relative">
+                    <x-clinical.patient-strip :patient="$selectedPatient" size="md" />
+                    
+                    <!-- Edit Patient Button -->
+                    <button type="button" 
+                            @click="$dispatch('close-modal', { name: 'quick-op-modal' }); $dispatch('edit-patient', { id: {{ $selectedPatient->id }} })"
+                            class="absolute top-2 right-2 p-2.5 bg-white dark:bg-gray-800 text-indigo-600 dark:text-indigo-400 rounded-xl shadow-xl border border-indigo-100 dark:border-indigo-900/30 hover:scale-110 active:scale-95 transition-all z-20"
+                            title="Update Patient Profile">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                    </button>
+
+                    @if($isReview)
                        <div class="absolute -top-3 -right-3">
                            <span class="bg-indigo-600 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg border-2 border-white dark:border-gray-900 uppercase tracking-widest animate-pulse">
                                Review Visit
@@ -375,12 +386,19 @@
                                     class="px-6 py-3 text-tiny font-black uppercase tracking-[0.2em] text-gray-400 hover:text-gray-900 transition-all">
                                 Cancel
                             </button>
-                            <button type="submit" 
-                                    wire:loading.attr="disabled"
-                                    class="btn btn-primary px-10 py-4 shadow-xl shadow-indigo-500/30 rounded-2xl group transition-all active:scale-95">
-                                <span wire:loading.remove>Confirm & Print</span>
-                                <span wire:loading>Finalizing...</span>
-                            </button>
+                            @if(!$activeBookingFound)
+                                <button type="submit" 
+                                        wire:loading.attr="disabled"
+                                        class="btn btn-primary px-10 py-4 shadow-xl shadow-indigo-500/30 rounded-2xl group transition-all active:scale-95">
+                                    <span wire:loading.remove>Confirm & Print</span>
+                                    <span wire:loading>Finalizing...</span>
+                                </button>
+                            @else
+                                <div class="px-8 py-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 rounded-2xl flex items-center gap-3">
+                                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                                    <p class="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest">Active Booking Found</p>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </form>

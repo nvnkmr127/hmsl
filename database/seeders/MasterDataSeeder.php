@@ -23,7 +23,7 @@ class MasterDataSeeder extends Seeder
         Doctor::updateOrCreate(
             ['email' => 'avinash.paed@hospital.com'],
             [
-                'full_name' => 'Dr. Avinash Lakkampally',
+                'full_name' => 'Avinash Lakkampally',
                 'user_id' => null, 
                 'department_id' => $pediatrics->id,
                 'specialization' => 'Senior Paediatrician',

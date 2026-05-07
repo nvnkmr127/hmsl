@@ -35,6 +35,7 @@ class QuickOpBooking extends Component
     public $isReview = false;
     public $growthStatus;
     public $growthForecast;
+    public $activeBookingFound = false;
 
     #[On('patient-registered')]
     public function handlePatientRegistered($id = null)
@@ -43,6 +44,15 @@ class QuickOpBooking extends Component
         $patientId = is_array($id) ? ($id['id'] ?? null) : $id;
         if ($patientId) {
             $this->selectPatient($patientId);
+        }
+    }
+
+    #[On('patient-saved')]
+    public function handlePatientSaved()
+    {
+        if ($this->selectedPatient) {
+            $this->selectedPatient->refresh();
+            $this->dispatch('open-modal', name: 'quick-op-modal');
         }
     }
 
@@ -63,14 +73,18 @@ class QuickOpBooking extends Component
     {
         // Auto search/select or trigger registration after 10 digits for phone search
         if (strlen($value) === 10 && is_numeric($value) && ($this->searchType === 'all' || $this->searchType === 'phone')) {
-            $patient = Patient::where('phone', $value)->first();
-            if ($patient) {
-                $this->selectPatient($patient->id);
+            $patients = Patient::where('phone', $value)->get();
+            if ($patients->count() === 1) {
+                $this->selectPatient($patients->first()->id);
+            } elseif ($patients->count() > 1) {
+                // Multiple siblings found - highlight search results and notify
+                $this->searchPatient = $value; 
+                $this->dispatch('notify', ['type' => 'info', 'message' => "Multiple patients found for this number. Please select one."]);
             } else {
                 // Not found - auto close this and open registration
                 $this->dispatch('close-modal', name: 'quick-op-modal');
                 // Small delay to ensure smooth transition
-                $this->dispatch('create-patient', phone: $value);
+                $this->dispatch('create-patient', ['phone' => $value]);
             }
         }
     }
@@ -103,53 +117,10 @@ class QuickOpBooking extends Component
     public function selectPatient($id)
     {
         $this->selectedPatient = Patient::findOrFail($id);
-        $service = app(GrowthChartService::class);
-        $this->growthForecast = $service->getGrowthForecast($this->selectedPatient);
         $this->isEditing = false;
         $this->searchPatient = '';
         
-        // Check for recent consultations within validity period
-        $hasRecentVisit = false;
-        if ($this->valid_upto) {
-            $hasRecentVisit = Consultation::where('patient_id', $id)
-                ->where('status', '!=', 'Cancelled')
-                ->where('valid_upto', '>=', $this->consultation_date)
-                ->exists();
-        }
-
-        $this->latestConsultation = Consultation::where('patient_id', $id)
-            ->with(['doctor', 'service'])
-            ->latest('consultation_date')
-            ->first();
-
-        // Review logic: Use service-specific validity or fallback to global setting
-        $this->isReview = false;
-        if ($this->latestConsultation) {
-            $serviceValidity = $this->latestConsultation->service?->validity_days ?? \App\Models\Setting::get('opd_validity_days', 7);
-            
-            $daysSinceLastVisit = Carbon::parse($this->latestConsultation->consultation_date)->diffInDays(Carbon::parse($this->consultation_date));
-            if ($daysSinceLastVisit <= $serviceValidity) {
-                $this->isReview = true;
-                $this->selectedService = $this->latestConsultation->service_id;
-                $this->selectedDoctor = $this->latestConsultation->doctor_id;
-                $this->fee = 0;
-            }
-        }
-
-        if ($this->isReview) {
-            $this->dispatch('notify', ['type' => 'success', 'message' => 'Review Visit: Auto-selected previous service.']);
-        }
-
-        $this->isFollowUp = $hasRecentVisit || $this->isReview;
-
-        if ($this->isFollowUp) {
-            if (!$this->isReview) {
-                $this->fee = 0;
-                $this->dispatch('notify', ['type' => 'success', 'message' => 'Follow-up visit: Free of charge.']);
-            }
-        } else {
-            $this->autoSelectDoctor();
-        }
+        $this->recalculateDetails();
 
         $latestVitals = $this->selectedPatient->vitals()->latest()->first();
         if ($latestVitals) {
@@ -163,79 +134,81 @@ class QuickOpBooking extends Component
         if ($this->weight || $this->height) {
             $this->updateGrowthStatus();
         }
+    }
 
-        $this->recalculateFee();
-        $this->refreshValidity();
+    public function recalculateDetails()
+    {
+        if (!$this->selectedPatient) return;
+
+        $opdService = app(OpdService::class);
+        $details = $opdService->calculateBookingDetails(
+            $this->selectedPatient,
+            $this->selectedService ?: null,
+            $this->selectedDoctor ?: null,
+            $this->consultation_date
+        );
+
+        $this->isReview = $details['is_review'];
+        $this->isFollowUp = $details['is_follow_up'];
+        $this->fee = $details['suggested_fee'];
+        $this->valid_upto = $details['valid_upto'];
+        $this->latestConsultation = $details['latest_consultation'];
+
+        if ($this->isReview) {
+            $this->selectedService = $this->latestConsultation->service_id;
+            $this->selectedDoctor = $this->latestConsultation->doctor_id;
+            $this->dispatch('notify', ['type' => 'success', 'message' => 'Review Visit: Auto-selected previous service.']);
+        } elseif ($this->isFollowUp) {
+            $this->dispatch('notify', ['type' => 'success', 'message' => 'Follow-up visit: Free of charge.']);
+        }
+
+        $growthService = app(GrowthChartService::class);
+        $this->growthForecast = $growthService->getGrowthForecast($this->selectedPatient);
+
+        $this->checkActiveBooking();
     }
 
     public function recalculateFee()
     {
-        if (!$this->selectedPatient) return;
+        $this->recalculateDetails();
+    }
 
-        $service = null;
-        if ($this->selectedService) {
-            $service = \App\Models\Service::find($this->selectedService);
+    private function checkActiveBooking()
+    {
+        if (!$this->selectedPatient || !$this->selectedService) {
+            $this->activeBookingFound = false;
+            return;
         }
 
-        if ($service && $service->validity_days > 0) {
-            // Check if within service-specific validity
-            $hasRecentVisit = Consultation::where('patient_id', $this->selectedPatient->id)
-                ->where('status', '!=', 'Cancelled')
-                ->where('service_id', $service->id)
-                ->whereDate('consultation_date', '>=', Carbon::parse($this->consultation_date)->subDays($service->validity_days))
-                ->exists();
-            
-            $this->isFollowUp = $hasRecentVisit;
-            if ($hasRecentVisit) {
-                $this->fee = 0;
-            } else {
-                $this->fee = $service->price;
-            }
-        } else {
-            // Default logic using global settings
-            $hasRecentVisit = Consultation::where('patient_id', $this->selectedPatient->id)
-                ->where('status', '!=', 'Cancelled')
-                ->where('valid_upto', '>=', $this->consultation_date)
-                ->exists();
-
-            $this->isFollowUp = $hasRecentVisit;
-
-            if ($this->isReview) {
-                $this->fee = 0;
-                if ($this->latestConsultation) {
-                    $this->selectedService = $this->latestConsultation->service_id;
-                }
-            } elseif ($hasRecentVisit) {
-                $this->fee = 0;
-            } else {
-                if ($service) {
-                    $this->fee = $service->price;
-                } else {
-                    $this->autoSelectDoctor();
-                }
-            }
-        }
-        
-        $this->refreshValidity();
+        $this->activeBookingFound = Consultation::where('patient_id', $this->selectedPatient->id)
+            ->where('service_id', $this->selectedService)
+            ->whereDate('consultation_date', $this->consultation_date)
+            ->whereIn('status', ['Pending', 'In Progress'])
+            ->when($this->selectedDoctor, fn($q) => $q->where('doctor_id', $this->selectedDoctor))
+            ->exists();
     }
 
     public function refreshValidity()
     {
-        $service = null;
-        if ($this->selectedService) {
-            $service = \App\Models\Service::find($this->selectedService);
-        }
-
-        $days = ($service && $service->validity_days > 0) 
-            ? $service->validity_days 
-            : \App\Models\Setting::get('opd_validity_days', 7);
-
-        $this->valid_upto = Carbon::parse($this->consultation_date)->addDays((int)$days)->toDateString();
+        $opdService = app(OpdService::class);
+        $this->valid_upto = $opdService->getValidityDate($this->consultation_date, $this->selectedService ?: null);
     }
 
     public function updatedSelectedService($id)
     {
         $this->recalculateFee();
+        $this->checkActiveBooking();
+    }
+
+    public function updatedSelectedDoctor($id)
+    {
+        $this->checkActiveBooking();
+    }
+
+    public function updatedConsultationDate($value)
+    {
+        $this->checkActiveBooking();
+        $this->refreshValidity();
     }
 
     public function updatedWeight($value)

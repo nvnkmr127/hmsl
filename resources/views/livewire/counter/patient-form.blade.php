@@ -1,14 +1,25 @@
 <div>
-    <x-modal name="patient-modal" :title="$isEditing ? 'Update Patient Information' : 'New Patient Registration'" width="3xl">
+    <x-modal name="patient-modal" :title="$isEditing ? 'Update Patient Information' : 'New Patient Registration'" width="3xl" persistent>
         <form wire:submit="save" class="space-y-8 p-1">
             <!-- Identity Section -->
             <div class="space-y-6">
                 <!-- Child Full Name (Prominent) -->
                 <div x-data="{}" x-init="$nextTick(() => $refs.firstName.focus())" class="grid grid-cols-1 gap-4">
                     <div class="p-6 rounded-ultra bg-indigo-50/50 dark:bg-indigo-950/20 border-2 border-indigo-100/50 dark:border-indigo-900/30 group transition-all focus-within:border-indigo-500">
-                        <label class="text-tiny font-black text-indigo-500 uppercase tracking-[0.2em] ml-2 mb-3 block">Patient (Child) Full Name</label>
-                        <input type="text" wire:model="first_name" x-ref="firstName" placeholder="Enter Child's Full Name" 
-                               class="w-full bg-transparent border-none p-0 text-2xl font-black text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-700 outline-none transition-all shadow-none ring-0 focus:ring-0">
+                        <div class="flex items-center justify-between mb-4">
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest pl-1">Patient (Child) Full Name</label>
+                            
+                            <label class="relative inline-flex items-center cursor-pointer group">
+                                <input type="checkbox" wire:model.live="is_baby_of" class="sr-only peer">
+                                <div class="w-10 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                                <span class="ml-2 text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest group-hover:text-indigo-500 transition-colors">Unnamed Baby? (B/O)</span>
+                            </label>
+                        </div>
+
+                        <input type="text" wire:model="first_name" x-ref="firstName" 
+                               placeholder="{{ $is_baby_of ? 'B/O Mother\'s Name' : 'Enter Child\'s Full Name' }}" 
+                               {{ $is_baby_of ? 'readonly' : '' }}
+                               class="w-full bg-transparent border-none p-0 text-2xl font-black {{ $is_baby_of ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-900 dark:text-white' }} placeholder-gray-300 dark:placeholder-gray-700 outline-none transition-all shadow-none ring-0 focus:ring-0">
                         @error('first_name') <p class="text-tiny text-rose-500 font-black uppercase mt-2 ml-2">{{ $message }}</p> @enderror
                     </div>
                 </div>
@@ -16,7 +27,7 @@
                 <!-- Parents Info Group -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <x-form.input label="Mother Name" wire:model="mother_name" name="mother_name" placeholder="Mother's Full Name" />
+                        <x-form.input label="Mother Name" wire:model.live.debounce.300ms="mother_name" name="mother_name" placeholder="Mother's Full Name" />
                         @error('mother_name') <p class="text-tiny text-rose-500 font-black uppercase mt-1">{{ $message }}</p> @enderror
                     </div>
                     <x-form.input label="Father Name (Optional)" wire:model="father_name" name="father_name" placeholder="Father's Full Name" />
@@ -137,20 +148,7 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                        <div class="md:col-span-2">
-                            <x-form.input label="City / Town" wire:model="city" name="city" placeholder="City" />
-                            @error('city') <p class="text-tiny text-rose-500 font-black uppercase mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <x-form.input label="State" wire:model="state" name="state" placeholder="State" />
-                            @error('state') <p class="text-tiny text-rose-500 font-black uppercase mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <x-form.input label="Pincode" wire:model="pincode" name="pincode" placeholder="6 Digit Code" />
-                            @error('pincode') <p class="text-tiny text-rose-500 font-black uppercase mt-1">{{ $message }}</p> @enderror
-                        </div>
-                    </div>
+
 
                     <div>
                         <x-form.input label="Blood Group (Optional)" wire:model="blood_group" name="blood_group" placeholder="A+, O+, ..." />
@@ -166,9 +164,16 @@
                         class="px-8 py-4 text-tiny font-black uppercase tracking-[0.2em] text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
                     Discard
                 </button>
-                <button type="submit" class="px-12 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[1.5rem] text-tiny font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-500/30 hover:scale-[1.02] active:scale-95 transition-all">
-                    {{ $isEditing ? 'Update Profile' : 'Register & Proceed' }}
-                </button>
+                @if(!$duplicateFound)
+                    <button type="submit" class="px-12 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[1.5rem] text-tiny font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-500/30 hover:scale-[1.02] active:scale-95 transition-all">
+                        {{ $isEditing ? 'Update Profile' : 'Register & Proceed' }}
+                    </button>
+                @else
+                    <div class="px-8 py-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 rounded-2xl flex items-center gap-3">
+                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                        <p class="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest">Patient Already Registered</p>
+                    </div>
+                @endif
             </div>
         </form>
     </x-modal>

@@ -13,6 +13,8 @@ class PatientForm extends Component
     public $isEditing = false;
     public $patientId;
     public $matchedPatientName;
+    public $duplicateFound = false;
+    public $is_baby_of = false;
 
     #[Validate('required|string|max:255')]
     public $first_name;
@@ -66,14 +68,95 @@ class PatientForm extends Component
     {
         $this->matchedPatientName = null;
         if (strlen($value) >= 10) {
-            $lastPatient = Patient::where('phone', $value)->latest()->first();
-            if ($lastPatient) {
-                $this->matchedPatientName = $lastPatient->full_name;
-                $this->address = $lastPatient->address;
-                $this->city = $lastPatient->city;
-                $this->state = $lastPatient->state;
-                $this->pincode = $lastPatient->pincode;
+            $patients = Patient::where('phone', $value)->latest()->get();
+            if ($patients->isNotEmpty()) {
+                $lastPatient = $patients->first();
+                $names = $patients->pluck('first_name')->unique()->implode(', ');
+                $this->matchedPatientName = $names . ($lastPatient->city ? ' · ' . $lastPatient->city : '');
+                
+                $this->autofillFromRecord($lastPatient);
+                $this->checkDuplicate();
+            } else {
+                $this->resetFields();
             }
+        } else {
+            $this->resetFields();
+        }
+    }
+
+    private function autofillFromRecord(Patient $patient)
+    {
+        $this->address = $patient->address;
+        $this->city = $patient->city;
+        $this->state = $patient->state;
+        $this->pincode = $patient->pincode;
+        $this->father_name = $patient->father_name;
+        $this->mother_name = $patient->mother_name;
+        $this->emergency_contact_name = $patient->emergency_contact_name;
+        $this->emergency_contact_phone = $patient->emergency_contact_phone;
+        
+        // Only autofill identity if not editing
+        if (!$this->isEditing) {
+            $this->first_name = $patient->first_name;
+            $this->last_name = $patient->last_name;
+            $this->gender = $patient->gender;
+            $this->date_of_birth = $patient->date_of_birth ? $patient->date_of_birth->format('Y-m-d') : null;
+        }
+    }
+
+    public function updatedMotherName($value)
+    {
+        if ($this->is_baby_of) {
+            $this->first_name = 'B/O ' . ($value ?: '[Mother\'s Name]');
+        }
+    }
+
+    public function updatedIsBabyOf($value)
+    {
+        if ($value) {
+            $this->first_name = 'B/O ' . ($this->mother_name ?: '[Mother\'s Name]');
+        } else {
+            // Optional: Clear or keep? Keeping it might be better if they toggled by mistake.
+            // But usually, they'd want to type a name now.
+            if (str_starts_with($this->first_name, 'B/O ')) {
+                $this->first_name = '';
+            }
+        }
+    }
+
+    private function resetFields()
+    {
+        $this->matchedPatientName = null;
+        $this->duplicateFound = false;
+        $this->is_baby_of = false;
+        $this->reset([
+            'first_name', 'last_name', 'father_name', 'mother_name', 
+            'gender', 'date_of_birth', 'address', 'city', 'state', 'pincode',
+            'emergency_contact_name', 'emergency_contact_phone'
+        ]);
+    }
+
+    public function updated($property)
+    {
+        if (in_array($property, ['first_name', 'last_name', 'phone', 'date_of_birth', 'gender'])) {
+            $this->checkDuplicate();
+        }
+    }
+
+    private function checkDuplicate()
+    {
+        if ($this->isEditing) {
+            $this->duplicateFound = false;
+            return;
+        }
+
+        if ($this->first_name && $this->phone) {
+            $this->duplicateFound = Patient::where('first_name', $this->first_name)
+                ->where('phone', $this->phone)
+                ->when($this->date_of_birth, fn($q) => $q->whereDate('date_of_birth', $this->date_of_birth))
+                ->exists();
+        } else {
+            $this->duplicateFound = false;
         }
     }
 
@@ -94,14 +177,14 @@ class PatientForm extends Component
         if ($phone) {
             $this->phone = $phone;
             
-            // Auto-fetch address from most recent patient with same phone (family/sibling)
-            $lastPatient = Patient::where('phone', $phone)->latest()->first();
-            if ($lastPatient) {
-                $this->matchedPatientName = $lastPatient->full_name;
-                $this->address = $lastPatient->address;
-                $this->city = $lastPatient->city;
-                $this->state = $lastPatient->state;
-                $this->pincode = $lastPatient->pincode;
+            // Auto-fetch details from siblings
+            $patients = Patient::where('phone', $phone)->latest()->get();
+            if ($patients->isNotEmpty()) {
+                $lastPatient = $patients->first();
+                $names = $patients->pluck('first_name')->unique()->implode(', ');
+                $this->matchedPatientName = $names . ($lastPatient->city ? ' · ' . $lastPatient->city : '');
+                
+                $this->autofillFromRecord($lastPatient);
             }
         }
 
@@ -113,6 +196,7 @@ class PatientForm extends Component
             $this->mother_name = $mother_name;
         }
 
+        $this->checkDuplicate();
         $this->dispatch('open-modal', name: 'patient-modal');
     }
 
@@ -141,12 +225,26 @@ class PatientForm extends Component
         $this->marital_status = $patient->marital_status;
         $this->is_active = $patient->is_active;
 
+        // Auto-detect B/O status
+        $this->is_baby_of = str_starts_with($patient->first_name, 'B/O ');
+
 
         $this->dispatch('open-modal', name: 'patient-modal');
     }
 
     public function save(PatientService $service)
     {
+        if ($this->is_baby_of && empty(trim($this->mother_name))) {
+            $this->addError('mother_name', 'Mother\'s name is required for unnamed babies.');
+            return;
+        }
+
+        $this->checkDuplicate();
+        if ($this->duplicateFound && !$this->isEditing) {
+             $this->addError('first_name', 'A patient with this name and phone already exists.');
+             return;
+        }
+
         $this->validate();
 
         $data = [

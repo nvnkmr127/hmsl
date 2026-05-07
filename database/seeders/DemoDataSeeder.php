@@ -31,7 +31,7 @@ class DemoDataSeeder extends Seeder
         // 3. Create Users for each role
         $users = [
             [
-                'name' => 'Dr. House',
+                'name' => 'House',
                 'email' => 'doctor@hospital.com',
                 'role' => 'doctor_owner'
             ],

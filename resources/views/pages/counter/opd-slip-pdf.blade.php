@@ -53,8 +53,16 @@
                 </td>
                 <td width="33%" align="right">
                     <span class="label">Consultation Fee</span><br>
-                    <span class="value" style="font-size: 13pt;">₹{{ number_format($consultation->fee, 0) }}</span>
-                    <span style="padding: 1px 3px; background: #333; color: #fff; font-size: 6pt; font-weight: bold; vertical-align: middle;">{{ strtoupper($consultation->payment_method) }}</span>
+                    <span class="value" style="font-size: 13pt;">
+                        @if($consultation->visit_type === 'Review' || $consultation->fee <= 0)
+                            REVIEW VISIT
+                        @else
+                            ₹{{ number_format($consultation->fee, 0) }}
+                        @endif
+                    </span>
+                    @if($consultation->visit_type !== 'Review' && $consultation->fee > 0)
+                        <span style="padding: 1px 3px; background: #333; color: #fff; font-size: 6pt; font-weight: bold; vertical-align: middle;">{{ strtoupper($consultation->payment_method) }}</span>
+                    @endif
                 </td>
             </tr>
             <tr><td colspan="3" style="height: 12px; border-bottom: 1px solid #eee; margin-bottom: 12px;"></td></tr>
@@ -63,6 +71,12 @@
                 <td width="20%">
                     <span class="label">Age / Gender</span><br>
                     <span class="value">{{ $consultation->patient->age }} / {{ $consultation->patient->gender }}</span>
+                    @if($consultation->patient->mother_name)
+                        <div style="margin-top: 3px;">
+                            <span class="label" style="font-size: 7pt;">M/O:</span>
+                            <span class="value" style="font-size: 8pt;">{{ strtoupper($consultation->patient->mother_name) }}</span>
+                        </div>
+                    @endif
                 </td>
                 <td width="60%" align="center">
                     <table style="width: auto; margin: 0 auto;">
@@ -100,7 +114,7 @@
 
     <div style="margin-top: 15px;">
         <span class="label">Consultant:</span><br>
-        <span class="value" style="font-size: 12pt;">Dr. {{ $consultation->doctor->full_name ?? 'Resident Doctor' }}</span>
+        <span class="value" style="font-size: 12pt;">{{ $consultation->doctor ? 'Dr. ' . $consultation->doctor->full_name : 'Resident Doctor' }}</span>
     </div>
 
 

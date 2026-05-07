@@ -405,7 +405,7 @@
     </div>
 
     <!-- Modals -->
-    <x-modal name="booking-modal" :title="$isEditing ? 'Reschedule Visit' : 'Create Token'" width="3xl">
+    <x-modal name="booking-modal" :title="$isEditing ? 'Reschedule Visit' : 'Create Token'" width="3xl" persistent>
         @if($selectedPatient)
             <div class="space-y-6 p-1">
                 <!-- Patient Identity Banner -->
@@ -640,20 +640,27 @@
                         </button>
                         
                         <div class="flex items-center gap-3 w-full sm:w-auto">
-                            <button type="button" 
-                                    wire:click="book(false)" 
-                                    wire:loading.attr="disabled"
-                                    class="flex-1 sm:flex-auto px-8 py-4 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-[1.5rem] text-tiny font-black uppercase tracking-[0.2em] transition-all disabled:opacity-50">
-                                <span wire:loading.remove wire:target="book(false)">Save Only</span>
-                                <span wire:loading wire:target="book(false)">Processing...</span>
-                            </button>
-                            <button type="button" 
-                                    wire:click="book(true)" 
-                                    wire:loading.attr="disabled"
-                                    class="flex-1 sm:flex-auto px-10 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[1.5rem] text-tiny font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-500/30 transition-all disabled:opacity-50">
-                                <span wire:loading.remove wire:target="book(true)">Save & Print</span>
-                                <span wire:loading wire:target="book(true)">Finalizing...</span>
-                            </button>
+                            @if(!$activeBookingFound)
+                                <button type="button" 
+                                        wire:click="book(false)" 
+                                        wire:loading.attr="disabled"
+                                        class="flex-1 sm:flex-auto px-8 py-4 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-[1.5rem] text-tiny font-black uppercase tracking-[0.2em] transition-all disabled:opacity-50">
+                                    <span wire:loading.remove wire:target="book(false)">Save Only</span>
+                                    <span wire:loading wire:target="book(false)">Processing...</span>
+                                </button>
+                                <button type="button" 
+                                        wire:click="book(true)" 
+                                        wire:loading.attr="disabled"
+                                        class="flex-1 sm:flex-auto px-10 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[1.5rem] text-tiny font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-500/30 transition-all disabled:opacity-50">
+                                    <span wire:loading.remove wire:target="book(true)">Save & Print</span>
+                                    <span wire:loading wire:target="book(true)">Finalizing...</span>
+                                </button>
+                            @else
+                                <div class="flex-1 sm:flex-auto px-8 py-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 rounded-2xl flex items-center gap-3">
+                                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                                    <p class="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest">Active Booking Found</p>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </form>

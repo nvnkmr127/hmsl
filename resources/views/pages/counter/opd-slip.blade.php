@@ -130,7 +130,19 @@
 
         {{-- LINE 3 --}}
         <div class="field pos-fee">
-            Paid: ₹{{ number_format($consultation->fee, 0) }} ({{ strtoupper($consultation->payment_method) }})
+            @php
+                $isNewbornReview = false;
+                if ($consultation->patient->date_of_birth) {
+                    $days = \Carbon\Carbon::parse($consultation->patient->date_of_birth)->startOfDay()->diffInDays($consultation->consultation_date->startOfDay());
+                    $isNewbornReview = $days <= 7;
+                }
+            @endphp
+
+            @if($isNewbornReview || $consultation->fee <= 0)
+                REVIEW VISIT
+            @else
+                Paid: ₹{{ number_format($consultation->fee, 0) }} ({{ strtoupper($consultation->payment_method) }})
+            @endif
         </div>
     </div>
 

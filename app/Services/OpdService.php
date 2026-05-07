@@ -18,11 +18,86 @@ class OpdService
         $this->billingService = $billingService;
     }
 
-    public function getValidityDate($date = null)
+    public function getValidityDate($date = null, $serviceId = null)
     {
         $date = $date ? Carbon::parse($date) : now();
+        
         $days = \App\Models\Setting::get('opd_validity_days', 7);
+        if ($serviceId) {
+            $service = \App\Models\Service::find($serviceId);
+            if ($service && $service->validity_days > 0) {
+                $days = $service->validity_days;
+            }
+        }
+        
         return $date->addDays((int)$days)->toDateString();
+    }
+
+    /**
+     * Centralized logic to determine booking details (follow-up, review, fees, etc.)
+     */
+    public function calculateBookingDetails(\App\Models\Patient $patient, ?int $serviceId = null, ?int $doctorId = null, ?string $date = null)
+    {
+        $date = $date ? Carbon::parse($date) : now();
+        $dateStr = $date->toDateString();
+
+        $latestConsultation = Consultation::where('patient_id', $patient->id)
+            ->with(['doctor', 'service'])
+            ->where('status', '!=', 'Cancelled')
+            ->latest('consultation_date')
+            ->first();
+
+        $isReview = false;
+        $isFollowUp = false;
+        $suggestedFee = 0;
+        
+        // 1. Check for REVIEW (within service/global validity of previous visit)
+        if ($latestConsultation) {
+            $serviceValidity = $latestConsultation->service?->validity_days ?? \App\Models\Setting::get('opd_validity_days', 7);
+            $daysSinceLastVisit = Carbon::parse($latestConsultation->consultation_date)->diffInDays($date);
+            
+            if ($daysSinceLastVisit <= $serviceValidity) {
+                $isReview = true;
+                $isFollowUp = true;
+                $suggestedFee = 0;
+            }
+        }
+
+        // 2. Check for FOLLOW-UP (any active validity)
+        if (!$isReview) {
+            $hasActiveValidity = Consultation::where('patient_id', $patient->id)
+                ->where('status', '!=', 'Cancelled')
+                ->where('valid_upto', '>=', $dateStr)
+                ->exists();
+            
+            if ($hasActiveValidity) {
+                $isFollowUp = true;
+                $suggestedFee = 0;
+            }
+        }
+
+        // 3. Determine Fee if not Follow-up/Review
+        if (!$isFollowUp) {
+            if ($serviceId) {
+                $service = \App\Models\Service::find($serviceId);
+                $suggestedFee = $service ? $service->price : 0;
+            } elseif ($doctorId) {
+                $doctor = Doctor::find($doctorId);
+                $suggestedFee = $doctor ? $doctor->consultation_fee : \App\Models\Setting::get('consultation_fee_default', 500);
+            } else {
+                $suggestedFee = \App\Models\Setting::get('consultation_fee_default', 500);
+            }
+        }
+
+        $validUpto = $this->getValidityDate($dateStr, $serviceId ?: ($latestConsultation?->service_id));
+
+        return [
+            'is_review' => $isReview,
+            'is_follow_up' => $isFollowUp,
+            'suggested_fee' => (float)$suggestedFee,
+            'valid_upto' => $validUpto,
+            'latest_consultation' => $latestConsultation,
+        ];
     }
 
     public function generateToken(?int $doctorId, $date = null, ?int $serviceId = null)
