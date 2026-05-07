@@ -18,6 +18,7 @@ use Livewire\Attributes\On;
 use Livewire\Attributes\Computed;
 
 use App\Services\GrowthChartService;
+use Carbon\Carbon;
 
 class OpdBooking extends Component
 {
@@ -141,6 +142,8 @@ class OpdBooking extends Component
             $this->reset(['weight', 'height', 'temperature']);
         }
 
+        $this->recalculateFee();
+
         $this->dispatch('open-modal', name: 'booking-modal');
 
         if ($this->weight || $this->height) {
@@ -148,26 +151,67 @@ class OpdBooking extends Component
         }
     }
 
-    public function updatedSelectedService($id)
+    public function recalculateFee()
     {
-        if ($id) {
-            $service = \App\Models\Service::find($id);
-            if ($service) {
-                $this->fee = $service->price;
+        if (!$this->selectedPatient) return;
+
+        $service = null;
+        if ($this->selectedService) {
+            $service = \App\Models\Service::find($this->selectedService);
+        }
+
+        $isNewBornService = $service && (strtolower($service->name) === 'new born');
+
+        if ($isNewBornService) {
+            $firstVisit = Consultation::where('patient_id', $this->selectedPatient->id)
+                ->where('status', '!=', 'Cancelled')
+                ->whereHas('service', fn($q) => $q->where('name', 'new born'))
+                ->oldest('consultation_date')
+                ->first();
+
+            if (!$firstVisit) {
+                $this->fee = 800;
+                $this->isFollowUp = false;
+            } else {
+                $daysSinceFirstVisit = Carbon::parse($firstVisit->consultation_date)->diffInDays(Carbon::parse($this->consultation_date));
                 
-                // If patient selected, check for follow-up
-                if ($this->selectedPatient) {
-                    $hasRecentVisit = Consultation::where('patient_id', $this->selectedPatient->id)
-                        ->where('status', '!=', 'Cancelled')
-                        ->where('valid_upto', '>=', $this->consultation_date)
-                        ->exists();
-                    $this->isFollowUp = $hasRecentVisit;
-                    if ($hasRecentVisit) {
-                        $this->fee = 0;
-                    }
+                if ($daysSinceFirstVisit <= 10) {
+                    $this->fee = 0;
+                    $this->isFollowUp = true;
+                } elseif ($daysSinceFirstVisit <= 30) {
+                    $this->fee = 500;
+                    $this->isFollowUp = true;
+                } else {
+                    $this->fee = 800; // After 30 days, treat as new?
+                    $this->isFollowUp = false;
+                }
+            }
+        } else {
+            // Default logic
+            $hasRecentVisit = Consultation::where('patient_id', $this->selectedPatient->id)
+                ->where('status', '!=', 'Cancelled')
+                ->where('valid_upto', '>=', $this->consultation_date)
+                ->exists();
+
+            $this->isFollowUp = $hasRecentVisit;
+
+            if ($hasRecentVisit) {
+                $this->fee = 0;
+            } else {
+                if ($service) {
+                    $this->fee = $service->price;
+                } else {
+                    $this->autoSelectDoctor();
                 }
             }
         }
+
+        $this->updatedFee($this->fee);
+    }
+
+    public function updatedSelectedService($id)
+    {
+        $this->recalculateFee();
     }
 
     public function updatedWeight($value)
@@ -573,7 +617,7 @@ class OpdBooking extends Component
         }
 
         $doctors = Doctor::active()->with(['department', 'user'])->get();
-        $services = \App\Models\Service::where('is_active', true)->where('category', 'OPD')->get();
+        $services = \App\Models\Service::where('is_active', true)->where('category', 'OPD')->orderBy('sort_order')->get();
         
         $todayConsultations = $this->todayConsultationsQuery->latest()->paginate(10);
 

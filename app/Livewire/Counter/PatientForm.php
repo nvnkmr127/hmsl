@@ -61,18 +61,55 @@ class PatientForm extends Component
 
     public $is_active = true;
 
+    public function updatedPhone($value)
+    {
+        if (strlen($value) >= 10) {
+            $lastPatient = Patient::where('phone', $value)->latest()->first();
+            if ($lastPatient) {
+                $this->address = $lastPatient->address;
+                $this->city = $lastPatient->city;
+                $this->state = $lastPatient->state;
+                $this->pincode = $lastPatient->pincode;
+                
+                // If names are empty, maybe suggest them too? 
+                // But usually better to just do address.
+            }
+        }
+    }
+
     #[On('create-patient')]
-    public function create($phone = null)
+    public function create($phone = null, $name = null, $mother_name = null)
     {
         $this->reset();
         $this->resetValidation();
         $this->isEditing = false;
         
-        // Handle both named array ['phone' => '...'] and direct argument
-        $phoneValue = is_array($phone) ? ($phone['phone'] ?? null) : $phone;
+        // Handle named array or direct arguments
+        if (is_array($phone)) {
+            $name = $phone['name'] ?? null;
+            $mother_name = $phone['mother_name'] ?? null;
+            $phone = $phone['phone'] ?? null;
+        }
         
-        if ($phoneValue) {
-            $this->phone = $phoneValue;
+        if ($phone) {
+            $this->phone = $phone;
+            
+            // Auto-fetch address from most recent patient with same phone (family/sibling)
+            $lastPatient = Patient::where('phone', $phone)->latest()->first();
+            if ($lastPatient) {
+                $this->address = $lastPatient->address;
+                $this->city = $lastPatient->city;
+                $this->state = $lastPatient->state;
+                $this->pincode = $lastPatient->pincode;
+            }
+        }
+
+        if ($name) {
+            $this->first_name = $name;
+        }
+
+        if ($mother_name) {
+            $this->mother_name = $mother_name;
         }
 
         $this->dispatch('open-modal', name: 'patient-modal');

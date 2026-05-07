@@ -5,7 +5,20 @@
                 <!-- Search Section -->
                 <div class="mb-6">
                     <div class="mb-4">
-                        <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-3">Search By</label>
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-0">Search By</label>
+                            <button type="button" 
+                                    @click="$dispatch('close-modal', { name: 'quick-op-modal' }); 
+                                            $dispatch('create-patient', { 
+                                                phone: '{{ ($searchType === 'phone' || ($searchType === 'all' && is_numeric($searchPatient) && strlen($searchPatient) === 10)) ? $searchPatient : '' }}',
+                                                name: '{{ ($searchType === 'name' || ($searchType === 'all' && !is_numeric($searchPatient))) ? $searchPatient : '' }}',
+                                                mother_name: '{{ $searchType === 'mother_name' ? $searchPatient : '' }}'
+                                            })" 
+                                    class="btn btn-primary px-6 py-2.5 rounded-xl text-[10px] shadow-lg shadow-indigo-500/20">
+                                <svg class="w-3.5 h-3.5 mr-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                Register New Patient
+                            </button>
+                        </div>
                         <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
                             @foreach([
                                 'all' => 'General',
@@ -74,7 +87,12 @@
                                 <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-width="1.5"/></svg>
                             </div>
                             <p class="text-sm font-black uppercase tracking-widest text-gray-400 mb-4 italic">No matching patient found in our registry.</p>
-                            <button @click="$dispatch('close-modal', { name: 'quick-op-modal' }); $dispatch('create-patient', { phone: '{{ $searchPatient }}' })" 
+                            <button @click="$dispatch('close-modal', { name: 'quick-op-modal' }); 
+                                            $dispatch('create-patient', { 
+                                                phone: '{{ ($searchType === 'phone' || ($searchType === 'all' && is_numeric($searchPatient) && strlen($searchPatient) === 10)) ? $searchPatient : '' }}',
+                                                name: '{{ ($searchType === 'name' || ($searchType === 'all' && !is_numeric($searchPatient))) ? $searchPatient : '' }}',
+                                                mother_name: '{{ $searchType === 'mother_name' ? $searchPatient : '' }}'
+                                            })" 
                                     class="btn btn-primary px-8 py-3 rounded-xl shadow-lg shadow-indigo-500/20">
                                 Register New Patient
                             </button>

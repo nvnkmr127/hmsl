@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use App\Models\Patient;
 
 class AddressAutocompleteController extends Controller
 {
@@ -13,7 +14,7 @@ class AddressAutocompleteController extends Controller
     {
         $q = trim((string) $request->query('q', ''));
 
-        $maxLen = (int) config('services.mappls.autosuggest_max_query_length', 45);
+        $maxLen = (int) config('services.mappls.autosuggest_max_query_length', 100);
         if ($maxLen > 0 && mb_strlen($q) > $maxLen) {
             return response()->json([]);
         }
@@ -25,9 +26,26 @@ class AddressAutocompleteController extends Controller
         $cacheKey = 'address_autocomplete:v5:mappls:' . md5(mb_strtolower($q));
 
         $items = Cache::remember($cacheKey, now()->addHours(6), function () use ($q) {
+            $localResults = Patient::where('address', 'like', "%{$q}%")
+                ->orWhere('city', 'like', "%{$q}%")
+                ->limit(5)
+                ->get()
+                ->map(function($p) {
+                    return [
+                        'place_id' => 'local_' . $p->id,
+                        'label' => $p->address,
+                        'subLabel' => trim("{$p->city}, {$p->state}"),
+                        'address' => $p->address,
+                        'city' => $p->city,
+                        'state' => $p->state,
+                        'pincode' => $p->pincode,
+                        'source' => 'local'
+                    ];
+                });
+
             $authHeader = $this->mapplsAuthHeader();
             if ($authHeader === null) {
-                return [];
+                return $localResults->all();
             }
 
             $filter = (string) config('services.mappls.autosuggest_bounds_filter', '');
@@ -43,18 +61,18 @@ class AddressAutocompleteController extends Controller
                     'query' => $q,
                     'region' => 'IND',
                     'filter' => $filter !== '' ? $filter : null,
-                    'tokenizeAddress' => $tokenizeAddress ? '' : null,
+                    'tokenizeAddress' => $tokenizeAddress ? 1 : null,
                 ]);
 
             if (!$response->successful()) {
-                return [];
+                return $localResults->all();
             }
 
             $payload = (array) $response->json();
             $rows = collect($payload['suggestedLocations'] ?? [])
                 ->merge($payload['userAddedLocations'] ?? []);
 
-            return $rows
+            $mapplsResults = $rows
                 ->map(function ($row) {
                     $placeAddress = (string) ($row['placeAddress'] ?? '');
                     $placeName = (string) ($row['placeName'] ?? '');
@@ -68,11 +86,6 @@ class AddressAutocompleteController extends Controller
                         ?? $addressTokens['subDistrict']
                         ?? $addressTokens['district']
                         ?? $parsed['city']
-                        ?? null;
-
-                    $colony = $addressTokens['subLocality']
-                        ?? $addressTokens['subSubLocality']
-                        ?? $parsed['colony']
                         ?? null;
 
                     $state = $addressTokens['state'] ?? $parsed['state'] ?? null;
@@ -94,12 +107,15 @@ class AddressAutocompleteController extends Controller
                         'label' => $label,
                         'subLabel' => $subLabel,
                         'address' => $fullAddress,
-                        'colony' => $colony,
                         'city' => $city,
                         'state' => $state,
                         'pincode' => $pincode,
+                        'source' => 'mappls'
                     ];
-                })
+                });
+
+            return $localResults->merge($mapplsResults)
+                ->unique('address')
                 ->take(6)
                 ->values()
                 ->all();

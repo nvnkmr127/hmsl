@@ -9,7 +9,7 @@ class Service extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['code', 'name', 'category', 'department_id', 'price', 'description', 'is_active'];
+    protected $fillable = ['code', 'name', 'category', 'department_id', 'price', 'description', 'is_active', 'sort_order'];
 
     protected $casts = [
         'price' => 'decimal:2',

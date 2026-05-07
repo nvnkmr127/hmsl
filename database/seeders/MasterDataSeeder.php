@@ -36,13 +36,15 @@ class MasterDataSeeder extends Seeder
         );
 
         $services = [
-            ['name' => 'General Consultation', 'category' => 'OPD', 'price' => 500],
-            ['name' => 'Follow-up Consultation', 'category' => 'OPD', 'price' => 300],
-            ['name' => 'Immunization / Vaccination', 'category' => 'OPD', 'price' => 200],
-            ['name' => 'Nebulization', 'category' => 'OPD', 'price' => 150],
-            ['name' => 'Growth & Development Monitoring', 'category' => 'OPD', 'price' => 400],
-            ['name' => 'Blood Routine (CBC)', 'category' => 'LAB', 'price' => 450],
-            ['name' => 'CRP Test', 'category' => 'LAB', 'price' => 600],
+            ['name' => 'General Consultation', 'category' => 'OPD', 'price' => 500, 'sort_order' => 10],
+            ['name' => 'Follow-up Consultation', 'category' => 'OPD', 'price' => 300, 'sort_order' => 20],
+            ['name' => 'emergency consultation/non-op(Hrs)', 'category' => 'OPD', 'price' => 500, 'sort_order' => 30],
+            ['name' => 'Immunization / Vaccination', 'category' => 'OPD', 'price' => 200, 'sort_order' => 40],
+            ['name' => 'Nebulization', 'category' => 'OPD', 'price' => 150, 'sort_order' => 50],
+            ['name' => 'Growth & Development Monitoring', 'category' => 'OPD', 'price' => 400, 'sort_order' => 60],
+            ['name' => 'new born', 'category' => 'OPD', 'price' => 800, 'sort_order' => 70],
+            ['name' => 'Blood Routine (CBC)', 'category' => 'LAB', 'price' => 450, 'sort_order' => 80],
+            ['name' => 'CRP Test', 'category' => 'LAB', 'price' => 600, 'sort_order' => 90],
         ];
 
         foreach ($services as $service) {

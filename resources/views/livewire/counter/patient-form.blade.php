@@ -38,18 +38,17 @@
                         @error('gender') <p class="text-tiny text-rose-500 font-black uppercase mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <x-form.input label="Mobile Phone" wire:model="phone" name="phone" placeholder="10 Digit Number" />
+                        <x-form.input label="Mobile Phone" wire:model.live.debounce.300ms="phone" name="phone" placeholder="10 Digit Number" />
                         @error('phone') <p class="text-tiny text-rose-500 font-black uppercase mt-1">{{ $message }}</p> @enderror
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 gap-6">
                     <div x-data="{
                         open: false,
                         loading: false,
                         results: [],
                         controller: null,
-                        supportsColony: {{ \Illuminate\Support\Js::from(property_exists($this, 'colony')) }},
                         async search(q) {
                             const query = (q || '').trim();
                             if (query.length < 2) {
@@ -82,18 +81,15 @@
                             $wire.set('city', item.city || '');
                             $wire.set('state', item.state || '');
                             $wire.set('pincode', item.pincode || '');
-                            if (this.supportsColony) {
-                                $wire.set('colony', item.colony || '');
-                            }
                             this.open = false;
                             this.results = [];
                         },
                     }" class="relative" @click.away="open = false" @keydown.escape.window="open = false">
                         <x-form.input
-                            label="Address (From)"
+                            label="Address / Landmark"
                             wire:model="address"
                             name="address"
-                            placeholder="Start typing address..."
+                            placeholder="Start typing street address or landmark..."
                             x-on:input.debounce.300ms="search($event.target.value)"
                             autocomplete="off"
                         />
@@ -110,6 +106,22 @@
                             <div x-show="!loading && results.length === 0" class="px-4 py-3 text-sm text-slate-500">No results</div>
                         </div>
                     </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div class="md:col-span-2">
+                            <x-form.input label="City / Town" wire:model="city" name="city" placeholder="City" />
+                            @error('city') <p class="text-tiny text-rose-500 font-black uppercase mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <x-form.input label="State" wire:model="state" name="state" placeholder="State" />
+                            @error('state') <p class="text-tiny text-rose-500 font-black uppercase mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <x-form.input label="Pincode" wire:model="pincode" name="pincode" placeholder="6 Digit Code" />
+                            @error('pincode') <p class="text-tiny text-rose-500 font-black uppercase mt-1">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+
                     <div>
                         <x-form.input label="Blood Group (Optional)" wire:model="blood_group" name="blood_group" placeholder="A+, O+, ..." />
                         @error('blood_group') <p class="text-tiny text-rose-500 font-black uppercase mt-1">{{ $message }}</p> @enderror
