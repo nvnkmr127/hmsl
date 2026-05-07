@@ -30,46 +30,46 @@
         /* LINE 1: Name and Date */
         /* Adjust 'top' to move both Name and Date up/down */
         .pos-name {
-            top: 4.8cm;
+            top: 4.3cm;
             left: 2.5cm;
             font-size: 13pt;
         }
 
         .pos-date {
-            top: 4.9cm;
+            top: 4.3cm;
             left: 16.5cm;
         }
 
         /* LINE 2: Vitals and Validity */
         /* Adjust 'top' to move the entire second row up/down */
         .pos-age {
-            top: 6cm;
+            top: 5.5cm;
             left: 1.8cm;
         }
 
         .pos-gender {
-            top: 6cm;
+            top: 5.5cm;
             left: 5.3cm;
         }
 
         .pos-weight {
-            top: 6cm;
+            top: 5.5cm;
             left: 9.5cm;
         }
 
         .pos-temp {
-            top: 6cm;
+            top: 5.5cm;
             left: 12.5cm;
         }
 
         .pos-valid {
-            top: 6cm;
+            top: 5.5cm;
             left: 18.0cm;
         }
 
         /* LINE 3: Financials */
         .pos-fee {
-            top: 6.5cm;
+            top: 6cm;
             left: 17.0cm;
             font-size: 10pt;
             color: #333;
