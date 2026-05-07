@@ -232,7 +232,6 @@ class OpdBooking extends Component
 
         $this->valid_upto = Carbon::parse($this->consultation_date)->addDays((int)$days)->toDateString();
     }
-    }
 
     public function updatedSelectedService($id)
     {
