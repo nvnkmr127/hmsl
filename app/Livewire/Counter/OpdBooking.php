@@ -69,7 +69,9 @@ class OpdBooking extends Component
 
         
         if ($patient_id) {
-            $this->selectPatient($patient_id);
+            // Note: We now let the global QuickOpBooking handle the patient_id popup
+            // for a more "express" experience as requested.
+            // $this->selectPatient($patient_id);
         }
 
         $this->autoSelectDoctor();

@@ -60,6 +60,7 @@ class BillingService
                 $bill->items()->create([
                     'item_name' => $item['name'],
                     'item_type' => $item['type'] ?? 'General',
+                    'medicine_id' => $item['medicine_id'] ?? null,
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['unit_price'],
                     'total_price' => $totalPrice,
@@ -67,9 +68,17 @@ class BillingService
                 $subtotal += $totalPrice;
             }
             
-            $totalAmount = $subtotal - ($data['discount_amount'] ?? 0) + ($data['tax_amount'] ?? 0);
+            // TAX CALCULATION: If tax_amount wasn't explicitly passed, calculate from settings
+            $taxAmount = $data['tax_amount'] ?? null;
+            if ($taxAmount === null) {
+                $taxRate = (float) \App\Models\Setting::get('tax_rate', 0);
+                $taxAmount = $taxRate > 0 ? ($subtotal * ($taxRate / 100)) : 0;
+            }
+
+            $totalAmount = $subtotal - ($data['discount_amount'] ?? 0) + $taxAmount;
             $bill->update([
                 'subtotal' => $subtotal,
+                'tax_amount' => $taxAmount,
                 'total_amount' => $totalAmount
             ]);
 
@@ -118,6 +127,7 @@ class BillingService
                     ['item_name' => $item['name']],
                     [
                         'item_type' => $item['type'] ?? 'General',
+                        'medicine_id' => $item['medicine_id'] ?? null,
                         'quantity' => $item['quantity'],
                         'unit_price' => $item['unit_price'],
                         'total_price' => $totalPrice,
@@ -134,7 +144,7 @@ class BillingService
 
                 // INVENTORY SYNC: Reduce stock for pharmacy items
                 if (strtolower($item['type'] ?? '') === 'pharmacy' && $billItem->wasRecentlyCreated) {
-                    $this->syncInventoryForItem($item);
+                    $this->syncInventoryForItem($item + ['medicine_id' => $item['medicine_id'] ?? null]);
                 }
             }
 
@@ -152,13 +162,11 @@ class BillingService
             ]);
 
             if ($oldTotal != (float) $totalAmount) {
-                \Illuminate\Support\Facades\Log::channel('heavy')->info('BILL_TOTAL_UPDATED', [
-                    'bill_id' => $bill->id,
-                    'old_total' => $oldTotal,
-                    'new_total' => (float) $totalAmount,
-                    'user_id' => Auth::id(),
-                    'reason' => 'IPD recalculation'
-                ]);
+                \App\Models\AuditLog::log('bill_total_updated', $bill, 
+                    ['total_amount' => $oldTotal], 
+                    ['total_amount' => (float) $totalAmount],
+                    ['billing', 'ipd_recalculation']
+                );
             }
 
             $this->recalculatePaymentStatus($bill);
@@ -169,13 +177,20 @@ class BillingService
 
     protected function syncInventoryForItem(array $item): void
     {
-        // Try to find the medicine by name or a reference if provided
+        $medicineId = $item['medicine_id'] ?? null;
         $name = $item['name'];
-        // Note: In a production system, we'd use a medicine_id here. 
-        // For now, we attempt to resolve it from the name or common patterns.
-        $medicine = \App\Models\Medicine::where('name', $name)
-            ->orWhereRaw('CONCAT(name, " - ", strength) = ?', [$name])
-            ->first();
+
+        // Try to find the medicine by ID first, then fallback to name patterns
+        $medicine = null;
+        if ($medicineId) {
+            $medicine = \App\Models\Medicine::find($medicineId);
+        }
+
+        if (!$medicine) {
+            $medicine = \App\Models\Medicine::where('name', $name)
+                ->orWhereRaw('CONCAT(name, " - ", strength) = ?', [$name])
+                ->first();
+        }
 
         if ($medicine) {
             app(MedicineService::class)->adjustStock(
@@ -218,33 +233,40 @@ class BillingService
             throw new \InvalidArgumentException('Payment amount must be greater than 0.');
         }
 
-        // AUTHORIZATION: Only admins can process refunds
-        if ($type === 'refund' && !Auth::user()->hasAnyRole(['admin', 'super_admin', 'manager'])) {
-            throw new \RuntimeException('Unauthorized: Only administrators or managers can process refunds.');
-        }
+        return DB::transaction(function () use ($bill, $amount, $method, $type, $reference, $notes) {
+            // RELOAD & LOCK FOR UPDATE: Ensure we have the latest balance and no one else is updating it
+            $bill = Bill::query()->lockForUpdate()->findOrFail($bill->id);
 
-        // PREVENT OVERPAYER: Check balance before recording
-        if ($type === 'payment') {
-            $balance = (float) $bill->balance_amount;
-            if ($amount > ($balance + 0.01)) { // 0.01 tolerance for floating point
-                 throw new \InvalidArgumentException("Payment amount ({$amount}) exceeds the remaining balance ({$balance}).");
+            // AUTHORIZATION: Only admins can process refunds
+            if ($type === 'refund' && !Auth::user()->hasAnyRole(['admin', 'super_admin', 'manager'])) {
+                throw new \RuntimeException('Unauthorized: Only administrators or managers can process refunds.');
             }
-        }
 
-        $payment = BillPayment::create([
-            'bill_id' => $bill->id,
-            'amount' => $amount,
-            'type' => $type,
-            'method' => $method,
-            'reference' => $reference,
-            'notes' => $notes,
-            'received_by' => Auth::id(),
-            'received_at' => now(),
-        ]);
+            // PREVENT OVERPAYER: Check balance before recording
+            if ($type === 'payment') {
+                $balance = (float) $bill->balance_amount;
+                if ($amount > ($balance + 0.01)) { // 0.01 tolerance for floating point
+                     throw new \InvalidArgumentException("Payment amount ({$amount}) exceeds the remaining balance ({$balance}).");
+                }
+            }
 
-        event(new \App\Events\Billing\PaymentReceived($payment->load(['bill.patient'])));
+            $payment = BillPayment::create([
+                'bill_id' => $bill->id,
+                'amount' => $amount,
+                'type' => $type,
+                'method' => $method,
+                'reference' => $reference,
+                'notes' => $notes,
+                'received_by' => Auth::id(),
+                'received_at' => now(),
+            ]);
 
-        return $payment;
+            \App\Models\AuditLog::log('payment_recorded', $payment, [], $payment->toArray(), ['billing', 'payment']);
+
+            event(new \App\Events\Billing\PaymentReceived($payment->load(['bill.patient'])));
+
+            return $payment;
+        });
     }
 
     private function applyInitialPayment(Bill $bill, array $data): void
@@ -428,6 +450,8 @@ class BillingService
                 'applied_at' => now(),
             ]);
 
+            \App\Models\AuditLog::log('discount_applied', $discount, [], $discount->toArray(), ['billing', 'discount']);
+
             if ($status === 'approved') {
                 $this->recalculatePaymentStatus($bill);
             }
@@ -441,11 +465,14 @@ class BillingService
         if ($discount->status !== 'pending') return;
 
         DB::transaction(function () use ($discount) {
+            $old = $discount->toArray();
             $discount->update([
                 'status' => 'approved',
                 'approved_by' => Auth::id(),
                 'applied_at' => now(), // Refresh since it's now officially active
             ]);
+
+            \App\Models\AuditLog::log('discount_approved', $discount, $old, $discount->toArray(), ['billing', 'discount']);
 
             $this->recalculatePaymentStatus($discount->bill);
         });
@@ -455,10 +482,13 @@ class BillingService
     {
         if ($discount->status !== 'pending') return;
 
+        $old = $discount->toArray();
         $discount->update([
             'status' => 'rejected',
             'approved_by' => Auth::id(),
         ]);
+
+        \App\Models\AuditLog::log('discount_rejected', $discount, $old, $discount->toArray(), ['billing', 'discount']);
         
         // No need to recalculate payment status as it was never 'approved'
     }

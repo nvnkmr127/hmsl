@@ -54,17 +54,18 @@ class OpdService
             $data['consultation_date'] = $consultationDate->toDateString();
 
             // 1. ATOMIC DUPLICATE CHECK: Prevent double-booking race condition
+            // Only block if there's a PENDING or IN-PROGRESS booking for the same service today
             $exists = Consultation::where('patient_id', $data['patient_id'])
                 ->where('service_id', $data['service_id'])
                 ->whereDate('consultation_date', $data['consultation_date'])
-                ->where('status', '!=', 'Cancelled')
+                ->whereIn('status', ['Pending', 'In Progress'])
                 ->when(isset($data['doctor_id']), fn($q) => $q->where('doctor_id', $data['doctor_id']))
                 ->when(isset($data['id']), fn($q) => $q->where('id', '!=', $data['id']))
                 ->sharedLock()
                 ->exists();
 
             if ($exists) {
-                throw new \Exception('Patient already has an active booking for this service on this date.');
+                throw new \Exception('Patient already has an active (Pending/In-Progress) booking for this service on this date.');
             }
 
             // 1.1 DOCTOR-SERVICE COMPATIBILITY CHECK
@@ -170,7 +171,6 @@ class OpdService
                     'patient_id' => $consultation->patient_id,
                     'consultation_id' => $consultation->id,
                     'discount_amount' => $consultation->discount_amount ?? 0,
-                    'tax_amount' => 0,
                     'payment_status' => $status,
                     'paid_amount' => $paidAmount,
                     'payment_method' => $consultation->payment_method ?? 'Cash',

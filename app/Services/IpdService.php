@@ -228,6 +228,7 @@ class IpdService
                 $items[] = [
                     'name' => $rx->medicine_name . ($rx->dosage ? ' - ' . $rx->dosage : ''),
                     'type' => 'Pharmacy',
+                    'medicine_id' => $rx->medicine_id,
                     'quantity' => $administeredQty,
                     'unit_price' => $unitPrice,
                     'source_type' => \App\Models\IpdMedicationChart::class,

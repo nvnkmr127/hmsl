@@ -51,9 +51,9 @@ class AddressAutocompleteController extends Controller
                         'input' => $q,
                         'key' => $apiKey,
                         'components' => 'country:in',
-                        'location' => '18.1124,79.0193', // Center of Telangana
-                        'radius' => '250000',           // 250km radius to cover Telangana
-                        'strictbounds' => 'true',
+                        'location' => \App\Models\Setting::get('hospital_location_coord', '18.4386,79.1288'), // Center: Karimnagar
+                        'radius' => \App\Models\Setting::get('hospital_location_radius', '150000'),           // 150km radius covers Kamareddy, Sircilla, Siddipet, Medak, etc.
+                        'strictbounds' => 'false', // Bias towards North Telangana, but allow entries from other parts if typed
                         'types' => 'geocode',
                         'language' => 'en',
                     ]);

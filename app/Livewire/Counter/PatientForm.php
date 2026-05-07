@@ -12,6 +12,7 @@ class PatientForm extends Component
 {
     public $isEditing = false;
     public $patientId;
+    public $matchedPatientName;
 
     #[Validate('required|string|max:255')]
     public $first_name;
@@ -31,7 +32,7 @@ class PatientForm extends Component
     #[Validate('required|date|before_or_equal:today')]
     public $date_of_birth;
 
-    #[Validate('required|string|max:15')]
+    #[Validate('required|digits:10')]
     public $phone;
 
 
@@ -63,16 +64,15 @@ class PatientForm extends Component
 
     public function updatedPhone($value)
     {
+        $this->matchedPatientName = null;
         if (strlen($value) >= 10) {
             $lastPatient = Patient::where('phone', $value)->latest()->first();
             if ($lastPatient) {
+                $this->matchedPatientName = $lastPatient->full_name;
                 $this->address = $lastPatient->address;
                 $this->city = $lastPatient->city;
                 $this->state = $lastPatient->state;
                 $this->pincode = $lastPatient->pincode;
-                
-                // If names are empty, maybe suggest them too? 
-                // But usually better to just do address.
             }
         }
     }
@@ -97,6 +97,7 @@ class PatientForm extends Component
             // Auto-fetch address from most recent patient with same phone (family/sibling)
             $lastPatient = Patient::where('phone', $phone)->latest()->first();
             if ($lastPatient) {
+                $this->matchedPatientName = $lastPatient->full_name;
                 $this->address = $lastPatient->address;
                 $this->city = $lastPatient->city;
                 $this->state = $lastPatient->state;

@@ -51,6 +51,12 @@ class QuickOpBooking extends Component
         $this->consultation_date = now()->toDateString();
         $this->valid_upto = $service->getValidityDate($this->consultation_date);
         $this->autoSelectDoctor();
+
+        // Check for patient_id in request to auto-open
+        $patientId = request()->get('patient_id');
+        if ($patientId && is_numeric($patientId)) {
+            $this->selectPatient($patientId);
+        }
     }
 
     public function updatedSearchPatient($value)

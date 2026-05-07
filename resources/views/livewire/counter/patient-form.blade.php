@@ -38,7 +38,15 @@
                         @error('gender') <p class="text-tiny text-rose-500 font-black uppercase mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <x-form.input label="Mobile Phone" wire:model.live.debounce.300ms="phone" name="phone" placeholder="10 Digit Number" />
+                        <x-form.input label="Mobile Phone" wire:model.live.debounce.300ms="phone" name="phone" placeholder="10 Digit Number" maxlength="10" onkeypress="return event.charCode >= 48 && event.charCode <= 57" />
+                        @if($matchedPatientName)
+                            <div class="mt-2 p-2 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-800/30 rounded-xl flex items-center gap-2 animate-in slide-in-from-top-1 duration-300">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <p class="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">
+                                    Recognized: {{ $matchedPatientName }}
+                                </p>
+                            </div>
+                        @endif
                         @error('phone') <p class="text-tiny text-rose-500 font-black uppercase mt-1">{{ $message }}</p> @enderror
                     </div>
                 </div>
