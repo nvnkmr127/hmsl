@@ -28,6 +28,9 @@ class ServiceForm extends Component
     #[Validate('required|numeric|min:0')]
     public $price;
 
+    #[Validate('required|integer|min:0')]
+    public $validity_days = 0;
+
     #[Validate('nullable|string|max:1000')]
     public $description;
 
@@ -46,6 +49,7 @@ class ServiceForm extends Component
         $this->category = $service->category;
         $this->department_id = $service->department_id;
         $this->price = $service->price;
+        $this->validity_days = $service->validity_days;
         $this->description = $service->description;
         $this->is_active = $service->is_active;
 
@@ -56,7 +60,7 @@ class ServiceForm extends Component
     #[On('create-service')]
     public function create()
     {
-        $this->reset(['code', 'name', 'category', 'department_id', 'price', 'description', 'is_active', 'serviceId', 'isEditing']);
+        $this->reset(['code', 'name', 'category', 'department_id', 'price', 'validity_days', 'description', 'is_active', 'serviceId', 'isEditing']);
 
         $this->resetValidation();
         $this->dispatch('open-modal', name: 'service-modal');
@@ -72,6 +76,7 @@ class ServiceForm extends Component
             'category' => $this->category,
             'department_id' => $this->department_id,
             'price' => $this->price,
+            'validity_days' => $this->validity_days,
             'description' => $this->description,
             'is_active' => $this->is_active,
         ];

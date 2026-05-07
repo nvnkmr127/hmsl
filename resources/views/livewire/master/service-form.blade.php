@@ -27,9 +27,11 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <x-form.input label="Base Price (₹)" wire:model="price" name="price" type="number" step="1" />
-                <div class="flex items-end pb-3">
-                    <x-form.checkbox label="Active / Available" wire:model="is_active" name="is_active" />
-                </div>
+                <x-form.input label="Free Validity (Days)" wire:model="validity_days" name="validity_days" type="number" step="1" placeholder="Days for free follow-up" />
+            </div>
+
+            <div class="flex items-center gap-4">
+                <x-form.checkbox label="Active / Available" wire:model="is_active" name="is_active" />
             </div>
             
             <x-form.textarea label="Service Description" wire:model="description" name="description" placeholder="Notes or instructions for billing..." rows="2" />

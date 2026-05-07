@@ -43,6 +43,7 @@
                     <x-table.th>Service Name</x-table.th>
                     <x-table.th>Category / Dept</x-table.th>
                     <x-table.th>Base Price</x-table.th>
+                    <x-table.th>Validity</x-table.th>
                     <x-table.th>Status</x-table.th>
                     <x-table.th class="text-right">Actions</x-table.th>
                 </tr>
@@ -71,6 +72,15 @@
                         </td>
                         <td>
                             <span class="text-sm font-black text-gray-900 dark:text-white">₹{{ number_format($service->price, 2) }}</span>
+                        </td>
+                        <td>
+                            @if($service->validity_days > 0)
+                                <span class="text-xs font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-lg uppercase tracking-widest">
+                                    {{ $service->validity_days }} Days
+                                </span>
+                            @else
+                                <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Standard</span>
+                            @endif
                         </td>
                         <td>
                             <x-badge :color="$service->is_active ? 'success' : 'danger'">

@@ -103,16 +103,32 @@
                 <!-- Booking Section -->
                 <div class="mb-8 relative">
                    <x-clinical.patient-strip :patient="$selectedPatient" size="md" />
-                   @if($isFollowUp)
+                   @if($isReview)
                        <div class="absolute -top-3 -right-3">
-                           <span class="bg-emerald-500 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg border-2 border-white dark:border-gray-900 uppercase tracking-widest animate-pulse">
+                           <span class="bg-indigo-600 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg border-2 border-white dark:border-gray-900 uppercase tracking-widest animate-pulse">
+                               Review Visit
+                           </span>
+                       </div>
+                   @elseif($isFollowUp)
+                       <div class="absolute -top-3 -right-3">
+                           <span class="bg-emerald-500 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg border-2 border-white dark:border-gray-900 uppercase tracking-widest">
                                Follow-up Visit
                            </span>
                        </div>
                    @endif
                 </div>
 
-                @if($isFollowUp)
+                @if($isReview)
+                    <div class="mb-6 p-4 bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-800/30 rounded-2xl flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-600">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Review Consultation</p>
+                            <p class="text-xs font-bold text-indigo-700 dark:text-indigo-300">This is a follow up review to previous visit (within {{ $latestConsultation->service?->validity_days ?? \App\Models\Setting::get('opd_validity_days', 7) }} days).</p>
+                        </div>
+                    </div>
+                @elseif($isFollowUp)
                     <div class="mb-6 p-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-800/30 rounded-2xl flex items-center gap-3">
                         <div class="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-600">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -150,6 +166,7 @@
                                 Appointment Details
                             </h4>
                             
+                            @if(!$isReview)
                             <div class="space-y-1.5">
                                 <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Consultation Service</label>
                                 <select wire:model.live="selectedService" class="w-full bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 font-bold text-gray-900 dark:text-white appearance-none transition-all outline-none">
@@ -162,6 +179,15 @@
                                 </select>
                                 @error('selectedService') <p class="text-[10px] font-bold text-rose-500 mt-1 ml-1">{{ $message }}</p> @enderror
                             </div>
+                            @else
+                            <div class="p-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800/50 rounded-2xl">
+                                <p class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Review Service</p>
+                                <p class="text-sm font-black text-gray-800 dark:text-gray-200 uppercase tracking-tight">
+                                    {{ $latestConsultation->service?->name ?? 'OPD Consultation' }}
+                                </p>
+                                <p class="text-[10px] font-bold text-indigo-500 mt-0.5 uppercase tracking-widest">AUTO-SELECTED FOR REVIEW</p>
+                            </div>
+                            @endif
 
                             <div class="p-4 bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100/50 dark:border-indigo-800/20 rounded-2xl">
                                 <p class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] mb-1">Assigned Doctor</p>
@@ -287,6 +313,7 @@
                             @endif
                         </div>
 
+                        @if(!$isReview)
                         <div class="space-y-4">
                             <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
@@ -316,6 +343,24 @@
                                 <svg class="absolute -right-8 -bottom-8 w-32 h-32 text-white/5 opacity-10 rotate-12" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L1 12l11 10 11-10L12 2zm0 18.5L2.5 12 12 3.5l9.5 8.5L12 20.5z"/></svg>
                             </div>
                         </div>
+                        @else
+                        <div class="space-y-4">
+                            <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                Payment Status
+                            </h4>
+                            <div class="bg-emerald-500 p-5 rounded-3xl text-white shadow-2xl shadow-emerald-500/20 relative overflow-hidden group">
+                                <div class="relative z-10">
+                                    <p class="text-[10px] font-black uppercase opacity-60 tracking-widest mb-2">Review Visit</p>
+                                    <p class="text-2xl font-black mb-4">No Charge</p>
+                                    <p class="text-[10px] font-bold opacity-80 leading-relaxed uppercase tracking-widest">
+                                        This visit is recorded as a follow-up review for the previous consultation.
+                                    </p>
+                                </div>
+                                <svg class="absolute -right-4 -bottom-4 w-24 h-24 text-white/10 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                        </div>
+                        @endif
                     </div>
 
                     <div class="pt-8 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between gap-4">

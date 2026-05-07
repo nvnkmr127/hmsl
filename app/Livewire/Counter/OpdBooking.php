@@ -57,6 +57,8 @@ class OpdBooking extends Component
     public $lastConsultationId;
     public $growthStatus;
     public $growthForecast;
+    public $isReview = false;
+    public $latestConsultation;
 
     public $showBookingForm = false;
 
@@ -104,22 +106,33 @@ class OpdBooking extends Component
         $this->isEditing = false;
         $this->searchPatient = ''; // Clear search
         
-        // Check for recent consultations within validity period
-        $hasRecentVisit = false;
-        if ($this->valid_upto) {
-            $hasRecentVisit = Consultation::where('patient_id', $id)
-                ->where('status', '!=', 'Cancelled')
-                ->where('valid_upto', '>=', $this->consultation_date)
-                ->exists();
+        $this->latestConsultation = Consultation::where('patient_id', $id)
+            ->with(['doctor', 'service'])
+            ->latest('consultation_date')
+            ->first();
+
+        // Review logic: Use service-specific validity or fallback to global setting
+        $this->isReview = false;
+        if ($this->latestConsultation) {
+            $serviceValidity = $this->latestConsultation->service?->validity_days ?? \App\Models\Setting::get('opd_validity_days', 7);
+            $daysSinceLastVisit = Carbon::parse($this->latestConsultation->consultation_date)->diffInDays(Carbon::parse($this->consultation_date));
+            if ($daysSinceLastVisit <= $serviceValidity) {
+                $this->isReview = true;
+                $this->selectedService = $this->latestConsultation->service_id;
+                $this->selectedDoctor = $this->latestConsultation->doctor_id;
+                $this->fee = 0;
+            }
         }
 
-        $this->isFollowUp = $hasRecentVisit;
+        $this->isFollowUp = $hasRecentVisit || $this->isReview;
 
-        if ($hasRecentVisit) {
-            $this->fee = 0;
-            $this->paymentStatus = 'Paid';
-            $this->amountPaid = 0;
-            $this->dispatch('notify', ['type' => 'success', 'message' => 'Follow-up visit: Free of charge.']);
+        if ($this->isFollowUp) {
+            if (!$this->isReview) {
+                $this->fee = 0;
+                $this->paymentStatus = 'Paid';
+                $this->amountPaid = 0;
+                $this->dispatch('notify', ['type' => 'success', 'message' => 'Follow-up visit: Free of charge.']);
+            }
         } else {
             // Re-select doctor or service to get current fee
             if ($this->selectedService) {
@@ -149,6 +162,9 @@ class OpdBooking extends Component
         if ($this->weight || $this->height) {
             $this->updateGrowthStatus();
         }
+
+        $this->recalculateFee();
+        $this->refreshValidity();
     }
 
     public function recalculateFee()
@@ -160,31 +176,19 @@ class OpdBooking extends Component
             $service = \App\Models\Service::find($this->selectedService);
         }
 
-        $isNewBornService = $service && (strtolower($service->name) === 'new born');
-
-        if ($isNewBornService) {
-            $firstVisit = Consultation::where('patient_id', $this->selectedPatient->id)
+        if ($service && $service->validity_days > 0) {
+            // Check if within service-specific validity
+            $hasRecentVisit = Consultation::where('patient_id', $this->selectedPatient->id)
                 ->where('status', '!=', 'Cancelled')
-                ->whereHas('service', fn($q) => $q->where('name', 'new born'))
-                ->oldest('consultation_date')
-                ->first();
-
-            if (!$firstVisit) {
-                $this->fee = 800;
-                $this->isFollowUp = false;
+                ->where('service_id', $service->id)
+                ->whereDate('consultation_date', '>=', Carbon::parse($this->consultation_date)->subDays($service->validity_days))
+                ->exists();
+            
+            $this->isFollowUp = $hasRecentVisit;
+            if ($hasRecentVisit) {
+                $this->fee = 0;
             } else {
-                $daysSinceFirstVisit = Carbon::parse($firstVisit->consultation_date)->diffInDays(Carbon::parse($this->consultation_date));
-                
-                if ($daysSinceFirstVisit <= 10) {
-                    $this->fee = 0;
-                    $this->isFollowUp = true;
-                } elseif ($daysSinceFirstVisit <= 30) {
-                    $this->fee = 500;
-                    $this->isFollowUp = true;
-                } else {
-                    $this->fee = 800; // After 30 days, treat as new?
-                    $this->isFollowUp = false;
-                }
+                $this->fee = $service->price;
             }
         } else {
             // Default logic
@@ -195,7 +199,12 @@ class OpdBooking extends Component
 
             $this->isFollowUp = $hasRecentVisit;
 
-            if ($hasRecentVisit) {
+            if ($this->isReview) {
+                $this->fee = 0;
+                if ($this->latestConsultation) {
+                    $this->selectedService = $this->latestConsultation->service_id;
+                }
+            } elseif ($hasRecentVisit) {
                 $this->fee = 0;
             } else {
                 if ($service) {
@@ -207,6 +216,22 @@ class OpdBooking extends Component
         }
 
         $this->updatedFee($this->fee);
+        $this->refreshValidity();
+    }
+
+    public function refreshValidity()
+    {
+        $service = null;
+        if ($this->selectedService) {
+            $service = \App\Models\Service::find($this->selectedService);
+        }
+
+        $days = ($service && $service->validity_days > 0) 
+            ? $service->validity_days 
+            : \App\Models\Setting::get('opd_validity_days', 7);
+
+        $this->valid_upto = Carbon::parse($this->consultation_date)->addDays((int)$days)->toDateString();
+    }
     }
 
     public function updatedSelectedService($id)
@@ -503,6 +528,7 @@ class OpdBooking extends Component
                 $consultation = $service->bookAppointment([
                     'patient_id' => $this->selectedPatient->id,
                     'service_id' => $this->selectedService,
+                    'visit_type' => $this->isReview ? 'Review' : ($this->isFollowUp ? 'Follow-up' : 'New'),
                     'doctor_id' => $this->selectedDoctor,
                     'weight' => $this->weight,
                     'height' => $this->height,
@@ -537,7 +563,7 @@ class OpdBooking extends Component
         $this->dispatch('notify', ['type' => 'success', 'message' => $message]);
 
 
-        $this->reset(['selectedPatient', 'selectedService', 'selectedDoctor', 'fee', 'notes', 'showBookingForm', 'isEditing', 'editingId', 'weight', 'height', 'temperature', 'paymentMode', 'paymentStatus', 'amountPaid', 'searchPatient', 'lastConsultationId', 'isFollowUp']);
+        $this->reset(['selectedPatient', 'selectedService', 'selectedDoctor', 'fee', 'notes', 'showBookingForm', 'isEditing', 'editingId', 'weight', 'height', 'temperature', 'paymentMode', 'paymentStatus', 'amountPaid', 'searchPatient', 'lastConsultationId', 'isFollowUp', 'isReview']);
 
         $validityDays = \App\Models\Setting::get('opd_validity_days', 7);
         $this->consultation_date = date('Y-m-d');

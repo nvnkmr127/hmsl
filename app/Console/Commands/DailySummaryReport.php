@@ -38,7 +38,9 @@ class DailySummaryReport extends Command
             'report_date' => $date,
             'metrics' => [
                 'new_patients' => Patient::whereDate('created_at', $date)->count(),
-                'opd_consultations' => Consultation::whereDate('consultation_date', $date)->count(),
+                'opd_total' => Consultation::whereDate('consultation_date', $date)->count(),
+                'opd_new' => Consultation::whereDate('consultation_date', $date)->where('visit_type', 'New')->count(),
+                'opd_review' => Consultation::whereDate('consultation_date', $date)->whereIn('visit_type', ['Review', 'Follow-up'])->count(),
                 'ipd_admissions' => Admission::whereDate('admission_date', $date)->count(),
                 'revenue' => [
                     'total_collected' => Bill::whereDate('created_at', $date)->where('payment_status', 'Paid')->sum('total_amount'),

@@ -86,22 +86,35 @@ class OpdService
                 $data['service_id'] ?? null
             );
 
-            $validityDays = \App\Models\Setting::get('opd_validity_days', 7);
+            $service = isset($data['service_id']) ? \App\Models\Service::find($data['service_id']) : null;
+            $validityDays = ($service && $service->validity_days > 0) 
+                ? $service->validity_days 
+                : \App\Models\Setting::get('opd_validity_days', 7);
+
             $data['valid_upto'] = $data['valid_upto'] ?? $consultationDate->copy()->addDays((int)$validityDays)->toDateString();
 
             // 3. STRICT REVENUE PROTECTION: Ensure fees are never zero due to missing relations
             // Except for follow-up visits within validity period
             if (!isset($data['fee']) || $data['fee'] <= 0) {
-                $hasRecentVisit = Consultation::where('patient_id', $data['patient_id'])
-                    ->where('status', '!=', 'Cancelled')
-                    ->where('valid_upto', '>=', $data['consultation_date'])
-                    ->exists();
+                $hasRecentVisit = false;
+                
+                if ($service && $service->validity_days > 0) {
+                    $hasRecentVisit = Consultation::where('patient_id', $data['patient_id'])
+                        ->where('status', '!=', 'Cancelled')
+                        ->where('service_id', $service->id)
+                        ->whereDate('consultation_date', '>=', $consultationDate->copy()->subDays($service->validity_days))
+                        ->exists();
+                } else {
+                    $hasRecentVisit = Consultation::where('patient_id', $data['patient_id'])
+                        ->where('status', '!=', 'Cancelled')
+                        ->where('valid_upto', '>=', $data['consultation_date'])
+                        ->exists();
+                }
 
                 if ($hasRecentVisit) {
                     $data['fee'] = 0;
-                } elseif (isset($data['service_id'])) {
-                    $service = \App\Models\Service::find($data['service_id']);
-                    if (!$service) throw new \Exception('Requested Service record no longer exists.');
+                    $data['visit_type'] = $data['visit_type'] ?? 'Follow-up';
+                } elseif ($service) {
                     $data['fee'] = $service->price;
                 } elseif (isset($data['doctor_id'])) {
                     $doctor = Doctor::find($data['doctor_id']);
@@ -116,10 +129,20 @@ class OpdService
             
             // Still enforce fee if no recent visit and no price found
             if ($data['fee'] == 0) {
-                $hasRecentVisit = Consultation::where('patient_id', $data['patient_id'])
-                    ->where('status', '!=', 'Cancelled')
-                    ->where('valid_upto', '>=', $data['consultation_date'])
-                    ->exists();
+                $hasRecentVisit = false;
+                if ($service && $service->validity_days > 0) {
+                    $hasRecentVisit = Consultation::where('patient_id', $data['patient_id'])
+                        ->where('status', '!=', 'Cancelled')
+                        ->where('service_id', $service->id)
+                        ->whereDate('consultation_date', '>=', $consultationDate->copy()->subDays($service->validity_days))
+                        ->exists();
+                } else {
+                    $hasRecentVisit = Consultation::where('patient_id', $data['patient_id'])
+                        ->where('status', '!=', 'Cancelled')
+                        ->where('valid_upto', '>=', $data['consultation_date'])
+                        ->exists();
+                }
+
                 if (!$hasRecentVisit) {
                     throw new \Exception('Consultation fee must be greater than zero for new visits.');
                 }
