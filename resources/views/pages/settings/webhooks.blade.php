@@ -18,7 +18,7 @@
             </div>
         </div>
         
-        <x-master-nav />
+        <x-settings-nav />
 
         <livewire:settings.webhook-endpoints />
     </div>

@@ -35,11 +35,16 @@ class ProcessWebhookJob implements ShouldQueue
         Log::info("Processing webhook from {$source}", ['payload' => $payload]);
 
         try {
-            // Processing logic based on source and payload event
-            // Example:
-            // if ($source === 'external_service' && ($payload['event'] ?? '') === 'patient.update') {
-            //    // Handle patient update
-            // }
+            // 1. Dynamic Handler Lookup
+            // Logic: App\Services\WebhookHandlers\{StudlySource}Handler
+            $handlerClass = "App\\Services\\WebhookHandlers\\" . \Illuminate\Support\Str::studly($source) . "Handler";
+            
+            if (class_exists($handlerClass)) {
+                $handler = app($handlerClass);
+                $handler->handle($this->webhook);
+            } else {
+                Log::warning("No specific handler found for webhook source: {$source}. Mark as completed.");
+            }
 
             $this->webhook->update([
                 'status' => 'completed',

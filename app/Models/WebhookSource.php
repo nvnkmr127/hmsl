@@ -16,5 +16,6 @@ class WebhookSource extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'secret' => 'encrypted',
     ];
 }

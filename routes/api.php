@@ -41,6 +41,10 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('prescriptions', PrescriptionApiController::class)->only(['index', 'show']);
         Route::apiResource('lab-results', LabApiController::class)->only(['index', 'show']);
         Route::apiResource('admissions', AdmissionApiController::class)->only(['index', 'show']);
+        Route::get('webhook-endpoints/events', [WebhookEndpointApiController::class, 'events']);
+        Route::post('webhook-endpoints/{webhook_endpoint}/rotate-secret', [WebhookEndpointApiController::class, 'rotateSecret']);
+        Route::get('webhook-endpoints/{webhook_endpoint}/logs', [WebhookEndpointApiController::class, 'logs']);
+        Route::post('webhook-endpoints/{webhook_endpoint}/test', [WebhookEndpointApiController::class, 'test']);
         Route::apiResource('webhook-endpoints', WebhookEndpointApiController::class);
         Route::apiResource('vitals', VitalApiController::class)->only(['index', 'show']);
         Route::apiResource('medicines', MedicineApiController::class)->only(['index', 'show']);

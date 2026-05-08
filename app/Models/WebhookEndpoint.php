@@ -22,6 +22,7 @@ class WebhookEndpoint extends Model
     protected $casts = [
         'events' => 'array',
         'is_active' => 'boolean',
+        'secret' => 'encrypted',
     ];
 
     public function logs()

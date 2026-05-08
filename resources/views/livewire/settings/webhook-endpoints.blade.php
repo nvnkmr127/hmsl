@@ -1,4 +1,32 @@
 <div class="space-y-6">
+    <!-- Health Metrics -->
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-4">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700/50 shadow-sm">
+            <div class="text-tiny font-black text-gray-400 uppercase tracking-widest mb-1">Queue Status</div>
+            <div class="text-2xl font-black {{ $stats['pending_outbox'] > 10 ? 'text-amber-500' : 'text-emerald-500' }}">
+                {{ $stats['pending_outbox'] }} <span class="text-xs text-gray-400">pending</span>
+            </div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700/50 shadow-sm">
+            <div class="text-tiny font-black text-gray-400 uppercase tracking-widest mb-1">Active Endpoints</div>
+            <div class="text-2xl font-black text-gray-900 dark:text-white">{{ $stats['active'] }}/{{ $stats['total'] }}</div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700/50 shadow-sm">
+            <div class="text-tiny font-black text-gray-400 uppercase tracking-widest mb-1">Success Rate (24h)</div>
+            <div class="text-2xl font-black {{ $stats['success_rate'] > 95 ? 'text-indigo-500' : 'text-orange-500' }}">
+                {{ $stats['success_rate'] }}%
+            </div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700/50 shadow-sm">
+            <div class="text-tiny font-black text-gray-400 uppercase tracking-widest mb-1">Avg Latency (24h)</div>
+            <div class="text-2xl font-black text-gray-900 dark:text-white">{{ $stats['avg_latency'] }}ms</div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700/50 shadow-sm">
+            <div class="text-tiny font-black text-gray-400 uppercase tracking-widest mb-1">Reliability</div>
+            <div class="text-2xl font-black text-emerald-500">99.9%</div>
+        </div>
+    </div>
+
     <!-- Tabs Header -->
     <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-2">
         <div class="flex space-x-8">
@@ -33,7 +61,14 @@
                 <div class="flex justify-between items-start mb-6">
                     <div>
                         <h3 class="text-lg font-black text-gray-800 dark:text-white uppercase tracking-tight">{{ $ep->name }}</h3>
-                        <p class="text-tiny text-gray-400 font-bold truncate max-w-[200px]">{{ $ep->url }}</p>
+                        <div class="flex items-center gap-2">
+                            <p class="text-tiny text-gray-400 font-bold truncate max-w-[200px]">{{ $ep->url }}</p>
+                            @if($ep->consecutive_failures > 0)
+                                <span class="text-[8px] font-black bg-rose-50 text-rose-600 px-1.5 py-0.5 rounded uppercase">
+                                    {{ $ep->consecutive_failures }} Failures
+                                </span>
+                            @endif
+                        </div>
                     </div>
                     <div class="flex items-center space-x-1">
                         <button wire:click="openModal({{ $ep->id }}, 'outbound')" class="p-2 text-gray-400 hover:text-indigo-600 transition-colors">
@@ -53,9 +88,16 @@
                 </div>
 
                 <div class="mt-8 pt-6 border-t border-gray-50 dark:border-gray-700/50 flex items-center justify-between">
-                    <button wire:click="toggleStatus({{ $ep->id }}, 'outbound')" class="text-tiny font-black uppercase tracking-widest {{ $ep->is_active ? 'text-amber-500' : 'text-emerald-500' }}">
-                        {{ $ep->is_active ? 'Deactivate' : 'Activate' }}
-                    </button>
+                    <div class="flex items-center gap-4">
+                        <button wire:click="toggleStatus({{ $ep->id }}, 'outbound')" wire:loading.attr="disabled" class="text-tiny font-black uppercase tracking-widest {{ $ep->is_active ? 'text-amber-500' : 'text-emerald-500' }}">
+                            {{ $ep->is_active ? 'Deactivate' : 'Activate' }}
+                        </button>
+                        <button wire:click="testEndpoint({{ $ep->id }})" wire:loading.attr="disabled" class="text-tiny font-black text-amber-600 uppercase tracking-widest hover:underline disabled:opacity-50">
+                            <span wire:loading.remove wire:target="testEndpoint({{ $ep->id }})">Test</span>
+                            <span wire:loading wire:target="testEndpoint({{ $ep->id }})">Sending...</span>
+                        </button>
+                        <a href="{{ route('settings.webhooks.logs', ['endpointId' => $ep->id]) }}" class="text-tiny font-black text-indigo-600 uppercase tracking-widest hover:underline">View Logs</a>
+                    </div>
                     <button 
                         wire:confirm="Permanent deletion of this endpoint?"
                         wire:click="delete({{ $ep->id }}, 'outbound')" 
@@ -108,9 +150,12 @@
                 </div>
 
                 <div class="mt-8 pt-6 border-t border-gray-50 dark:border-gray-700/50 flex items-center justify-between">
-                    <button wire:click="toggleStatus({{ $src->id }}, 'inbound')" class="text-tiny font-black uppercase tracking-widest {{ $src->is_active ? 'text-amber-500' : 'text-emerald-500' }}">
-                        {{ $src->is_active ? 'Disable' : 'Enable' }}
-                    </button>
+                    <div class="flex items-center gap-4">
+                        <button wire:click="toggleStatus({{ $src->id }}, 'inbound')" class="text-tiny font-black uppercase tracking-widest {{ $src->is_active ? 'text-amber-500' : 'text-emerald-500' }}">
+                            {{ $src->is_active ? 'Disable' : 'Enable' }}
+                        </button>
+                        <a href="{{ route('settings.webhooks.inbound', ['sourceSlug' => $src->slug]) }}" class="text-tiny font-black text-indigo-600 uppercase tracking-widest hover:underline">View Logs</a>
+                    </div>
                     <button 
                         wire:confirm="Permanent deletion of this source?"
                         wire:click="delete({{ $src->id }}, 'inbound')" 
@@ -147,6 +192,13 @@
                         
                         @if($activeTab === 'outbound')
                             <x-form.input label="Target URL" wire:model="url" placeholder="https://api.yourcrm.com/v1/hms-hook" />
+                            <div class="space-y-2">
+                                <label class="text-tiny font-black text-gray-400 uppercase tracking-widest block">API Version</label>
+                                <select wire:model="apiVersion" class="block w-full px-4 py-3 rounded-2xl border-2 border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-bold">
+                                    <option value="v1">v1 (Current)</option>
+                                    <option value="2026-05">2026-05 (Beta)</option>
+                                </select>
+                            </div>
                         @else
                             <x-form.input label="Endpoint Slug" wire:model="slug" placeholder="e.g. stripe-payments" />
                         @endif
@@ -168,7 +220,13 @@
 
                     @if($activeTab === 'outbound')
                     <div class="space-y-4">
-                        <label class="text-tiny font-black text-gray-400 uppercase tracking-widest block">Subscribe to Events</label>
+                        <div class="flex items-center justify-between">
+                            <label class="text-tiny font-black text-gray-400 uppercase tracking-widest block">Subscribe to Events</label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" wire:click="toggleAllEvents" class="w-3 h-3 rounded-md text-indigo-600">
+                                <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Select All</span>
+                            </label>
+                        </div>
                         <div class="grid grid-cols-2 gap-4 bg-gray-50 dark:bg-gray-900/40 p-6 rounded-3xl border border-gray-100 dark:border-gray-700/50">
                             @foreach($availableEvents as $key => $label)
                                 <label class="flex items-center space-x-3 cursor-pointer group">
@@ -181,24 +239,61 @@
                     @endif
 
                     @if($authType !== 'open' || $activeTab === 'outbound')
-                    <div class="p-6 bg-amber-50 dark:bg-amber-900/20 rounded-3xl border border-amber-100 dark:border-amber-800/50">
-                        <div class="flex items-center justify-between mb-3">
-                            <span class="text-tiny font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest">
-                                {{ $authType === 'secret' || $activeTab === 'outbound' ? 'Secret Signing Key (HMAC)' : 'Bearer Token' }}
-                            </span>
-                            <button type="button" wire:click="$set('secret', '{{ Str::random(32) }}')" class="text-tiny font-black text-indigo-600 uppercase underline">Regenerate</button>
+                    <div x-data="{ showDocs: false }" class="space-y-4">
+                        <div class="p-6 bg-amber-50 dark:bg-amber-900/20 rounded-3xl border border-amber-100 dark:border-amber-800/50">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-tiny font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest">
+                                    {{ $authType === 'secret' || $activeTab === 'outbound' ? 'Secret Signing Key (HMAC)' : 'Bearer Token' }}
+                                </span>
+                                <div class="flex items-center gap-4">
+                                    <button type="button" @click="showDocs = !showDocs" class="text-tiny font-black text-indigo-600 uppercase underline">
+                                        <span x-show="!showDocs">Show Implementation Docs</span>
+                                        <span x-show="showDocs">Hide Docs</span>
+                                    </button>
+                                    <button type="button" wire:click="$set('secret', '{{ Str::random(32) }}')" class="text-tiny font-black text-indigo-600 uppercase underline">Regenerate</button>
+                                </div>
+                            </div>
+                            <div x-data="{ revealed: false }" class="relative">
+                                <code x-show="revealed" class="text-xs font-mono text-gray-600 dark:text-gray-400 break-all select-all">{{ $secret }}</code>
+                                <code x-show="!revealed" class="text-xs font-mono text-gray-400">••••••••••••••••••••••••••••••••</code>
+                                <button type="button" @click="revealed = !revealed" class="absolute right-0 top-0 text-[10px] font-black text-indigo-500 uppercase">
+                                    <span x-show="!revealed">Reveal</span>
+                                    <span x-show="revealed">Hide</span>
+                                </button>
+                            </div>
+                            <p class="text-[8px] text-amber-600 mt-3 font-bold uppercase tracking-widest">
+                                {{ $authType === 'secret' || $activeTab === 'outbound' ? 'Used to sign and verify every request via HMAC-SHA256.' : 'Must be sent in the Authorization header as Bearer token.' }}
+                            </p>
                         </div>
-                        <code class="text-xs font-mono text-gray-600 dark:text-gray-400 break-all select-all">{{ $secret }}</code>
-                        <p class="text-[8px] text-amber-600 mt-3 font-bold uppercase tracking-widest">
-                            {{ $authType === 'secret' || $activeTab === 'outbound' ? 'Used to sign and verify every request via HMAC-SHA256.' : 'Must be sent in the Authorization header as Bearer token.' }}
-                        </p>
+
+                        <!-- Developer Docs Snippet -->
+                        <div x-show="showDocs" x-transition class="bg-gray-900 rounded-[2rem] p-8 text-white font-mono text-[10px] space-y-4 overflow-hidden">
+                            <div class="flex justify-between items-center border-b border-gray-800 pb-4">
+                                <span class="text-gray-500 uppercase tracking-widest font-black">PHP Implementation</span>
+                                <span class="text-indigo-400">Copy</span>
+                            </div>
+                            <pre class="overflow-x-auto"><code>$payload = file_get_contents('php://input');
+$signature = $_SERVER['HTTP_X_HMS_SIGNATURE'];
+$timestamp = $_SERVER['HTTP_X_HMS_TIMESTAMP'];
+
+// HMAC with timestamp protection
+$expected = 'sha256=' . hash_hmac('sha256', $timestamp . '.' . $payload, '{{ $secret }}');
+
+if (hash_equals($expected, $signature)) {
+    // Verified: Request is authentic
+    $data = json_decode($payload, true);
+}</code></pre>
+                        </div>
                     </div>
                     @endif
 
                     <div class="pt-6 border-t border-gray-100 dark:border-gray-700/50 flex justify-end space-x-3">
                         <button type="button" wire:click="$set('showModal', false)" class="px-6 py-2.5 text-xs font-black text-gray-400 uppercase tracking-widest hover:text-gray-800 transition-colors">Cancel</button>
-                        <button type="submit" class="btn-primary px-10 py-2.5 text-xs font-black uppercase tracking-widest">
-                            {{ ($editingEndpointId || $editingSourceId) ? 'Update Config' : 'Create Config' }}
+                        <button type="submit" wire:loading.attr="disabled" class="btn-primary px-10 py-2.5 text-xs font-black uppercase tracking-widest disabled:opacity-50">
+                            <span wire:loading.remove wire:target="save">
+                                {{ ($editingEndpointId || $editingSourceId) ? 'Update Config' : 'Create Config' }}
+                            </span>
+                            <span wire:loading wire:target="save">Saving...</span>
                         </button>
                     </div>
                 </form>

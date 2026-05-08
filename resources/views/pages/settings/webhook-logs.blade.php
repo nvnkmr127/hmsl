@@ -11,7 +11,7 @@
             <h1 class="text-3xl font-black text-gray-800 dark:text-white uppercase tracking-tight">Delivery Audit</h1>
         </div>
         
-        <x-master-nav />
+        <x-settings-nav />
 
         <livewire:settings.webhook-logs />
     </div>

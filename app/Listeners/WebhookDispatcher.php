@@ -19,6 +19,8 @@ use Illuminate\Queue\InteractsWithQueue;
 
 class WebhookDispatcher implements ShouldQueue
 {
+    public $afterCommit = true;
+
     protected $service;
 
     /**

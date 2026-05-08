@@ -18,13 +18,25 @@ class WebhookController extends Controller
             ->where('is_active', true)
             ->firstOrFail();
 
-        // 1. Log the webhook request
-        $webhook = InboundWebhook::create([
-            'source' => $source,
-            'payload' => $request->all(),
-            'headers' => $request->headers->all(),
-            'status' => 'pending',
-        ]);
+        // 1. Atomic Check & Create for idempotency
+        $externalId = $request->header('X-Idempotency-Key') ?? $request->header('X-Request-ID');
+        
+        $webhook = \App\Models\InboundWebhook::firstOrCreate(
+            ['external_id' => $externalId],
+            [
+                'source' => $source,
+                'payload' => $request->all(),
+                'headers' => $request->headers->all(),
+                'status' => 'pending',
+            ]
+        );
+
+        if (!$webhook->wasRecentlyCreated && $externalId) {
+            return response()->json([
+                'message' => 'Webhook already received.',
+                'id' => $webhook->id,
+            ], 200);
+        }
 
         try {
             // 2. Validate authentication based on config
@@ -67,20 +79,29 @@ class WebhookController extends Controller
 
         if ($config->auth_type === 'secret') {
             $signature = $request->header('X-Webhook-Signature');
-            if (!$signature) {
-                throw new \Exception("Missing HMAC signature header.");
+            $timestamp = $request->header('X-Webhook-Timestamp');
+
+            if (!$signature || !$timestamp) {
+                throw new \Exception("Missing HMAC signature or timestamp header.");
             }
 
-            if (!$this->verifyHmac($request->getContent(), $signature, $config->secret)) {
+            // 1. Check timestamp window (5 minutes)
+            if (abs(now()->timestamp - (int)$timestamp) > 300) {
+                throw new \Exception("Webhook timestamp outside valid window.");
+            }
+
+            // 2. Verify signature
+            if (!$this->verifyHmac($request->getContent(), $signature, $config->secret, (int)$timestamp)) {
                 throw new \Exception("Invalid HMAC signature.");
             }
             return true;
         }
     }
 
-    protected function verifyHmac(string $payload, string $signature, string $secret): bool
+    protected function verifyHmac(string $payload, string $signature, string $secret, int $timestamp): bool
     {
-        $computed = hash_hmac('sha256', $payload, $secret);
+        $signedPayload = $timestamp . '.' . $payload;
+        $computed = hash_hmac('sha256', $signedPayload, $secret);
         return hash_equals($computed, $signature);
     }
 }
