@@ -58,7 +58,7 @@ class ComprehensiveDataSeeder extends Seeder
                 'date_of_birth' => $faker->dateTimeBetween('-12 years', '-1 months')->format('Y-m-d'),
                 'phone' => $faker->randomElement(['98', '99', '88', '77', '63']) . $faker->numerify('########'),
                 'email' => strtolower($firstName . '.' . $lastName . rand(1, 99) . '@example.com'),
-                'blood_group' => $faker->randomElement(['A+', 'B+', 'O+', 'AB+', 'A-', 'B-', 'O-', 'AB-']),
+
                 'address' => $faker->randomElement(['Tilak Gardens', 'Khaleelwadi', 'Bora Colony', 'Gandhi Chowk', 'Varni Road']),
                 'city' => 'Nizamabad',
                 'state' => 'Telangana',

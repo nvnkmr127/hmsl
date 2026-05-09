@@ -14,19 +14,16 @@ class PatientList extends Component
 
     public $search = '';
     public $genderFilter = '';
-    public $bloodGroupFilter = '';
     public $sortBy = 'latest';
 
     protected $queryString = [
         'search' => ['except' => ''],
         'genderFilter' => ['except' => ''],
-        'bloodGroupFilter' => ['except' => ''],
         'sortBy' => ['except' => 'latest'],
     ];
 
     public function updatedSearch() { $this->resetPage(); }
     public function updatedGenderFilter() { $this->resetPage(); }
-    public function updatedBloodGroupFilter() { $this->resetPage(); }
     public function updatedSortBy() { $this->resetPage(); }
 
     #[On('patient-saved')]
@@ -50,17 +47,16 @@ class PatientList extends Component
     {
         $patients = $service->getAll($this->search, [
             'gender' => $this->genderFilter,
-            'blood_group' => $this->bloodGroupFilter,
         ], $this->sortBy);
 
         $filename = "hms-patients-" . now()->format('Y-m-d-His') . ".csv";
         
         return response()->streamDownload(function () use ($patients) {
             $handle = fopen('php://output', 'w');
-            fputcsv($handle, ['UHID', 'Name', 'Gender', 'DOB', 'Phone', 'Blood Group', 'Address']);
+            fputcsv($handle, ['UHID', 'Name', 'Gender', 'DOB', 'Phone', 'Address']);
 
             foreach ($patients as $p) {
-                fputcsv($handle, [$p->uhid, $p->full_name, $p->gender, $p->date_of_birth?->format('Y-m-d'), $p->phone, $p->blood_group, $p->address]);
+                fputcsv($handle, [$p->uhid, $p->full_name, $p->gender, $p->date_of_birth?->format('Y-m-d'), $p->phone, $p->address]);
             }
             fclose($handle);
         }, $filename);
@@ -71,10 +67,8 @@ class PatientList extends Component
         return view('livewire.counter.patient-list', [
             'patients' => $service->getAll($this->search, [
                 'gender' => $this->genderFilter,
-                'blood_group' => $this->bloodGroupFilter,
             ], $this->sortBy),
             'stats' => $service->getStats(),
-            'bloodGroups' => Patient::whereNotNull('blood_group')->distinct()->pluck('blood_group'),
         ]);
     }
 }

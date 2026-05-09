@@ -38,8 +38,7 @@ class PatientForm extends Component
     public $phone;
 
 
-    #[Validate('nullable|string|max:10')]
-    public $blood_group;
+
 
     #[Validate('nullable|string')]
     public $address;
@@ -215,7 +214,7 @@ class PatientForm extends Component
         $this->gender = $patient->gender;
         $this->date_of_birth = $patient->date_of_birth ? \Carbon\Carbon::parse($patient->date_of_birth)->format('Y-m-d') : null;
         $this->phone = $patient->phone;
-        $this->blood_group = $patient->blood_group;
+
         $this->address = $patient->address;
         $this->city = $patient->city;
         $this->state = $patient->state;
@@ -255,7 +254,7 @@ class PatientForm extends Component
             'gender' => $this->gender,
             'date_of_birth' => $this->date_of_birth,
             'phone' => $this->phone,
-            'blood_group' => $this->blood_group,
+
             'address' => $this->address,
             'city' => $this->city,
             'state' => $this->state,

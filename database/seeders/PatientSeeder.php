@@ -22,7 +22,7 @@ class PatientSeeder extends Seeder
                 'gender' => 'Male',
                 'date_of_birth' => now()->subYears(5)->format('Y-m-d'),
                 'phone' => '9848012345',
-                'blood_group' => 'B+',
+
                 'address' => 'Varni Road',
                 'city' => 'Nizamabad',
                 'state' => 'Telangana',
@@ -34,7 +34,7 @@ class PatientSeeder extends Seeder
                 'gender' => 'Female',
                 'date_of_birth' => now()->subYears(2)->format('Y-m-d'),
                 'phone' => '9000011111',
-                'blood_group' => 'O+',
+
                 'address' => 'Khaleelwadi',
                 'city' => 'Nizamabad',
                 'state' => 'Telangana',
@@ -46,7 +46,7 @@ class PatientSeeder extends Seeder
                 'gender' => 'Male',
                 'date_of_birth' => now()->subYears(10)->format('Y-m-d'),
                 'phone' => '8888877777',
-                'blood_group' => 'A+',
+
                 'address' => 'Tilak Gardens',
                 'city' => 'Nizamabad',
                 'state' => 'Telangana',

@@ -20,7 +20,7 @@ class PatientResource extends JsonResource
             'age' => $this->age,
             'phone' => $this->phone,
             'email' => $this->email,
-            'blood_group' => $this->blood_group,
+
             'address' => [
                 'street' => $this->address,
                 'city' => $this->city,

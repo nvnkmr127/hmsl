@@ -46,10 +46,7 @@
                     <p class="text-tiny font-black text-gray-400 uppercase tracking-widest">Gender / Age</p>
                     <p class="font-bold text-gray-900 dark:text-white">{{ $patient->gender ?? '—' }} · {{ $patient->age ?? '—' }}</p>
                 </div>
-                <div>
-                    <p class="text-tiny font-black text-gray-400 uppercase tracking-widest">Blood Group</p>
-                    <p class="font-bold text-red-600 dark:text-red-400">{{ $patient->blood_group ?? '—' }}</p>
-                </div>
+
                 <div>
                     <p class="text-tiny font-black text-gray-400 uppercase tracking-widest">Date of Birth</p>
                     <p class="font-bold text-gray-900 dark:text-white">{{ $patient->date_of_birth ? \Illuminate\Support\Carbon::parse($patient->date_of_birth)->format('d M Y') : '—' }}</p>

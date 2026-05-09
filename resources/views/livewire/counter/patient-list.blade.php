@@ -68,14 +68,7 @@
                         <option value="Other">Other</option>
                     </x-form.select>
                 </div>
-                <div class="md:col-span-2">
-                    <x-form.select wire:model.live="bloodGroupFilter">
-                        <option value="">All Blood Type</option>
-                        @foreach($bloodGroups as $bg)
-                            <option value="{{ $bg }}">{{ $bg }}</option>
-                        @endforeach
-                    </x-form.select>
-                </div>
+
                 <div class="md:col-span-3">
                     <x-form.select wire:model.live="sortBy">
                         <option value="latest">Recently Added</option>
@@ -124,7 +117,7 @@
                     <x-table.th>Patient Profile</x-table.th>
                     <x-table.th>Gender / Age</x-table.th>
                     <x-table.th>Phone</x-table.th>
-                    <x-table.th>Blood Group</x-table.th>
+
                     <x-table.th>Status</x-table.th>
                     <x-table.th class="text-right">Actions</x-table.th>
                 </tr>
@@ -153,13 +146,7 @@
                         <td>
                             <span class="font-bold text-gray-700 dark:text-gray-300">{{ $patient->phone }}</span>
                         </td>
-                        <td>
-                            @if($patient->blood_group)
-                                <x-badge color="danger">{{ $patient->blood_group }}</x-badge>
-                            @else
-                                <span class="text-tiny font-black text-gray-400 uppercase tracking-widest italic opacity-40">N/A</span>
-                            @endif
-                        </td>
+
                         <td>
                             <x-badge :color="$patient->is_active ? 'success' : 'warning'">
                                 {{ $patient->is_active ? 'Active' : 'Inactive' }}

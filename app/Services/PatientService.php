@@ -26,7 +26,7 @@ class PatientService
         return Patient::query()
             ->when($search, fn($q) => $q->search($search))
             ->when($filters['gender'] ?? null, fn($q) => $q->where('gender', $filters['gender']))
-            ->when($filters['blood_group'] ?? null, fn($q) => $q->where('blood_group', $filters['blood_group']))
+
             ->when($sortBy === 'alphabetic', fn($q) => $q->orderBy('first_name'))
             ->latest()
             ->paginate(10);

@@ -150,10 +150,7 @@
 
 
 
-                    <div>
-                        <x-form.input label="Blood Group (Optional)" wire:model="blood_group" name="blood_group" placeholder="A+, O+, ..." />
-                        @error('blood_group') <p class="text-tiny text-rose-500 font-black uppercase mt-1">{{ $message }}</p> @enderror
-                    </div>
+
                 </div>
             </div>
 
