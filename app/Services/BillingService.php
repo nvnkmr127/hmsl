@@ -245,6 +245,9 @@ class BillingService
             // PREVENT OVERPAYER: Check balance before recording
             if ($type === 'payment') {
                 $balance = (float) $bill->balance_amount;
+                if ($balance <= 0 && $amount > 0) {
+                     throw new \InvalidArgumentException("This bill is already fully paid. Remaining balance is 0.");
+                }
                 if ($amount > ($balance + 0.01)) { // 0.01 tolerance for floating point
                      throw new \InvalidArgumentException("Payment amount ({$amount}) exceeds the remaining balance ({$balance}).");
                 }

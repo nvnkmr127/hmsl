@@ -127,7 +127,15 @@ class WebhookEndpoints extends Component
         if ($this->activeTab === 'outbound') {
             $this->validate([
                 'name' => 'required|string|max:150',
-                'url' => 'required|url',
+                'url' => [
+                    'required',
+                    'url',
+                    function ($attribute, $value, $fail) {
+                        if (!\App\Helpers\WebhookSecurity::isSafeUrl($value)) {
+                            $fail('The webhook URL must resolve to a public IP address (SSRF Protection).');
+                        }
+                    }
+                ],
             ]);
 
             $data = [
@@ -137,6 +145,7 @@ class WebhookEndpoints extends Component
                 'events' => $this->selectedEvents,
                 'api_version' => $this->apiVersion,
                 'is_active' => true,
+                'created_by' => auth()->id(),
             ];
 
             if ($this->editingEndpointId) {

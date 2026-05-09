@@ -124,28 +124,32 @@ class BillGenerate extends Component
             'discountReason' => 'nullable|required_if:discount,>0|string|max:255',
         ]);
 
-        $bill = $service->createBill([
-            'patient_id' => $this->patientId,
-            'consultation_id' => $this->consultationId,
-            'discount_amount' => 0, // We will apply it separately for auditing
-            'tax_amount' => $this->tax,
-            'payment_status' => $this->paymentStatus,
-            'paid_amount' => (float) $this->amountPaid,
-            'payment_method' => $this->paymentMethod,
-            'notes' => $this->notes,
-        ], $this->items);
+        try {
+            $bill = $service->createBill([
+                'patient_id' => $this->patientId,
+                'consultation_id' => $this->consultationId,
+                'discount_amount' => 0, // We will apply it separately for auditing
+                'tax_amount' => $this->tax,
+                'payment_status' => $this->paymentStatus,
+                'paid_amount' => (float) $this->amountPaid,
+                'payment_method' => $this->paymentMethod,
+                'notes' => $this->notes,
+            ], $this->items);
 
-        if ($this->discount > 0) {
-            $service->applyDiscount($bill, [
-                'type' => $this->discountType,
-                'value' => $this->discount,
-                'reason' => $this->discountReason ?: 'Initial bill discount',
-            ]);
+            if ($this->discount > 0) {
+                $service->applyDiscount($bill, [
+                    'type' => $this->discountType,
+                    'value' => $this->discount,
+                    'reason' => $this->discountReason ?: 'Initial bill discount',
+                ]);
+            }
+
+            $this->dispatch('close-modal', name: 'billing-modal');
+            $this->dispatch('bill-generated', billId: $bill->id);
+            $this->dispatch('notify', ['type' => 'success', 'message' => 'Bill generated successfully!']);
+        } catch (\Exception $e) {
+            $this->dispatch('notify', ['type' => 'error', 'message' => $e->getMessage()]);
         }
-
-        $this->dispatch('close-modal', name: 'billing-modal');
-        $this->dispatch('bill-generated', billId: $bill->id);
-        $this->dispatch('notify', ['type' => 'success', 'message' => 'Bill generated successfully!']);
     }
 
     public function render()

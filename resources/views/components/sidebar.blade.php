@@ -60,10 +60,19 @@
         @endcan
         
         @can('view lab')
-        <x-nav-link href="{{ route('laboratory.index') }}" :active="request()->routeIs('laboratory.*')" icon="flask">Lab</x-nav-link>
+        <x-nav-group title="Laboratory" icon="flask" :active="request()->routeIs('laboratory.*')">
+            <x-nav-link href="{{ route('laboratory.index') }}" :active="request()->routeIs('laboratory.index')" icon="home">Overview</x-nav-link>
+            <x-nav-link href="{{ route('laboratory.tests') }}" :active="request()->routeIs('laboratory.tests')" icon="beaker">Tests</x-nav-link>
+            <x-nav-link href="{{ route('laboratory.results') }}" :active="request()->routeIs('laboratory.results')" icon="clipboard">Results</x-nav-link>
+        </x-nav-group>
         @endcan
+
         @can('view pharmacy')
-        <x-nav-link href="{{ route('pharmacy.index') }}" :active="request()->routeIs('pharmacy.*')" icon="pill">Pharmacy</x-nav-link>
+        <x-nav-group title="Pharmacy" icon="pill" :active="request()->routeIs('pharmacy.*')">
+            <x-nav-link href="{{ route('pharmacy.index') }}" :active="request()->routeIs('pharmacy.index')" icon="home">Overview</x-nav-link>
+            <x-nav-link href="{{ route('pharmacy.orders') }}" :active="request()->routeIs('pharmacy.orders')" icon="clipboard">Orders</x-nav-link>
+            <x-nav-link href="{{ route('pharmacy.stock') }}" :active="request()->routeIs('pharmacy.stock')" icon="box">Stock</x-nav-link>
+        </x-nav-group>
         @endcan
         
         @can('admit patients')
@@ -76,7 +85,16 @@
     @can('view reports')
     <div>
         <p class="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] px-3 mb-5">Data Intelligence</p>
-        <x-nav-link href="{{ route('reports.index') }}" :active="request()->routeIs('reports.*')" icon="chart">Reports</x-nav-link>
+        <x-nav-group title="Reports" icon="chart" :active="request()->routeIs('reports.*')">
+            <x-nav-link href="{{ route('reports.index') }}" :active="request()->routeIs('reports.index')" icon="home">Dashboard</x-nav-link>
+            <x-nav-link href="{{ route('reports.revenue') }}" :active="request()->routeIs('reports.revenue')" icon="credit-card">Revenue</x-nav-link>
+            <x-nav-link href="{{ route('reports.visits') }}" :active="request()->routeIs('reports.visits')" icon="users">Patient Visits</x-nav-link>
+            <x-nav-link href="{{ route('reports.dues') }}" :active="request()->routeIs('reports.dues')" icon="credit-card">Pending Dues</x-nav-link>
+            <x-nav-link href="{{ route('reports.doctor-consults') }}" :active="request()->routeIs('reports.doctor-consults')" icon="stethoscope">Doctor Stats</x-nav-link>
+            <x-nav-link href="{{ route('reports.discounts') }}" :active="request()->routeIs('reports.discounts')" icon="credit-card">Discount Audit</x-nav-link>
+            <x-nav-link href="{{ route('reports.inventory') }}" :active="request()->routeIs('reports.inventory')" icon="box">Stock Reports</x-nav-link>
+            <x-nav-link href="{{ route('reports.lab') }}" :active="request()->routeIs('reports.lab')" icon="beaker">Lab Analytics</x-nav-link>
+        </x-nav-group>
     </div>
     @endcan
 
@@ -89,9 +107,11 @@
         <x-nav-group title="Master Data" icon="box" :active="request()->routeIs('master.*')">
             <x-nav-link href="{{ route('master.doctors.index') }}" :active="request()->routeIs('master.doctors.*')" icon="users">Doctors</x-nav-link>
             <x-nav-link href="{{ route('master.departments.index') }}" :active="request()->routeIs('master.departments.*')" icon="home">Departments</x-nav-link>
-            <x-nav-link href="{{ route('master.wards.index') }}" :active="request()->routeIs('master.wards.*')" icon="bed">Wards & Beds</x-nav-link>
+            <x-nav-link href="{{ route('master.wards.index') }}" :active="request()->routeIs('master.wards.*')" icon="bed">Wards</x-nav-link>
+            <x-nav-link href="{{ route('master.beds.index') }}" :active="request()->routeIs('master.beds.*')" icon="bed">Beds</x-nav-link>
             <x-nav-link href="{{ route('master.services.index') }}" :active="request()->routeIs('master.services.*')" icon="credit-card">Services</x-nav-link>
             <x-nav-link href="{{ route('master.medicines.index') }}" :active="request()->routeIs('master.medicines.*')" icon="pill">Medicines</x-nav-link>
+            <x-nav-link href="{{ route('master.inventory-categories.index') }}" :active="request()->routeIs('master.inventory-categories.*')" icon="box">Inventory Categories</x-nav-link>
             <x-nav-link href="{{ route('master.labs.index') }}" :active="request()->routeIs('master.labs.*')" icon="beaker">Lab Tests</x-nav-link>
             <x-nav-link href="{{ route('master.clinical-templates.index') }}" :active="request()->routeIs('master.clinical-templates.*')" icon="clipboard">Admission Layouts</x-nav-link>
         </x-nav-group>
@@ -102,15 +122,25 @@
         @endcan
         
         @can('manage inventory')
-        <x-nav-link href="{{ route('inventory.index') }}" :active="request()->routeIs('inventory.*')" icon="box">Stock</x-nav-link>
+        <x-nav-group title="Inventory" icon="box" :active="request()->routeIs('inventory.*')">
+            <x-nav-link href="{{ route('inventory.index') }}" :active="request()->routeIs('inventory.index')" icon="home">Overview</x-nav-link>
+            <x-nav-link href="{{ route('inventory.stock') }}" :active="request()->routeIs('inventory.stock')" icon="box">Stock Levels</x-nav-link>
+            <x-nav-link href="{{ route('inventory.suppliers') }}" :active="request()->routeIs('inventory.suppliers')" icon="users">Suppliers</x-nav-link>
+        </x-nav-group>
         @endcan
         
         @can('manage settings')
         <x-nav-group title="Settings" icon="settings" :active="request()->routeIs('settings.*')">
             <x-nav-link href="{{ route('settings.index') }}" :active="request()->routeIs('settings.index')" icon="home">Hospital Details</x-nav-link>
             <x-nav-link href="{{ route('settings.preferences') }}" :active="request()->routeIs('settings.preferences')" icon="monitor">Preferences</x-nav-link>
-            <x-nav-link href="{{ route('settings.webhooks.index') }}" :active="request()->routeIs('settings.webhooks.*')" icon="link">Webhooks</x-nav-link>
-            <x-nav-link href="{{ route('settings.api-tokens.index') }}" :active="request()->routeIs('settings.api-tokens.*')" icon="credit-card">API Tokens</x-nav-link>
+            <x-nav-link href="{{ route('settings.invoice') }}" :active="request()->routeIs('settings.invoice')" icon="credit-card">Invoice Setup</x-nav-link>
+            <x-nav-group title="Webhooks" icon="link" :active="request()->routeIs('settings.webhooks.*')">
+                <x-nav-link href="{{ route('settings.webhooks.index') }}" :active="request()->routeIs('settings.webhooks.index')" icon="arrow-up">Outbound</x-nav-link>
+                <x-nav-link href="{{ route('settings.webhooks.inbound') }}" :active="request()->routeIs('settings.webhooks.inbound')" icon="arrow-down">Inbound</x-nav-link>
+                <x-nav-link href="{{ route('settings.webhooks.logs') }}" :active="request()->routeIs('settings.webhooks.logs')" icon="clipboard">Delivery Logs</x-nav-link>
+            </x-nav-group>
+            <x-nav-link href="{{ route('settings.api-tokens.index') }}" :active="request()->routeIs('settings.api-tokens.*')" icon="key">API Tokens</x-nav-link>
+            <x-nav-link href="{{ route('log-viewer.index') }}" :active="request()->routeIs('log-viewer.*')" icon="clipboard" target="_blank">System Logs</x-nav-link>
         </x-nav-group>
         @endcan
     </div>

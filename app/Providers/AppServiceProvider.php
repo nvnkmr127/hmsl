@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -65,5 +67,11 @@ class AppServiceProvider extends ServiceProvider
             \App\Events\OPD\AppointmentBooked::class,
             \App\Listeners\WebhookDispatcher::class
         );
+
+        Livewire::component('ipd.transfer-bed', \App\Livewire\Ipd\TransferBed::class);
+
+        Gate::define('viewLogViewer', function ($user) {
+            return $user->can('manage settings');
+        });
     }
 }

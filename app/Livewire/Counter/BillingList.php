@@ -132,20 +132,26 @@ class BillingList extends Component
             return;
         }
 
-        $service->recordPayment(
-            $bill,
-            $amount,
-            $this->paymentMethod,
-            $this->paymentType,
-            $this->paymentReference ?: null,
-            $this->paymentNotes ?: null
-        );
+        try {
+            $service->recordPayment(
+                $bill,
+                $amount,
+                $this->paymentMethod,
+                $this->paymentType,
+                $this->paymentReference ?: null,
+                $this->paymentNotes ?: null
+            );
 
-        $service->recalculatePaymentStatus($bill);
+            // Refresh the bill to get the latest payments before recalculating status
+            $bill->refresh();
+            $service->recalculatePaymentStatus($bill);
 
-        $this->dispatch('close-modal', name: 'billing-payment-modal');
-        $this->dispatch('notify', ['type' => 'success', 'message' => 'Payment saved.']);
-        $this->reset(['selectedBillId', 'paymentType', 'paymentMethod', 'paymentAmount', 'paymentReference', 'paymentNotes']);
+            $this->dispatch('close-modal', name: 'billing-payment-modal');
+            $this->dispatch('notify', ['type' => 'success', 'message' => 'Payment saved.']);
+            $this->reset(['selectedBillId', 'paymentType', 'paymentMethod', 'paymentAmount', 'paymentReference', 'paymentNotes']);
+        } catch (\Exception $e) {
+            $this->dispatch('notify', ['type' => 'error', 'message' => $e->getMessage()]);
+        }
     }
 
     public function openDiscountModal(int $billId): void

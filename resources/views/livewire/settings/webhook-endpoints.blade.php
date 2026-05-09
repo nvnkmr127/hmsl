@@ -176,103 +176,113 @@
     <!-- Modal Form -->
     @if($showModal)
         <div class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
-            <div class="bg-white dark:bg-gray-800 w-full max-w-2xl rounded-[3rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-                <div class="px-10 py-8 bg-indigo-600 text-white">
-                    <h2 class="text-2xl font-black uppercase tracking-tight">
-                        {{ $activeTab === 'outbound' ? ($editingEndpointId ? 'Edit Endpoint' : 'New Outbound Integration') : ($editingSourceId ? 'Edit Source' : 'New Inbound Source') }}
-                    </h2>
-                    <p class="text-xs text-indigo-100 mt-1 uppercase tracking-widest font-bold">
-                        {{ $activeTab === 'outbound' ? 'Connect HMS to external APIs' : 'Receive data from external services' }}
-                    </p>
-                </div>
-                
-                <form wire:submit="save" class="p-10 space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <x-form.input label="Display Name" wire:model="name" placeholder="e.g. CRM Sync or Stripe Inbound" />
-                        
-                        @if($activeTab === 'outbound')
-                            <x-form.input label="Target URL" wire:model="url" placeholder="https://api.yourcrm.com/v1/hms-hook" />
-                            <div class="space-y-2">
-                                <label class="text-tiny font-black text-gray-400 uppercase tracking-widest block">API Version</label>
-                                <select wire:model="apiVersion" class="block w-full px-4 py-3 rounded-2xl border-2 border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-bold">
-                                    <option value="v1">v1 (Current)</option>
-                                    <option value="2026-05">2026-05 (Beta)</option>
-                                </select>
-                            </div>
-                        @else
-                            <x-form.input label="Endpoint Slug" wire:model="slug" placeholder="e.g. stripe-payments" />
-                        @endif
-                    </div>
-
-                    @if($activeTab === 'inbound')
-                    <div class="space-y-4">
-                        <label class="text-tiny font-black text-gray-400 uppercase tracking-widest block">Authentication Type</label>
-                        <div class="grid grid-cols-3 gap-4">
-                            @foreach(['secret' => 'HMAC Secret', 'bearer' => 'Bearer Token', 'open' => 'No Auth (Open)'] as $val => $lbl)
-                                <label class="flex flex-col items-center justify-center gap-2 p-4 rounded-3xl border-2 transition-all cursor-pointer {{ $authType === $val ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20' : 'border-gray-100 dark:border-gray-700/50 hover:border-indigo-200' }}">
-                                    <input type="radio" wire:model.live="authType" value="{{ $val }}" class="sr-only">
-                                    <span class="text-[10px] font-black uppercase tracking-tight text-center">{{ $lbl }}</span>
-                                </label>
-                            @endforeach
-                        </div>
-                    </div>
-                    @endif
-
-                    @if($activeTab === 'outbound')
-                    <div class="space-y-4">
-                        <div class="flex items-center justify-between">
-                            <label class="text-tiny font-black text-gray-400 uppercase tracking-widest block">Subscribe to Events</label>
-                            <label class="flex items-center space-x-2 cursor-pointer">
-                                <input type="checkbox" wire:click="toggleAllEvents" class="w-3 h-3 rounded-md text-indigo-600">
-                                <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Select All</span>
-                            </label>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4 bg-gray-50 dark:bg-gray-900/40 p-6 rounded-3xl border border-gray-100 dark:border-gray-700/50">
-                            @foreach($availableEvents as $key => $label)
-                                <label class="flex items-center space-x-3 cursor-pointer group">
-                                    <input type="checkbox" wire:model="selectedEvents" value="{{ $key }}" class="w-4 h-4 rounded-lg border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                                    <span class="text-xs font-bold text-gray-700 dark:text-gray-300 group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{{ $label }}</span>
-                                </label>
-                            @endforeach
-                        </div>
-                    </div>
-                    @endif
-
-                    @if($authType !== 'open' || $activeTab === 'outbound')
-                    <div x-data="{ showDocs: false }" class="space-y-4">
-                        <div class="p-6 bg-amber-50 dark:bg-amber-900/20 rounded-3xl border border-amber-100 dark:border-amber-800/50">
-                            <div class="flex items-center justify-between mb-3">
-                                <span class="text-tiny font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest">
-                                    {{ $authType === 'secret' || $activeTab === 'outbound' ? 'Secret Signing Key (HMAC)' : 'Bearer Token' }}
-                                </span>
-                                <div class="flex items-center gap-4">
-                                    <button type="button" @click="showDocs = !showDocs" class="text-tiny font-black text-indigo-600 uppercase underline">
-                                        <span x-show="!showDocs">Show Implementation Docs</span>
-                                        <span x-show="showDocs">Hide Docs</span>
-                                    </button>
-                                    <button type="button" wire:click="$set('secret', '{{ Str::random(32) }}')" class="text-tiny font-black text-indigo-600 uppercase underline">Regenerate</button>
-                                </div>
-                            </div>
-                            <div x-data="{ revealed: false }" class="relative">
-                                <code x-show="revealed" class="text-xs font-mono text-gray-600 dark:text-gray-400 break-all select-all">{{ $secret }}</code>
-                                <code x-show="!revealed" class="text-xs font-mono text-gray-400">••••••••••••••••••••••••••••••••</code>
-                                <button type="button" @click="revealed = !revealed" class="absolute right-0 top-0 text-[10px] font-black text-indigo-500 uppercase">
-                                    <span x-show="!revealed">Reveal</span>
-                                    <span x-show="revealed">Hide</span>
-                                </button>
-                            </div>
-                            <p class="text-[8px] text-amber-600 mt-3 font-bold uppercase tracking-widest">
-                                {{ $authType === 'secret' || $activeTab === 'outbound' ? 'Used to sign and verify every request via HMAC-SHA256.' : 'Must be sent in the Authorization header as Bearer token.' }}
+            <div class="bg-white dark:bg-gray-800 w-full max-w-2xl max-h-[90vh] rounded-[3rem] shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-300">
+                <!-- Modal Header -->
+                <div class="px-10 py-8 bg-indigo-600 text-white shrink-0">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h2 class="text-2xl font-black uppercase tracking-tight">
+                                {{ $activeTab === 'outbound' ? ($editingEndpointId ? 'Edit Endpoint' : 'New Outbound Integration') : ($editingSourceId ? 'Edit Source' : 'New Inbound Source') }}
+                            </h2>
+                            <p class="text-xs text-indigo-100 mt-1 uppercase tracking-widest font-bold">
+                                {{ $activeTab === 'outbound' ? 'Connect HMS to external APIs' : 'Receive data from external services' }}
                             </p>
                         </div>
+                        <button wire:click="$set('showModal', false)" class="text-white/50 hover:text-white transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Modal Body (Scrollable) -->
+                <div class="flex-1 overflow-y-auto custom-scrollbar">
+                    <form wire:submit="save" id="webhookForm" class="p-10 space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <x-form.input label="Display Name" wire:model="name" placeholder="e.g. CRM Sync or Stripe Inbound" />
+                            
+                            @if($activeTab === 'outbound')
+                                <x-form.input label="Target URL" wire:model="url" placeholder="https://api.yourcrm.com/v1/hms-hook" />
+                                <div class="space-y-2">
+                                    <label class="text-tiny font-black text-gray-400 uppercase tracking-widest block">API Version</label>
+                                    <select wire:model="apiVersion" class="block w-full px-4 py-3 rounded-2xl border-2 border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-bold">
+                                        <option value="v1">v1 (Current)</option>
+                                        <option value="2026-05">2026-05 (Beta)</option>
+                                    </select>
+                                </div>
+                            @else
+                                <x-form.input label="Endpoint Slug" wire:model="slug" placeholder="e.g. stripe-payments" />
+                            @endif
+                        </div>
 
-                        <!-- Developer Docs Snippet -->
-                        <div x-show="showDocs" x-transition class="bg-gray-900 rounded-[2rem] p-8 text-white font-mono text-[10px] space-y-4 overflow-hidden">
-                            <div class="flex justify-between items-center border-b border-gray-800 pb-4">
-                                <span class="text-gray-500 uppercase tracking-widest font-black">PHP Implementation</span>
-                                <span class="text-indigo-400">Copy</span>
+                        @if($activeTab === 'inbound')
+                        <div class="space-y-4">
+                            <label class="text-tiny font-black text-gray-400 uppercase tracking-widest block">Authentication Type</label>
+                            <div class="grid grid-cols-3 gap-4">
+                                @foreach(['secret' => 'HMAC Secret', 'bearer' => 'Bearer Token', 'open' => 'No Auth (Open)'] as $val => $lbl)
+                                    <label class="flex flex-col items-center justify-center gap-2 p-4 rounded-3xl border-2 transition-all cursor-pointer {{ $authType === $val ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20' : 'border-gray-100 dark:border-gray-700/50 hover:border-indigo-200' }}">
+                                        <input type="radio" wire:model.live="authType" value="{{ $val }}" class="sr-only">
+                                        <span class="text-[10px] font-black uppercase tracking-tight text-center">{{ $lbl }}</span>
+                                    </label>
+                                @endforeach
                             </div>
-                            <pre class="overflow-x-auto"><code>$payload = file_get_contents('php://input');
+                        </div>
+                        @endif
+
+                        @if($activeTab === 'outbound')
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <label class="text-tiny font-black text-gray-400 uppercase tracking-widest block">Subscribe to Events</label>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" wire:click="toggleAllEvents" class="w-3 h-3 rounded-md text-indigo-600">
+                                    <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Select All</span>
+                                </label>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 bg-gray-50 dark:bg-gray-900/40 p-6 rounded-3xl border border-gray-100 dark:border-gray-700/50">
+                                @foreach($availableEvents as $key => $label)
+                                    <label class="flex items-center space-x-3 cursor-pointer group">
+                                        <input type="checkbox" wire:model="selectedEvents" value="{{ $key }}" class="w-4 h-4 rounded-lg border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                        <span class="text-xs font-bold text-gray-700 dark:text-gray-300 group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{{ $label }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endif
+
+                        @if($authType !== 'open' || $activeTab === 'outbound')
+                        <div x-data="{ showDocs: false }" class="space-y-4">
+                            <div class="p-6 bg-amber-50 dark:bg-amber-900/20 rounded-3xl border border-amber-100 dark:border-amber-800/50">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="text-tiny font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest">
+                                        {{ $authType === 'secret' || $activeTab === 'outbound' ? 'Secret Signing Key (HMAC)' : 'Bearer Token' }}
+                                    </span>
+                                    <div class="flex items-center gap-4">
+                                        <button type="button" @click="showDocs = !showDocs" class="text-tiny font-black text-indigo-600 uppercase underline">
+                                            <span x-show="!showDocs">Show Implementation Docs</span>
+                                            <span x-show="showDocs">Hide Docs</span>
+                                        </button>
+                                        <button type="button" wire:click="$set('secret', '{{ Str::random(32) }}')" class="text-tiny font-black text-indigo-600 uppercase underline">Regenerate</button>
+                                    </div>
+                                </div>
+                                <div x-data="{ revealed: false }" class="relative">
+                                    <code x-show="revealed" class="text-xs font-mono text-gray-600 dark:text-gray-400 break-all select-all">{{ $secret }}</code>
+                                    <code x-show="!revealed" class="text-xs font-mono text-gray-400">••••••••••••••••••••••••••••••••</code>
+                                    <button type="button" @click="revealed = !revealed" class="absolute right-0 top-0 text-[10px] font-black text-indigo-500 uppercase">
+                                        <span x-show="!revealed">Reveal</span>
+                                        <span x-show="revealed">Hide</span>
+                                    </button>
+                                </div>
+                                <p class="text-[8px] text-amber-600 mt-3 font-bold uppercase tracking-widest">
+                                    {{ $authType === 'secret' || $activeTab === 'outbound' ? 'Used to sign and verify every request via HMAC-SHA256.' : 'Must be sent in the Authorization header as Bearer token.' }}
+                                </p>
+                            </div>
+
+                            <!-- Developer Docs Snippet -->
+                            <div x-show="showDocs" x-transition class="bg-gray-900 rounded-[2rem] p-8 text-white font-mono text-[10px] space-y-4 overflow-hidden">
+                                <div class="flex justify-between items-center border-b border-gray-800 pb-4">
+                                    <span class="text-gray-500 uppercase tracking-widest font-black">PHP Implementation</span>
+                                    <span class="text-indigo-400">Copy</span>
+                                </div>
+                                <pre class="overflow-x-auto"><code>$payload = file_get_contents('php://input');
 $signature = $_SERVER['HTTP_X_HMS_SIGNATURE'];
 $timestamp = $_SERVER['HTTP_X_HMS_TIMESTAMP'];
 
@@ -283,20 +293,22 @@ if (hash_equals($expected, $signature)) {
     // Verified: Request is authentic
     $data = json_decode($payload, true);
 }</code></pre>
+                            </div>
                         </div>
-                    </div>
-                    @endif
+                        @endif
+                    </form>
+                </div>
 
-                    <div class="pt-6 border-t border-gray-100 dark:border-gray-700/50 flex justify-end space-x-3">
-                        <button type="button" wire:click="$set('showModal', false)" class="px-6 py-2.5 text-xs font-black text-gray-400 uppercase tracking-widest hover:text-gray-800 transition-colors">Cancel</button>
-                        <button type="submit" wire:loading.attr="disabled" class="btn-primary px-10 py-2.5 text-xs font-black uppercase tracking-widest disabled:opacity-50">
-                            <span wire:loading.remove wire:target="save">
-                                {{ ($editingEndpointId || $editingSourceId) ? 'Update Config' : 'Create Config' }}
-                            </span>
-                            <span wire:loading wire:target="save">Saving...</span>
-                        </button>
-                    </div>
-                </form>
+                <!-- Modal Footer -->
+                <div class="px-10 py-6 border-t border-gray-100 dark:border-gray-700/50 flex justify-end space-x-3 shrink-0">
+                    <button type="button" wire:click="$set('showModal', false)" class="px-6 py-2.5 text-xs font-black text-gray-400 uppercase tracking-widest hover:text-gray-800 transition-colors">Cancel</button>
+                    <button type="submit" form="webhookForm" wire:loading.attr="disabled" class="btn-primary px-10 py-2.5 text-xs font-black uppercase tracking-widest disabled:opacity-50">
+                        <span wire:loading.remove wire:target="save">
+                            {{ ($editingEndpointId || $editingSourceId) ? 'Update Config' : 'Create Config' }}
+                        </span>
+                        <span wire:loading wire:target="save">Saving...</span>
+                    </button>
+                </div>
             </div>
         </div>
     @endif

@@ -227,7 +227,9 @@
                                 <p class="text-xs text-gray-400 mt-2">{{ $bill->created_at->format('d M Y') }}</p>
                             </div>
                             <div class="flex items-center gap-2">
-                                <button wire:click="openPaymentModal({{ $bill->id }})" class="btn btn-ghost px-3 py-2 text-xs">Collect</button>
+                                @if($bill->payment_status !== 'Paid' || $bill->balance_amount > 0)
+                                    <button wire:click="openPaymentModal({{ $bill->id }})" class="btn btn-ghost px-3 py-2 text-xs">Collect</button>
+                                @endif
                                 <a href="{{ route('billing.bills.print', $bill->id) }}" target="_blank" class="btn btn-secondary px-3 py-2 text-xs">Print</a>
                             </div>
                         </div>
@@ -275,7 +277,11 @@
                             <td class="px-4 py-3 text-xs text-gray-400">{{ $bill->created_at->format('d M Y') }}</td>
                             <td class="px-4 py-3 text-right">
                                 <div class="flex justify-end gap-1">
-                                    <button wire:click="openPaymentModal({{ $bill->id }})" class="btn btn-ghost px-3 py-1.5 text-xs font-bold">Collect</button>
+                                    @if($bill->payment_status !== 'Paid' || $bill->balance_amount > 0)
+                                        <button wire:click="openPaymentModal({{ $bill->id }})" class="btn btn-ghost px-3 py-1.5 text-xs font-bold">Collect</button>
+                                    @else
+                                        <span class="px-3 py-1.5 text-[10px] font-black text-emerald-500 uppercase tracking-widest">Settled</span>
+                                    @endif
                                     <a href="{{ route('billing.bills.print', $bill->id) }}" target="_blank" class="btn btn-secondary px-3 py-1.5 text-xs font-bold">Print</a>
                                 </div>
                             </td>

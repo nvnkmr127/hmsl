@@ -16,6 +16,8 @@ class WebhookEndpoint extends Model
         'events',
         'is_active',
         'timeout_seconds',
+        'api_version',
+        'consecutive_failures',
         'created_by',
     ];
 
