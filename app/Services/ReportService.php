@@ -87,10 +87,16 @@ class ReportService
             ->pluck('total', 'method')
             ->toArray();
 
+        $billTypeExpr = "CASE
+            WHEN admission_id IS NOT NULL THEN 'IPD'
+            WHEN consultation_id IS NOT NULL THEN 'OPD'
+            ELSE 'Other'
+        END";
+
         $revenueByType = Bill::query()
             ->whereBetween('created_at', [$filter->from . ' 00:00:00', $filter->to . ' 23:59:59'])
-            ->select('bill_type', DB::raw('SUM(total_amount) as total'))
-            ->groupBy('bill_type')
+            ->selectRaw($billTypeExpr . ' as bill_type, SUM(total_amount) as total')
+            ->groupByRaw($billTypeExpr)
             ->get()
             ->pluck('total', 'bill_type')
             ->toArray();

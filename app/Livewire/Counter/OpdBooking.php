@@ -6,6 +6,7 @@ use App\Models\Patient;
 use App\Models\Doctor;
 use App\Models\Consultation;
 use App\Models\HospitalOwner;
+use App\Models\PatientVital;
 use App\Services\OpdService;
 use App\Services\BillingService;
 use Illuminate\Support\Facades\DB;
@@ -435,6 +436,29 @@ class OpdBooking extends Component
                 'payment_status' => $newConsultationStatus,
                 'payment_method' => $newConsultationStatus === 'Paid' ? $this->paymentMode : null,
             ]);
+
+            $hasAnyVitals = $this->weight !== null || $this->height !== null || $this->temperature !== null;
+            if ($hasAnyVitals) {
+                $bmi = null;
+                if ($this->weight !== null && $this->height !== null && (float) $this->height > 0) {
+                    $heightInMeters = (float) $this->height / 100;
+                    $bmi = round(((float) $this->weight) / ($heightInMeters * $heightInMeters), 1);
+                }
+
+                PatientVital::updateOrCreate(
+                    [
+                        'patient_id' => $consultation->patient_id,
+                        'consultation_id' => $consultation->id,
+                    ],
+                    [
+                        'recorded_by' => Auth::id(),
+                        'weight' => $this->weight,
+                        'height' => $this->height,
+                        'bmi' => $bmi,
+                        'temperature' => $this->temperature,
+                    ]
+                );
+            }
 
             if ($this->fee > 0) {
                 $itemName = ($consultation->service?->name ?? 'Consultation Fee') . ($consultation->doctor ? ' - Dr. ' . $consultation->doctor->full_name : '');

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Consultation;
 use App\Models\Doctor;
 use App\Models\Bill;
+use App\Models\PatientVital;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -298,6 +299,33 @@ class OpdService
             }
 
             $consultation = Consultation::create($data);
+
+            $weight = $consultation->weight;
+            $height = $consultation->height;
+            $temperature = $consultation->temperature;
+
+            $hasAnyVitals = $weight !== null || $height !== null || $temperature !== null;
+            if ($hasAnyVitals) {
+                $bmi = null;
+                if ($weight !== null && $height !== null && (float) $height > 0) {
+                    $heightInMeters = (float) $height / 100;
+                    $bmi = round(((float) $weight) / ($heightInMeters * $heightInMeters), 1);
+                }
+
+                PatientVital::updateOrCreate(
+                    [
+                        'patient_id' => $consultation->patient_id,
+                        'consultation_id' => $consultation->id,
+                    ],
+                    [
+                        'recorded_by' => Auth::id(),
+                        'weight' => $weight,
+                        'height' => $height,
+                        'bmi' => $bmi,
+                        'temperature' => $temperature,
+                    ]
+                );
+            }
 
             \Illuminate\Support\Facades\Log::info('OPD_BOOKING_CREATED', [
                 'id' => $consultation->id,

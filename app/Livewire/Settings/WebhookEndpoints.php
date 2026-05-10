@@ -110,14 +110,20 @@ class WebhookEndpoints extends Component
     #[Computed]
     public function availableEvents()
     {
-        return config('webhooks.groups', []);
+        $events = config('webhooks.events', []);
+        $grouped = [];
+        foreach ($events as $key => $event) {
+            $group = $event['group'] ?? 'Other';
+            $grouped[$group][$key] = $event['label'] ?? $key;
+        }
+        return $grouped;
     }
 
     #[Computed]
     public function flatAvailableEvents()
     {
         return collect(config('webhooks.events', []))
-            ->mapWithKeys(fn($event, $key) => [$key => $event['label']])
+            ->mapWithKeys(fn($event, $key) => [$key => $event['label'] ?? $key])
             ->toArray();
     }
 

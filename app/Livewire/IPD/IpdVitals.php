@@ -4,6 +4,7 @@ namespace App\Livewire\Ipd;
 
 use App\Models\Admission;
 use App\Models\IpdVital;
+use App\Models\PatientVital;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
@@ -85,6 +86,22 @@ class IpdVitals extends Component
             'bmi' => $this->bmi,
             'pain_scale' => $this->pain_scale,
             'notes' => $this->notes,
+        ]);
+
+        PatientVital::create([
+            'patient_id' => $this->admission->patient_id,
+            'admission_id' => $this->admission->id,
+            'weight' => $this->weight,
+            'height' => $this->height,
+            'bmi' => $this->bmi,
+            'temperature' => $this->temperature,
+            'pulse' => $this->pulse,
+            'bp_systolic' => $this->bp_systolic,
+            'bp_diastolic' => $this->bp_diastolic,
+            'resp_rate' => $this->resp_rate,
+            'spo2' => $this->spo2,
+            'notes' => $this->notes,
+            'recorded_by' => Auth::id(),
         ]);
 
         $this->reset(['bp_systolic', 'bp_diastolic', 'pulse', 'temperature', 'spo2', 'resp_rate', 'weight', 'height', 'bmi', 'pain_scale', 'notes']);
