@@ -27,6 +27,7 @@ class Patient extends Model
         'date_of_birth',
         'phone',
         'email',
+        'is_delivery_attended',
 
         'address',
         'city',
@@ -45,6 +46,7 @@ class Patient extends Model
     protected $casts = [
         'date_of_birth' => 'date',
         'is_active' => 'boolean',
+        'is_delivery_attended' => 'boolean',
         'insurance_validity' => 'date',
     ];
 

@@ -11,8 +11,6 @@ use Illuminate\Support\Str;
 
 class WebhookEndpoints extends Component
 {
-    public $endpoints;
-    public $sources;
     public $activeTab = 'outbound'; // outbound, inbound
     
     public $showModal = false;
@@ -24,32 +22,52 @@ class WebhookEndpoints extends Component
     public function mount()
     {
         $this->loadStats();
-        $this->loadData();
     }
 
     public function loadStats()
     {
         $last24Hours = now()->subDay();
         $isAdmin = auth()->user()->can('manage settings');
-        $baseQuery = WebhookLog::when(!$isAdmin, function($q) {
+
+        // Outbound Stats
+        $outboundQuery = WebhookLog::when(!$isAdmin, function($q) {
                 $q->whereHas('endpoint', fn($eq) => $eq->where('created_by', auth()->id()));
             })
             ->where('created_at', '>', $last24Hours);
 
-        $logStats = $baseQuery->selectRaw('
+        $logStats = $outboundQuery->selectRaw('
             COUNT(*) as total_count,
             SUM(CASE WHEN status = "success" THEN 1 ELSE 0 END) as success_count,
             AVG(duration_ms) as avg_latency
         ')->first();
 
+        // Inbound Stats
+        $inboundStats = \App\Models\InboundWebhook::where('created_at', '>', $last24Hours)
+            ->selectRaw('
+                COUNT(*) as total_received,
+                SUM(CASE WHEN status = "failed" THEN 1 ELSE 0 END) as failed_count
+            ')->first();
+
         $this->stats = [
-            'total' => $isAdmin ? WebhookEndpoint::count() : WebhookEndpoint::where('created_by', auth()->id())->count(),
-            'active' => $isAdmin ? WebhookEndpoint::where('is_active', true)->count() : WebhookEndpoint::where('created_by', auth()->id())->where('is_active', true)->count(),
+            'total_sent' => $logStats->total_count,
+            'total_received' => $inboundStats->total_received,
             'success_rate' => $logStats->total_count > 0 
                 ? round(($logStats->success_count / $logStats->total_count) * 100, 1) 
                 : 100,
             'avg_latency' => round($logStats->avg_latency ?? 0),
             'pending_outbox' => \App\Models\WebhookOutbox::whereIn('status', ['pending', 'processing'])->count(),
+            'top_failing' => WebhookLog::where('status', 'failed')
+                ->where('created_at', '>', $last24Hours)
+                ->with('endpoint')
+                ->select('webhook_endpoint_id', \Illuminate\Support\Facades\DB::raw('count(*) as count'))
+                ->groupBy('webhook_endpoint_id')
+                ->orderByDesc('count')
+                ->limit(3)
+                ->get(),
+            'recent_failed_inbound' => \App\Models\InboundWebhook::where('status', 'failed')
+                ->latest()
+                ->limit(3)
+                ->get(),
             'trend' => $this->getHourlyTrend($last24Hours),
         ];
     }
@@ -57,14 +75,22 @@ class WebhookEndpoints extends Component
     protected function getHourlyTrend($since)
     {
         $isAdmin = auth()->user()->can('manage settings');
+        $driver = \Illuminate\Support\Facades\DB::connection()->getDriverName();
+        $hourExpr = $driver === 'sqlite' ? "strftime('%H', created_at)" : 'HOUR(created_at)';
+        
         return WebhookLog::when(!$isAdmin, function($q) {
                 $q->whereHas('endpoint', fn($eq) => $eq->where('created_by', auth()->id()));
             })
             ->where('created_at', '>', $since)
-            ->selectRaw('HOUR(created_at) as hour, status, COUNT(*) as count')
+            ->selectRaw("{$hourExpr} as hour, status, COUNT(*) as count")
             ->groupBy('hour', 'status')
             ->get()
-            ->groupBy('hour');
+            ->groupBy('hour')
+            ->map(fn($group) => [
+                'total' => $group->sum('count'),
+                'has_failures' => $group->where('status', 'failed')->count() > 0
+            ])
+            ->toArray();
     }
 
     // Common fields
@@ -81,45 +107,18 @@ class WebhookEndpoints extends Component
     // Inbound specific
     public $slug;
 
-    protected $availableEvents = [
-        'Patient Management' => [
-            'patient.registered' => 'Patient Registered',
-            'patient.updated' => 'Patient Updated',
-            'patient.deleted' => 'Patient Deleted',
-        ],
-        'OPD / Consultations' => [
-            'appointment.booked' => 'Appointment Booked',
-            'consultation.created' => 'Consultation Created',
-            'consultation.completed' => 'Consultation Completed',
-        ],
-        'IPD / Admissions' => [
-            'admission.created' => 'Admission Created',
-            'admission.discharged' => 'Patient Discharged',
-        ],
-        'Billing & Payments' => [
-            'invoice.paid' => 'Invoice Paid',
-            'payment.received' => 'Payment Received',
-        ],
-        'Clinical Services' => [
-            'prescription.created' => 'Prescription Created',
-            'prescription.dispensed' => 'Prescription Dispensed',
-            'medicine.low_stock' => 'Medicine Low Stock',
-            'lab.order_created' => 'Lab Order Created',
-            'lab.order_completed' => 'Lab Order Completed',
-        ],
-        'System Events' => [
-            'daily.summary' => 'Daily Summary',
-        ],
-    ];
+    #[Computed]
+    public function availableEvents()
+    {
+        return config('webhooks.groups', []);
+    }
 
     #[Computed]
     public function flatAvailableEvents()
     {
-        $flat = [];
-        foreach ($this->availableEvents as $group) {
-            $flat = array_merge($flat, $group);
-        }
-        return $flat;
+        return collect(config('webhooks.events', []))
+            ->mapWithKeys(fn($event, $key) => [$key => $event['label']])
+            ->toArray();
     }
 
     public function toggleAllEvents()
@@ -137,39 +136,32 @@ class WebhookEndpoints extends Component
     }
 
 
-    public function loadData()
-    {
-        $this->endpoints = \App\Models\WebhookEndpoint::latest()->get();
-        $this->sources = \App\Models\WebhookSource::latest()->get();
-    }
+    // Removed loadData in favor of render-time loading
 
     public function openModal($id = null, $type = 'outbound')
     {
-        $this->reset(['name', 'url', 'slug', 'selectedEvents', 'editingEndpointId', 'editingSourceId', 'authType', 'apiVersion']);
+        $this->reset(['name', 'url', 'slug', 'secret', 'selectedEvents', 'editingEndpointId', 'editingSourceId', 'authType', 'apiVersion']);
         $this->activeTab = $type;
-        
+
         if ($id) {
             if ($type === 'outbound') {
-                $endpoint = \App\Models\WebhookEndpoint::findOrFail($id);
                 $this->editingEndpointId = $id;
+                $endpoint = \App\Models\WebhookEndpoint::find($id);
                 $this->name = $endpoint->name;
                 $this->url = $endpoint->url;
-                $this->secret = $endpoint->secret;
-                $this->selectedEvents = $endpoint->events;
-                $this->apiVersion = $endpoint->api_version;
+                $this->secret = '********';
+                $this->selectedEvents = $endpoint->events ?? [];
+                $this->apiVersion = $endpoint->api_version ?? 'v1';
             } else {
-                $source = \App\Models\WebhookSource::findOrFail($id);
                 $this->editingSourceId = $id;
+                $source = \App\Models\WebhookSource::find($id);
                 $this->name = $source->name;
                 $this->slug = $source->slug;
-                $this->secret = $source->secret;
+                $this->secret = '********';
                 $this->authType = $source->auth_type;
             }
         } else {
             $this->secret = Str::random(32);
-            if ($type === 'inbound') {
-                $this->authType = 'secret';
-            }
         }
 
         $this->showModal = true;
@@ -177,6 +169,8 @@ class WebhookEndpoints extends Component
 
     public function save()
     {
+        $record = null;
+
         if ($this->activeTab === 'outbound') {
             $this->validate([
                 'name' => 'required|string|max:150',
@@ -194,19 +188,22 @@ class WebhookEndpoints extends Component
             $data = [
                 'name' => $this->name,
                 'url' => $this->url,
-                'secret' => $this->secret,
                 'events' => $this->selectedEvents,
                 'api_version' => $this->apiVersion,
                 'is_active' => true,
                 'created_by' => auth()->id(),
             ];
 
+            if ($this->secret !== '********') {
+                $data['secret'] = $this->secret;
+            }
+
             if ($this->editingEndpointId) {
-                $endpoint = \App\Models\WebhookEndpoint::findOrFail($this->editingEndpointId);
-                $this->authorize('update', $endpoint);
-                $endpoint->update($data);
+                $record = \App\Models\WebhookEndpoint::findOrFail($this->editingEndpointId);
+                $this->authorize('update', $record);
+                $record->update($data);
             } else {
-                \App\Models\WebhookEndpoint::create($data);
+                $record = \App\Models\WebhookEndpoint::create($data);
             }
         } else {
             $this->validate([
@@ -218,20 +215,32 @@ class WebhookEndpoints extends Component
             $data = [
                 'name' => $this->name,
                 'slug' => $this->slug,
-                'secret' => $this->secret,
                 'auth_type' => $this->authType,
                 'is_active' => true,
             ];
 
+            if ($this->secret !== '********') {
+                $data['secret'] = $this->secret;
+            }
+
             if ($this->editingSourceId) {
-                \App\Models\WebhookSource::find($this->editingSourceId)->update($data);
+                $record = \App\Models\WebhookSource::findOrFail($this->editingSourceId);
+                $record->update($data);
             } else {
-                \App\Models\WebhookSource::create($data);
+                $record = \App\Models\WebhookSource::create($data);
             }
         }
 
-        $this->loadData();
-        $this->loadStats(); // Refresh dashboard
+        $this->loadStats();
+
+        \App\Models\AuditLog::log(
+            ($this->editingEndpointId || $this->editingSourceId) ? 'webhook.updated' : 'webhook.created',
+            $record,
+            [],
+            $record->toArray(),
+            ['webhook', $this->activeTab]
+        );
+
         $this->showModal = false;
         $this->dispatch('notify', ['type' => 'success', 'message' => 'Configuration saved.']);
     }
@@ -239,48 +248,84 @@ class WebhookEndpoints extends Component
     public function delete($id, $type = 'outbound')
     {
         if ($type === 'outbound') {
-            $endpoint = \App\Models\WebhookEndpoint::findOrFail($id);
-            $this->authorize('delete', $endpoint);
-            $endpoint->delete();
+            $record = \App\Models\WebhookEndpoint::findOrFail($id);
+            $this->authorize('delete', $record);
         } else {
-            \App\Models\WebhookSource::findOrFail($id)->delete();
+            $record = \App\Models\WebhookSource::findOrFail($id);
         }
-        $this->loadData();
-        $this->dispatch('notify', ['type' => 'success', 'message' => 'Configuration removed.']);
+
+        \App\Models\AuditLog::log('webhook.deleted', $record, $record->toArray(), [], ['webhook', $type]);
+        $record->delete();
+        $this->dispatch('notify', ['type' => 'success', 'message' => 'Integration removed permanently.']);
     }
 
     public function toggleStatus($id, $type = 'outbound')
     {
         if ($type === 'outbound') {
             $record = \App\Models\WebhookEndpoint::findOrFail($id);
+            $this->authorize('update', $record);
         } else {
             $record = \App\Models\WebhookSource::findOrFail($id);
         }
-        
-        if ($type === 'outbound') {
-            $this->authorize('update', $record);
-        }
 
         $record->update(['is_active' => !$record->is_active]);
-        $this->loadData();
-        $this->loadStats(); // Refresh dashboard
+        
+        \App\Models\AuditLog::log(
+            $record->is_active ? 'webhook.enabled' : 'webhook.disabled',
+            $record,
+            [],
+            ['is_active' => $record->is_active],
+            ['webhook', $type]
+        );
+        
+        $this->loadStats();
+        $this->dispatch('notify', ['type' => 'success', 'message' => 'Status updated.']);
     }
 
     public function testEndpoint($id, \App\Services\WebhookService $service)
     {
         $endpoint = \App\Models\WebhookEndpoint::findOrFail($id);
-        $this->authorize('view', $endpoint); // Security check
+        $this->authorize('view', $endpoint);
         
         $correlationId = (string) \Illuminate\Support\Str::uuid();
         $data = $this->getMockDataForEvent($this->selectedTestEvent);
-        $payload = $service->buildPayload($this->selectedTestEvent, $data, null, $correlationId);
+        
+        // Use standardized envelope
+        $payload = \App\Services\Webhooks\Factories\WebhookPayloadFactory::createEnvelope(
+            $this->selectedTestEvent, 
+            $data, 
+            $correlationId
+        );
         
         try {
             \App\Jobs\SendWebhookJob::dispatch($endpoint, $payload, 1, $correlationId);
             $this->dispatch('notify', ['type' => 'success', 'message' => "Test '{$this->selectedTestEvent}' queued (ID: " . substr($correlationId, 0, 8) . "). Check logs."]);
         } catch (\Exception $e) {
-            $this->dispatch('notify', ['type' => 'error', 'message' => 'Failed to send test: ' . $e->getMessage()]);
+            $this->dispatch('notify', ['type' => 'error', 'message' => 'Failed to queue test: ' . $e->getMessage()]);
         }
+    }
+
+    public function rotateSecret($id = null, $type = 'outbound')
+    {
+        if (!$id) {
+            $this->secret = Str::random(32);
+            return;
+        }
+
+        if ($type === 'outbound') {
+            $record = \App\Models\WebhookEndpoint::findOrFail($id);
+            $this->authorize('update', $record);
+        } else {
+            $record = \App\Models\WebhookSource::findOrFail($id);
+        }
+
+        $newSecret = Str::random(32);
+        $record->update(['secret' => $newSecret]);
+        $this->secret = $newSecret;
+
+        \App\Models\AuditLog::log('webhook.secret_rotated', $record, [], [], ['webhook', $type]);
+
+        $this->dispatch('notify', ['type' => 'success', 'message' => 'Secret rotated successfully. Update your external systems immediately.']);
     }
 
     protected function getMockDataForEvent($event): array
@@ -326,7 +371,9 @@ class WebhookEndpoints extends Component
     public function render()
     {
         return view('livewire.settings.webhook-endpoints', [
-            'availableEvents' => $this->availableEvents
+            'availableEvents' => $this->availableEvents,
+            'endpoints' => \App\Models\WebhookEndpoint::latest()->get(),
+            'sources' => \App\Models\WebhookSource::latest()->get(),
         ]);
     }
 }

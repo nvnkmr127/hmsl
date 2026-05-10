@@ -1,0 +1,185 @@
+PHPUnit 11.5.55 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.5.3
+Configuration: /Users/naveenadicharla/Documents/hms/phpunit.xml
+
+EEEE                                                                4 / 4 (100%)
+
+Time: 00:00.203, Memory: 48.50 MB
+
+There were 4 errors:
+
+1) Tests\Feature\WebhookOutboundTest::test_successful_delivery_updates_endpoint_health
+Illuminate\Database\QueryException: SQLSTATE[23000]: Integrity constraint violation: 19 NOT NULL constraint failed: webhook_endpoints.events (Connection: sqlite, SQL: insert into "webhook_endpoints" ("name", "url", "secret", "is_active", "consecutive_failures", "updated_at", "created_at") values (Test Endpoint, https://example.com/webhook, eyJpdiI6IjhDQ0pkQStZRG4reEI3V3d0enp3Q0E9PSIsInZhbHVlIjoiTEovZmxKRVJLdjR5ZzVtbityVWtvWExGS2JHVmhLTVZ0anpQUnJxeXdKUT0iLCJtYWMiOiIyNWQwOGRjMjlmZDU3YTUxNGQ4YmJmNzFmZTFjOTRjMzVmODQ5Y2U3Yzg0MDg4NmFhZmZlZDZkYzhjOWJiODk3IiwidGFnIjoiIn0=, 1, 5, 2026-05-10 22:35:41, 2026-05-10 22:35:41))
+
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:825
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:779
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:560
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:524
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Query/Processors/Processor.php:32
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php:3766
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:2120
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1359
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1324
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1163
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:1128
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Support/helpers.php:399
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:1127
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Support/Traits/ForwardsCalls.php:23
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:2372
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:2384
+/Users/naveenadicharla/Documents/hms/tests/Feature/WebhookOutboundTest.php:19
+
+Caused by
+PDOException: SQLSTATE[23000]: Integrity constraint violation: 19 NOT NULL constraint failed: webhook_endpoints.events
+
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:571
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:812
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:779
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:560
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:524
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Query/Processors/Processor.php:32
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php:3766
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:2120
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1359
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1324
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1163
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:1128
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Support/helpers.php:399
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:1127
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Support/Traits/ForwardsCalls.php:23
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:2372
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:2384
+/Users/naveenadicharla/Documents/hms/tests/Feature/WebhookOutboundTest.php:19
+
+2) Tests\Feature\WebhookOutboundTest::test_server_error_triggers_retry_and_increments_failures
+Illuminate\Database\QueryException: SQLSTATE[23000]: Integrity constraint violation: 19 NOT NULL constraint failed: webhook_endpoints.events (Connection: sqlite, SQL: insert into "webhook_endpoints" ("name", "url", "secret", "is_active", "updated_at", "created_at") values (Test Endpoint, https://example.com/webhook, eyJpdiI6IjdHbXM3bWI3WEhZa3h4Q055YTVweGc9PSIsInZhbHVlIjoiQ0kzMERDa29XTDJvN0JQUStrMEFydy91NXJVM3U2d1M4RUVIWFpOSklXMD0iLCJtYWMiOiJiYWU4OWMwMGFiODQ4ZjZiMThkMjcxMmMwM2RhZGM4ZDVkMGE1YTM2ZDE1NGRjZDExZGM1Y2MxYmU4ZDM4ODg3IiwidGFnIjoiIn0=, 1, 2026-05-10 22:35:41, 2026-05-10 22:35:41))
+
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:825
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:779
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:560
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:524
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Query/Processors/Processor.php:32
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php:3766
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:2120
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1359
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1324
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1163
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:1128
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Support/helpers.php:399
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:1127
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Support/Traits/ForwardsCalls.php:23
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:2372
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:2384
+/Users/naveenadicharla/Documents/hms/tests/Feature/WebhookOutboundTest.php:49
+
+Caused by
+PDOException: SQLSTATE[23000]: Integrity constraint violation: 19 NOT NULL constraint failed: webhook_endpoints.events
+
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:571
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:812
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:779
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:560
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:524
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Query/Processors/Processor.php:32
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php:3766
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:2120
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1359
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1324
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1163
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:1128
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Support/helpers.php:399
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:1127
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Support/Traits/ForwardsCalls.php:23
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:2372
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:2384
+/Users/naveenadicharla/Documents/hms/tests/Feature/WebhookOutboundTest.php:49
+
+3) Tests\Feature\WebhookOutboundTest::test_circuit_breaker_pauses_endpoint_after_threshold
+Illuminate\Database\QueryException: SQLSTATE[23000]: Integrity constraint violation: 19 NOT NULL constraint failed: webhook_endpoints.events (Connection: sqlite, SQL: insert into "webhook_endpoints" ("name", "url", "secret", "is_active", "consecutive_failures", "updated_at", "created_at") values (Failing Endpoint, https://example.com/webhook, eyJpdiI6InlrR01MbmIrbVpDQ0tQUi9mak1mdGc9PSIsInZhbHVlIjoiV1pHZ29IYTNTcER3Nkkxc2syWVhqUT09IiwibWFjIjoiNGZjNmUyZWU1MzdjYjRjMGMyZTBmYzkxMDdhM2MzNGU1ODFlMDQ3NDNkNjY3ZjM1M2MyY2MxNWMwODBmNDI0ZCIsInRhZyI6IiJ9, 1, 14, 2026-05-10 22:35:41, 2026-05-10 22:35:41))
+
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:825
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:779
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:560
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:524
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Query/Processors/Processor.php:32
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php:3766
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:2120
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1359
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1324
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1163
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:1128
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Support/helpers.php:399
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:1127
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Support/Traits/ForwardsCalls.php:23
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:2372
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:2384
+/Users/naveenadicharla/Documents/hms/tests/Feature/WebhookOutboundTest.php:75
+
+Caused by
+PDOException: SQLSTATE[23000]: Integrity constraint violation: 19 NOT NULL constraint failed: webhook_endpoints.events
+
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:571
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:812
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:779
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:560
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:524
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Query/Processors/Processor.php:32
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php:3766
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:2120
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1359
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1324
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1163
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:1128
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Support/helpers.php:399
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:1127
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Support/Traits/ForwardsCalls.php:23
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:2372
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:2384
+/Users/naveenadicharla/Documents/hms/tests/Feature/WebhookOutboundTest.php:75
+
+4) Tests\Feature\WebhookOutboundTest::test_auth_error_does_not_retry
+Illuminate\Database\QueryException: SQLSTATE[23000]: Integrity constraint violation: 19 NOT NULL constraint failed: webhook_endpoints.secret (Connection: sqlite, SQL: insert into "webhook_endpoints" ("name", "url", "is_active", "updated_at", "created_at") values (Auth Failing Endpoint, https://example.com/webhook, 1, 2026-05-10 22:35:41, 2026-05-10 22:35:41))
+
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:825
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:779
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:560
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:524
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Query/Processors/Processor.php:32
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php:3766
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:2120
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1359
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1324
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1163
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:1128
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Support/helpers.php:399
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:1127
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Support/Traits/ForwardsCalls.php:23
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:2372
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:2384
+/Users/naveenadicharla/Documents/hms/tests/Feature/WebhookOutboundTest.php:98
+
+Caused by
+PDOException: SQLSTATE[23000]: Integrity constraint violation: 19 NOT NULL constraint failed: webhook_endpoints.secret
+
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:571
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:812
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:779
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:560
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:524
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Query/Processors/Processor.php:32
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php:3766
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:2120
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1359
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1324
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1163
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:1128
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Support/helpers.php:399
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:1127
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Support/Traits/ForwardsCalls.php:23
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:2372
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:2384
+/Users/naveenadicharla/Documents/hms/tests/Feature/WebhookOutboundTest.php:98
+
+ERRORS!
+Tests: 4, Assertions: 0, Errors: 4, Deprecations: 2.

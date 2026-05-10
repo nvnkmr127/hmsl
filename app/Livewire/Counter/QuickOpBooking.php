@@ -36,6 +36,8 @@ class QuickOpBooking extends Component
     public $growthStatus;
     public $growthForecast;
     public $activeBookingFound = false;
+    public $isEmergency = false;
+    public $isNewbornBenefit = false;
 
     #[On('patient-registered')]
     public function handlePatientRegistered($id = null)
@@ -153,11 +155,17 @@ class QuickOpBooking extends Component
         $this->fee = $details['suggested_fee'];
         $this->valid_upto = $details['valid_upto'];
         $this->latestConsultation = $details['latest_consultation'];
+        $this->isEmergency = $details['is_emergency'] ?? false;
+        $this->isNewbornBenefit = $details['is_newborn_benefit'] ?? false;
 
         if ($this->isReview) {
             $this->selectedService = $this->latestConsultation->service_id;
             $this->selectedDoctor = $this->latestConsultation->doctor_id;
             $this->dispatch('notify', ['type' => 'success', 'message' => 'Review Visit: Auto-selected previous service.']);
+        } elseif ($details['is_newborn_benefit'] ?? false) {
+            $this->dispatch('notify', ['type' => 'success', 'message' => 'Newborn Benefit: Free consultation applied (Delivery Attended).']);
+        } elseif ($details['is_emergency'] ?? false) {
+            $this->dispatch('notify', ['type' => 'warning', 'message' => 'Emergency Hours: Flat ₹500 fee applied.']);
         } elseif ($this->isFollowUp) {
             $this->dispatch('notify', ['type' => 'success', 'message' => 'Follow-up visit: Free of charge.']);
         }

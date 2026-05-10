@@ -7,10 +7,22 @@ use Illuminate\Database\Eloquent\Model;
 class WebhookOutbox extends Model
 {
     protected $table = 'webhook_outbox';
-    protected $fillable = ['event_type', 'payload', 'status', 'dispatched_at', 'correlation_id'];
+
+    protected $fillable = [
+        'correlation_id',
+        'event_type',
+        'payload',
+        'status',
+        'dispatched_at',
+    ];
+
+    protected $casts = [
+        'payload' => 'array',
+        'dispatched_at' => 'datetime',
+    ];
 
     /**
-     * Gracefully handle payload decryption for legacy logs.
+     * Gracefully handle payload encryption if needed.
      */
     public function getPayloadAttribute($value)
     {

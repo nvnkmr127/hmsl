@@ -171,9 +171,24 @@
 
                     <!-- JSON Sections -->
                     <div class="space-y-6">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div>
+                                <h4 class="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Request Headers</h4>
+                                <div class="bg-slate-900 rounded-[1.5rem] p-6 overflow-hidden border border-slate-800">
+                                    <pre class="text-[11px] font-mono text-indigo-300 overflow-x-auto custom-scrollbar leading-relaxed">@json($selectedLog->request_headers, JSON_PRETTY_PRINT)</pre>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Response Headers</h4>
+                                <div class="bg-slate-900 rounded-[1.5rem] p-6 overflow-hidden border border-slate-800">
+                                    <pre class="text-[11px] font-mono text-emerald-400 overflow-x-auto custom-scrollbar leading-relaxed">@json($selectedLog->response_headers, JSON_PRETTY_PRINT)</pre>
+                                </div>
+                            </div>
+                        </div>
+
                         <div>
-                            <h4 class="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Request Payload</h4>
-                            <div class="bg-slate-900 rounded-[1.5rem] p-6 overflow-hidden">
+                            <h4 class="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Payload Body</h4>
+                            <div class="bg-slate-900 rounded-[1.5rem] p-6 overflow-hidden border border-slate-800">
                                 <pre class="text-[11px] font-mono text-indigo-300 overflow-x-auto custom-scrollbar leading-relaxed">@json($selectedLog->payload, JSON_PRETTY_PRINT)</pre>
                             </div>
                         </div>

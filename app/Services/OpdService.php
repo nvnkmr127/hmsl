@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Auth;
 class OpdService
 {
     protected $billingService;
+    const EMERGENCY_FEE = 500;
+    const NEWBORN_FREE_DAYS = 7;
 
     public function __construct(\App\Services\BillingService $billingService)
     {
@@ -34,6 +36,60 @@ class OpdService
     }
 
     /**
+     * Determine if current time falls under Emergency/After-hours pricing.
+     * Rules: 10 PM - 9 AM daily, Sunday 6 PM onwards.
+     */
+    public function isEmergencyPricing(?Carbon $time = null): bool
+    {
+        $time = $time ?? now();
+        $hour = $time->hour;
+        $day = $time->dayOfWeek;
+
+        // Daily 10 PM (22:00) to 9 AM (09:00)
+        if ($hour >= 22 || $hour < 9) {
+            return true;
+        }
+
+        // Sunday 6 PM (18:00) onwards
+        if ($day === Carbon::SUNDAY && $hour >= 18) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if a patient has any active validity for a revisit.
+     * Considers service-specific validity if service has its own validity period.
+     */
+    public function hasActiveValidity(int $patientId, ?int $serviceId = null, $date = null): bool
+    {
+        $date = $date ? Carbon::parse($date)->toDateString() : now()->toDateString();
+        
+        // We look for ANY non-cancelled consultation that is still valid.
+        // This makes the 7-day (or service-specific) validity global for the patient.
+        $query = Consultation::where('patient_id', $patientId)
+            ->where('status', '!=', 'Cancelled')
+            ->where('valid_upto', '>=', $date);
+        return $query->exists();
+    }
+
+    /**
+     * Check if newborn is eligible for free visits (within 7 days of birth and attended by our doctor).
+     */
+    public function isEligibleNewborn(\App\Models\Patient $patient, $date = null): bool
+    {
+        if (!$patient->is_delivery_attended) return false;
+        if (!$patient->date_of_birth) return false;
+
+        $date = $date ? Carbon::parse($date) : now();
+        $dob = Carbon::parse($patient->date_of_birth)->startOfDay();
+        
+        // Return true if current date is within 7 days of DOB
+        return $dob->diffInDays($date->copy()->startOfDay()) <= self::NEWBORN_FREE_DAYS;
+    }
+
+    /**
      * Centralized logic to determine booking details (follow-up, review, fees, etc.)
      */
     public function calculateBookingDetails(\App\Models\Patient $patient, ?int $serviceId = null, ?int $doctorId = null, ?string $date = null)
@@ -50,34 +106,49 @@ class OpdService
         $isReview = false;
         $isFollowUp = false;
         $suggestedFee = 0;
+        $isEmergency = $this->isEmergencyPricing();
+        $isNewbornBenefit = $this->isEligibleNewborn($patient, $dateStr);
+
+        if ($isNewbornBenefit) {
+            return [
+                'is_review' => false,
+                'is_follow_up' => true,
+                'suggested_fee' => 0.0,
+                'is_emergency' => false,
+                'is_newborn_benefit' => true,
+                'valid_upto' => $this->getValidityDate($dateStr, $serviceId ?: ($latestConsultation?->service_id)),
+                'latest_consultation' => $latestConsultation,
+            ];
+        }
+
+        if ($isEmergency) {
+            return [
+                'is_review' => false,
+                'is_follow_up' => false,
+                'suggested_fee' => (float) self::EMERGENCY_FEE,
+                'is_emergency' => true,
+                'is_newborn_benefit' => false,
+                'valid_upto' => $this->getValidityDate($dateStr, $serviceId ?: ($latestConsultation?->service_id)),
+                'latest_consultation' => $latestConsultation,
+            ];
+        }
+
+        $isReview = false;
+        $isFollowUp = $this->hasActiveValidity($patient->id, $serviceId, $dateStr);
+        $suggestedFee = 0;
         
-        // 1. Check for REVIEW (within service/global validity of previous visit)
+        // 1. A visit is a "Review" if the MOST RECENT consultation is still valid.
         if ($latestConsultation) {
-            $serviceValidity = $latestConsultation->service?->validity_days ?? \App\Models\Setting::get('opd_validity_days', 7);
-            $daysSinceLastVisit = Carbon::parse($latestConsultation->consultation_date)->diffInDays($date);
-            
-            if ($daysSinceLastVisit <= $serviceValidity) {
+            if (Carbon::parse($latestConsultation->valid_upto)->startOfDay()->greaterThanOrEqualTo($date->copy()->startOfDay())) {
                 $isReview = true;
-                $isFollowUp = true;
-                $suggestedFee = 0;
+                $isFollowUp = true; // Safety
             }
         }
 
-        // 2. Check for FOLLOW-UP (any active validity)
-        if (!$isReview) {
-            $hasActiveValidity = Consultation::where('patient_id', $patient->id)
-                ->where('status', '!=', 'Cancelled')
-                ->where('valid_upto', '>=', $dateStr)
-                ->exists();
-            
-            if ($hasActiveValidity) {
-                $isFollowUp = true;
-                $suggestedFee = 0;
-            }
-        }
-
-        // 3. Determine Fee if not Follow-up/Review
-        if (!$isFollowUp) {
+        // 2. Determine Fee
+        if ($isFollowUp) {
+            $suggestedFee = 0;
+        } else {
             if ($serviceId) {
                 $service = \App\Models\Service::find($serviceId);
                 $suggestedFee = $service ? $service->price : 0;
@@ -95,6 +166,8 @@ class OpdService
             'is_review' => $isReview,
             'is_follow_up' => $isFollowUp,
             'suggested_fee' => (float)$suggestedFee,
+            'is_emergency' => false,
+            'is_newborn_benefit' => false,
             'valid_upto' => $validUpto,
             'latest_consultation' => $latestConsultation,
         ];
@@ -169,28 +242,28 @@ class OpdService
 
             $data['valid_upto'] = $data['valid_upto'] ?? $consultationDate->copy()->addDays((int)$validityDays)->toDateString();
 
-            // 3. STRICT REVENUE PROTECTION: Ensure fees are never zero due to missing relations
-            // Except for follow-up visits within validity period
-            if (!isset($data['fee']) || $data['fee'] <= 0) {
-                $hasRecentVisit = false;
-                
-                if ($service && $service->validity_days > 0) {
-                    $hasRecentVisit = Consultation::where('patient_id', $data['patient_id'])
-                        ->where('status', '!=', 'Cancelled')
-                        ->where('service_id', $service->id)
-                        ->whereDate('consultation_date', '>=', $consultationDate->copy()->subDays($service->validity_days))
-                        ->exists();
-                } else {
-                    $hasRecentVisit = Consultation::where('patient_id', $data['patient_id'])
-                        ->where('status', '!=', 'Cancelled')
-                        ->where('valid_upto', '>=', $data['consultation_date'])
-                        ->exists();
-                }
+            $patient = \App\Models\Patient::find($data['patient_id']);
+            $isNewbornBenefit = $patient ? $this->isEligibleNewborn($patient, $data['consultation_date']) : false;
+            $isEmergency = $this->isEmergencyPricing();
+            
+            $isFollowUp = $this->hasActiveValidity($data['patient_id'], $data['service_id'] ?? null, $data['consultation_date']);
 
-                if ($hasRecentVisit) {
-                    $data['fee'] = 0;
-                    $data['visit_type'] = $data['visit_type'] ?? 'Follow-up';
-                } elseif ($service) {
+            // Priority logic for fee assignment
+            if ($isNewbornBenefit) {
+                $data['fee'] = 0;
+                $data['visit_type'] = $data['visit_type'] ?? 'Newborn Followup';
+            } elseif ($isEmergency) {
+                $data['fee'] = self::EMERGENCY_FEE;
+                $data['visit_type'] = $data['visit_type'] ?? 'Emergency';
+            } elseif ($isFollowUp) {
+                $data['fee'] = 0;
+                $data['visit_type'] = $data['visit_type'] ?? 'Follow-up';
+            }
+
+            // 4. STRICT REVENUE PROTECTION: Ensure fees are never zero due to missing relations
+            // Except for follow-up visits within validity period
+            if (!$isNewbornBenefit && !$isEmergency && !$isFollowUp && (!isset($data['fee']) || $data['fee'] <= 0)) {
+                if ($service) {
                     $data['fee'] = $service->price;
                 } elseif (isset($data['doctor_id'])) {
                     $doctor = Doctor::find($data['doctor_id']);

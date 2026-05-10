@@ -45,8 +45,8 @@
                         ₹{{ number_format($due->total_amount - $due->paid_amount, 2) }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right">
-                        <a href="{{ route('billing.bills.show', $due->id) }}" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-black rounded-lg text-primary-700 bg-primary-100 hover:bg-primary-200 transition-colors uppercase">
-                            View Bill
+                        <a href="{{ route('billing.index', ['search' => $due->bill_number]) }}" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-black rounded-lg text-primary-700 bg-primary-100 hover:bg-primary-200 transition-colors uppercase">
+                            Open Bill
                         </a>
                     </td>
                 </tr>

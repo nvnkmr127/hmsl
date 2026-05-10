@@ -1,0 +1,68 @@
+PHPUnit 11.5.55 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.5.3
+Configuration: /Users/naveenadicharla/Documents/hms/phpunit.xml
+
+EDDFD                                                               5 / 5 (100%)
+
+Time: 00:00.278, Memory: 52.50 MB
+
+There was 1 error:
+
+1) Tests\Feature\WebhookPipelineTest::test_successful_processing_via_crm_handler
+Illuminate\Database\QueryException: SQLSTATE[HY000]: General error: 1 table patients has no column named full_name (Connection: sqlite, SQL: insert into "patients" ("full_name", "uhid", "phone", "gender", "dob", "updated_at", "created_at") values (Mr. Stanton Brakus MD, UHID-123, 111, Other, 1982-06-02, 2026-05-10 22:12:42, 2026-05-10 22:12:42))
+
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:825
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:779
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:560
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:524
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Query/Processors/Processor.php:32
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php:3766
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:2120
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1359
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1324
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1163
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Factories/Factory.php:352
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Collections/Traits/EnumeratesValues.php:261
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Factories/Factory.php:347
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Factories/Factory.php:303
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Factories/Factory.php:297
+/Users/naveenadicharla/Documents/hms/tests/Feature/WebhookPipelineTest.php:19
+
+Caused by
+PDOException: SQLSTATE[HY000]: General error: 1 table patients has no column named full_name
+
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:565
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:812
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:779
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:560
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Connection.php:524
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Query/Processors/Processor.php:32
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php:3766
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:2120
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1359
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1324
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1163
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Factories/Factory.php:352
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Collections/Traits/EnumeratesValues.php:261
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Factories/Factory.php:347
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Factories/Factory.php:303
+/Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Factories/Factory.php:297
+/Users/naveenadicharla/Documents/hms/tests/Feature/WebhookPipelineTest.php:19
+
+--
+
+There was 1 failure:
+
+1) Tests\Feature\WebhookPipelineTest::test_duplicate_webhook_is_ignored
+Failed asserting that two strings are equal.
+--- Expected
++++ Actual
+@@ @@
+-'ignored'
++'completed'
+
+/Users/naveenadicharla/Documents/hms/tests/Feature/WebhookPipelineTest.php:106
+
+ERRORS!
+Tests: 5, Assertions: 5, Errors: 1, Failures: 1, Deprecations: 2.

@@ -114,22 +114,54 @@
                         </svg>
                     </button>
 
-                    @if($isReview)
-                       <div class="absolute -top-3 -right-3">
-                           <span class="bg-indigo-600 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg border-2 border-white dark:border-gray-900 uppercase tracking-widest animate-pulse">
-                               Review Visit
-                           </span>
-                       </div>
-                   @elseif($isFollowUp)
-                       <div class="absolute -top-3 -right-3">
-                           <span class="bg-emerald-500 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg border-2 border-white dark:border-gray-900 uppercase tracking-widest">
-                               Follow-up Visit
-                           </span>
-                       </div>
-                   @endif
+                    @if($isNewbornBenefit)
+                        <div class="absolute -top-3 -right-3">
+                            <span class="bg-emerald-600 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg border-2 border-white dark:border-gray-900 uppercase tracking-widest animate-bounce">
+                                Newborn Benefit
+                            </span>
+                        </div>
+                    @elseif($isEmergency)
+                        <div class="absolute -top-3 -right-3">
+                            <span class="bg-amber-500 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg border-2 border-white dark:border-gray-900 uppercase tracking-widest">
+                                Emergency Shift
+                            </span>
+                        </div>
+                    @elseif($isReview)
+                        <div class="absolute -top-3 -right-3">
+                            <span class="bg-indigo-600 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg border-2 border-white dark:border-gray-900 uppercase tracking-widest animate-pulse">
+                                Review Visit
+                            </span>
+                        </div>
+                    @elseif($isFollowUp)
+                        <div class="absolute -top-3 -right-3">
+                            <span class="bg-emerald-500 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg border-2 border-white dark:border-gray-900 uppercase tracking-widest">
+                                Follow-up Visit
+                            </span>
+                        </div>
+                    @endif
                 </div>
 
-                @if($isReview)
+                @if($isNewbornBenefit)
+                    <div class="mb-6 p-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-800/30 rounded-2xl flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-600">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18z"/></svg>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Newborn Privilege</p>
+                            <p class="text-xs font-bold text-emerald-700 dark:text-indigo-300">Free consultation for newborns attended by our doctors (Valid till age 7 days).</p>
+                        </div>
+                    </div>
+                @elseif($isEmergency)
+                    <div class="mb-6 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-800/30 rounded-2xl flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-600">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-black text-amber-600 uppercase tracking-widest">Emergency Shift Pricing</p>
+                            <p class="text-xs font-bold text-amber-700 dark:text-amber-300">After-hours or Sunday shift premium applied (₹500 flat fee).</p>
+                        </div>
+                    </div>
+                @elseif($isReview)
                     <div class="mb-6 p-4 bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-800/30 rounded-2xl flex items-center gap-3">
                         <div class="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-600">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>

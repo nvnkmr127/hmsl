@@ -11,6 +11,6 @@
         <h1 class="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Patient Visits</h1>
     </div>
 
-    <livewire:reports.visit-report />
+    <livewire:reports.opd-report />
 </div>
 @endsection

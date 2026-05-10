@@ -11,6 +11,6 @@
         <h1 class="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Outstanding Dues</h1>
     </div>
 
-    <livewire:reports.outstanding-dues-report />
+    <livewire:reports.outstanding-dues />
 </div>
 @endsection

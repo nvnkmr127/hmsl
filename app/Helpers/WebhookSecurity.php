@@ -35,10 +35,45 @@ class WebhookSecurity
      */
     public static function isPublicIp(string $ip): bool
     {
+        // Allow private IPs in local environment for testing
+        if (config('app.env') === 'local') {
+            return true;
+        }
+
+        // Specifically block localhost, link-local, and AWS/GCP metadata IPs
+        $blocked = [
+            '127.0.0.1', '::1',
+            '169.254.169.254', // AWS/GCP Metadata
+            'metadata.google.internal',
+        ];
+
+        if (in_array($ip, $blocked)) return false;
+
         return filter_var(
             $ip,
             FILTER_VALIDATE_IP,
             FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
         ) !== false;
+    }
+
+    /**
+     * Verify the HMAC signature of an incoming request.
+     */
+    public static function verifySignature(string $payload, string $signature, string $secret, ?string $timestamp = null): bool
+    {
+        if ($timestamp) {
+            // Check for replay attacks using timestamp tolerance (default 5 minutes)
+            $tolerance = 300; 
+            if (abs(time() - (int)$timestamp) > $tolerance) {
+                return false;
+            }
+            $dataToSign = $timestamp . '.' . $payload;
+        } else {
+            $dataToSign = $payload;
+        }
+
+        $expected = 'sha256=' . hash_hmac('sha256', $dataToSign, $secret);
+
+        return hash_equals($expected, $signature);
     }
 }

@@ -4,20 +4,31 @@ namespace App\Services;
 
 use App\Models\WebhookEndpoint;
 use App\Models\WebhookLog;
+use App\Models\WebhookOutbox;
 use App\Jobs\SendWebhookJob;
-use Illuminate\Support\Facades\Http;
+use App\Services\Webhooks\Factories\WebhookPayloadFactory;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class WebhookService
 {
     /**
      * Entry point to dispatch webhooks for an event.
      */
-    public function dispatch(string $event, array $data, ?string $correlationId = null)
+    public function dispatch(string $event, array $data, ?string $correlationId = null): void
     {
-        $correlationId = $correlationId ?? (string) \Illuminate\Support\Str::uuid();
+        // Validate event against catalog
+        if (!config("webhooks.events.{$event}")) {
+            Log::warning("Attempted to dispatch unregistered webhook event: {$event}", [
+                'correlation_id' => $correlationId,
+                'event' => $event
+            ]);
+        }
+
+        $correlationId = $correlationId ?? $this->resolveCorrelationId();
 
         // 1. Record in Outbox first (Source of Truth)
-        $outbox = \App\Models\WebhookOutbox::create([
+        $outbox = WebhookOutbox::create([
             'correlation_id' => $correlationId,
             'event_type' => $event,
             'payload' => $data,
@@ -25,7 +36,9 @@ class WebhookService
         ]);
 
         $endpoints = $this->getSubscribedEndpoints($event);
-        $payload = $this->buildPayload($event, $data, null, $correlationId);
+        
+        // 2. Build the standard envelope
+        $payload = WebhookPayloadFactory::createEnvelope($event, $data, $correlationId);
 
         if ($endpoints->isEmpty()) {
             $outbox->update(['status' => 'dispatched', 'dispatched_at' => now()]);
@@ -35,10 +48,12 @@ class WebhookService
         $outbox->update(['status' => 'processing']);
 
         foreach ($endpoints as $endpoint) {
-            // Queue the job
+            // Queue the delivery job
             SendWebhookJob::dispatch($endpoint, $payload, 1, $correlationId)->afterCommit();
         }
 
+        // The outbox is considered "dispatched" once we've handed off to the queue
+        // In a more complex system, we might wait for all deliveries to finish.
         $outbox->update(['status' => 'dispatched', 'dispatched_at' => now()]);
     }
 
@@ -53,33 +68,32 @@ class WebhookService
     }
 
     /**
-     * Standardize the webhook payload envelope.
+     * Resolve correlation ID from request headers, global state, or generate a new one.
      */
-    public function buildPayload(string $event, array $data, ?string $id = null, ?string $correlationId = null)
+    protected function resolveCorrelationId(): string
     {
-        return [
-            'id' => $id ?? (string) \Illuminate\Support\Str::uuid(),
-            'event' => $event,
-            'api_version' => '2024-05-01',
-            'timestamp' => now()->toIso8601String(),
-            'hospital' => config('app.name', 'HMS'),
-            'environment' => config('app.env', 'production'),
-            'correlation_id' => $correlationId,
-            'data' => $data
-        ];
+        return static::$currentCorrelationId 
+            ?? request()->header('X-Correlation-ID') 
+            ?? request()->header('X-Request-ID') 
+            ?? (string) Str::uuid();
     }
+
+    /**
+     * Global state for correlation ID propagation in background jobs.
+     */
+    public static ?string $currentCorrelationId = null;
 
     /**
      * Generate HMAC signature for a payload with timestamp.
      */
-    public function sign(string $payload, string $secret, int $timestamp)
+    public function sign(string $payload, string $secret, int $timestamp): string
     {
         $signedPayload = $timestamp . '.' . $payload;
         return 'sha256=' . hash_hmac('sha256', $signedPayload, $secret);
     }
 
     /**
-     * Log a delivery attempt.
+     * Log a delivery attempt with sensitive data redaction.
      */
     public function logDelivery(
         WebhookEndpoint $endpoint, 
@@ -91,23 +105,34 @@ class WebhookService
         $durationMs = null,
         $deliveryId = null,
         $correlationId = null,
-        $errorCategory = null
+        $errorCategory = null,
+        ?array $responseHeaders = null
     ) {
         $status = 'failed';
         if ($response && $response->successful()) {
             $status = 'success';
-        } elseif ($attempt < 5) {
+        } elseif ($attempt < 5 && ($errorCategory !== 'AUTH_ERROR' && $errorCategory !== 'CLIENT_ERROR')) {
             $status = 'retrying';
         }
+
+        // Redact sensitive data before logging
+        $redactedPayload = $this->redactPayload($payload);
+        $redactedResponseHeaders = $this->redactHeaders($responseHeaders ?? []);
 
         return WebhookLog::create([
             'webhook_endpoint_id' => $endpoint->id,
             'delivery_id' => $deliveryId,
             'correlation_id' => $correlationId,
             'event_name' => $event,
-            'payload' => $payload,
+            'payload' => $redactedPayload,
+            'request_headers' => [
+                'X-HMS-Event' => $event,
+                'X-HMS-Delivery-ID' => $deliveryId,
+                'X-HMS-Correlation-ID' => $correlationId,
+            ],
             'response_status' => $response ? $response->status() : null,
-            'response_body' => $response ? $response->body() : null,
+            'response_body' => $response ? Str::limit($response->body(), 2000) : null,
+            'response_headers' => $redactedResponseHeaders,
             'duration_ms' => $durationMs,
             'attempt_number' => $attempt,
             'status' => $status,
@@ -115,5 +140,45 @@ class WebhookService
             'error_category' => $errorCategory,
             'delivered_at' => $status === 'success' ? now() : null,
         ]);
+    }
+
+    /**
+     * Redact sensitive fields in payload.
+     */
+    public function redactPayload(array $data): array
+    {
+        $sensitiveKeys = ['phone', 'email', 'mobile', 'address', 'password', 'token', 'secret', 'aadhar', 'pan', 'identifier'];
+
+        array_walk_recursive($data, function (&$value, $key) use ($sensitiveKeys) {
+            if (in_array(strtolower($key), $sensitiveKeys) && is_string($value)) {
+                $value = Str::mask($value, '*', 3);
+            }
+        });
+
+        return $data;
+    }
+
+    /**
+     * Redact sensitive headers.
+     */
+    public function redactHeaders(array $headers): array
+    {
+        $sensitiveHeaders = ['authorization', 'x-api-key', 'set-cookie', 'cookie', 'x-hms-signature'];
+
+        return collect($headers)->map(function ($value, $key) use ($sensitiveHeaders) {
+            if (in_array(strtolower($key), $sensitiveHeaders)) {
+                return '[REDACTED]';
+            }
+            return $value;
+        })->toArray();
+    }
+
+    /**
+     * Dispatch the daily summary to all subscribed endpoints.
+     */
+    public function dispatchDailySummary(?string $date = null): void
+    {
+        $data = \App\Services\Webhooks\Factories\SystemPayloadFactory::createDailySummary($date);
+        $this->dispatch('system.daily.summary', $data);
     }
 }

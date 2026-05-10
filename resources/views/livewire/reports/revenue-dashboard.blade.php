@@ -86,6 +86,24 @@
                     @endforelse
                 </div>
             </x-card>
+
+            <x-card title="Consultation Breakdown" subtitle="By Visit Category">
+                <div class="space-y-4">
+                    @forelse($visitTypeSplit as $type)
+                        <div class="flex items-center justify-between group">
+                            <div class="flex flex-col">
+                                <span class="text-xs font-black text-gray-800 dark:text-gray-200 uppercase tracking-tight">{{ $type->visit_type ?: 'New' }}</span>
+                                <span class="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em]">{{ $type->count }} Visits</span>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm font-black text-indigo-600 dark:text-indigo-400">₹{{ number_format($type->total, 0) }}</p>
+                            </div>
+                        </div>
+                    @empty
+                        <p class="text-center py-4 text-xs text-gray-400 italic">No consultation data.</p>
+                    @endforelse
+                </div>
+            </x-card>
         </div>
 
         <!-- Recent Transactions -->

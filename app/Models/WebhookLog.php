@@ -12,18 +12,25 @@ class WebhookLog extends Model
     protected $fillable = [
         'webhook_endpoint_id',
         'delivery_id',
+        'correlation_id',
         'event_name',
         'payload',
+        'request_headers',
         'response_status',
         'response_body',
+        'response_headers',
         'duration_ms',
         'attempt_number',
         'status',
         'error_message',
+        'error_category',
         'delivered_at',
     ];
 
     protected $casts = [
+        'payload' => 'array',
+        'request_headers' => 'array',
+        'response_headers' => 'array',
         'delivered_at' => 'datetime',
     ];
 

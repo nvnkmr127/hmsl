@@ -8,6 +8,11 @@ use Illuminate\Support\Facades\Log;
 
 class CrmHandler implements WebhookHandlerInterface
 {
+    public function supports(InboundWebhook $webhook): bool
+    {
+        return $webhook->source === 'crm';
+    }
+
     /**
      * Handle the incoming webhook from a CRM.
      */
@@ -16,8 +21,6 @@ class CrmHandler implements WebhookHandlerInterface
         $payload = $webhook->payload;
         $action = $payload['action'] ?? null;
         $data = $payload['data'] ?? [];
-
-        Log::info("CRM Webhook received action: {$action}", ['payload' => $payload]);
 
         if ($action === 'update_patient') {
             $this->updatePatient($data);
@@ -28,7 +31,7 @@ class CrmHandler implements WebhookHandlerInterface
     {
         $uhid = $data['uhid'] ?? null;
         if (!$uhid) {
-            throw new \Exception("Missing UHID in CRM update payload.");
+            throw new \App\Exceptions\WebhookValidationException("Missing UHID in CRM update payload.");
         }
 
         $patient = Patient::where('uhid', $uhid)->first();
@@ -37,13 +40,11 @@ class CrmHandler implements WebhookHandlerInterface
             return;
         }
 
-        // Only allow updating specific fields from CRM to protect data integrity
         $allowedFields = ['phone', 'email', 'address', 'city', 'state', 'pincode'];
         $updateData = array_intersect_key($data, array_flip($allowedFields));
 
         if (!empty($updateData)) {
             $patient->update($updateData);
-            Log::info("Patient {$uhid} updated via CRM webhook.", ['changes' => $updateData]);
         }
     }
 }

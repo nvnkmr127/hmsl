@@ -18,12 +18,16 @@ class WebhookEndpoint extends Model
         'timeout_seconds',
         'api_version',
         'consecutive_failures',
+        'last_success_at',
+        'last_failure_at',
         'created_by',
     ];
 
     protected $casts = [
         'events' => 'array',
         'is_active' => 'boolean',
+        'last_success_at' => 'datetime',
+        'last_failure_at' => 'datetime',
     ];
 
     public function logs()

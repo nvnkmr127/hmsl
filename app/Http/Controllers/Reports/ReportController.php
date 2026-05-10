@@ -13,18 +13,21 @@ class ReportController extends Controller
     public function index()
     {
         $reportGroups = [
-            'Financial' => [
-                ['title' => 'Revenue Dashboard', 'route' => 'reports.revenue', 'icon' => 'revenue', 'desc' => 'Daily and monthly revenue performance analytics.'],
-                ['title' => 'Outstanding Dues', 'route' => 'reports.dues', 'icon' => 'dues', 'desc' => 'Track unpaid and partially paid bills.'],
-                ['title' => 'Discount Audit', 'route' => 'reports.discounts', 'icon' => 'discount', 'desc' => 'Detailed trail of all bill discounts and authorizers.'],
+            'Financial Flow' => [
+                ['title' => 'Revenue Analytics', 'route' => 'reports.revenue', 'icon' => 'revenue', 'desc' => 'Comprehensive financial performance dashboard.'],
+                ['title' => 'Outstanding Receivables', 'route' => 'reports.dues', 'icon' => 'dues', 'desc' => 'Track unpaid balances and collection health.'],
+                ['title' => 'Discount Audit', 'route' => 'reports.discounts', 'icon' => 'discount', 'desc' => 'Traceability for all price adjustments and authorizers.'],
             ],
-            'Clinical' => [
-                ['title' => 'Patient Visits', 'route' => 'reports.visits', 'icon' => 'visit', 'desc' => 'Comprehensive log of OPD visits and status.'],
-                ['title' => 'Doctor Wise Consults', 'route' => 'reports.doctor-consults', 'icon' => 'doctor', 'desc' => 'Performance breakdown by doctor.'],
+            'Patient Flow' => [
+                ['title' => 'Visit Intelligence', 'route' => 'reports.visits', 'icon' => 'visit', 'desc' => 'Detailed analytics on OPD volume and revisit patterns.'],
+                ['title' => 'Registration Metrics', 'route' => 'reports.index', 'icon' => 'patient', 'desc' => 'Patient demographics and registration trends.'],
             ],
-            'Operations' => [
-                ['title' => 'Inventory Status', 'route' => 'reports.inventory', 'icon' => 'inventory', 'desc' => 'Current stock levels and low stock alerts.'],
-                ['title' => 'Lab Utilization', 'route' => 'reports.lab', 'icon' => 'lab', 'desc' => 'Usage statistics for laboratory services.'],
+            'Clinical Excellence' => [
+                ['title' => 'Consultation Stats', 'route' => 'reports.doctor-consults', 'icon' => 'doctor', 'desc' => 'Doctor-wise performance and caseload analysis.'],
+                ['title' => 'Laboratory Usage', 'route' => 'reports.lab', 'icon' => 'lab', 'desc' => 'Diagnostic service utilization and turnaround trends.'],
+            ],
+            'Inventory & Logistics' => [
+                ['title' => 'Stock Intelligence', 'route' => 'reports.inventory', 'icon' => 'inventory', 'desc' => 'Real-time inventory levels and consumption patterns.'],
             ]
         ];
 

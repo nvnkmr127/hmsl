@@ -26,6 +26,8 @@
                     <option value="New">New Visit</option>
                     <option value="Review">Review Visit</option>
                     <option value="Follow-up">Follow-up Visit</option>
+                    <option value="Emergency">Emergency Shift</option>
+                    <option value="Newborn Followup">Newborn Privilege</option>
                 </select>
             </div>
         </div>
@@ -63,6 +65,8 @@
                         <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest 
                             @if($visit->visit_type === 'Review') bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400
                             @elseif($visit->visit_type === 'Follow-up') bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400
+                            @elseif($visit->visit_type === 'Emergency') bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400
+                            @elseif($visit->visit_type === 'Newborn Followup') bg-emerald-600 text-white
                             @else bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 @endif">
                             {{ $visit->visit_type }}
                         </span>

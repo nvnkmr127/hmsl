@@ -15,6 +15,7 @@ class PatientForm extends Component
     public $matchedPatientName;
     public $duplicateFound = false;
     public $is_baby_of = false;
+    public $is_delivery_attended = false;
 
     #[Validate('required|string|max:255')]
     public $first_name;
@@ -128,6 +129,7 @@ class PatientForm extends Component
         $this->matchedPatientName = null;
         $this->duplicateFound = false;
         $this->is_baby_of = false;
+        $this->is_delivery_attended = false;
         $this->reset([
             'first_name', 'last_name', 'father_name', 'mother_name', 
             'gender', 'date_of_birth', 'address', 'city', 'state', 'pincode',
@@ -223,6 +225,7 @@ class PatientForm extends Component
         $this->emergency_contact_phone = $patient->emergency_contact_phone;
         $this->marital_status = $patient->marital_status;
         $this->is_active = $patient->is_active;
+        $this->is_delivery_attended = (bool)$patient->is_delivery_attended;
 
         // Auto-detect B/O status
         $this->is_baby_of = str_starts_with($patient->first_name, 'B/O ');
@@ -263,6 +266,7 @@ class PatientForm extends Component
             'emergency_contact_phone' => $this->emergency_contact_phone,
             'marital_status' => $this->marital_status,
             'is_active' => $this->is_active,
+            'is_delivery_attended' => $this->is_delivery_attended,
         ];
 
         if ($this->isEditing) {

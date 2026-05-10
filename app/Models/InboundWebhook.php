@@ -12,7 +12,10 @@ class InboundWebhook extends Model
         'payload',
         'headers',
         'status',
+        'is_verified',
+        'attempt_count',
         'error_message',
+        'error_category',
         'processed_at',
         'correlation_id',
     ];

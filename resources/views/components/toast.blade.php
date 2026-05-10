@@ -1,20 +1,32 @@
 <div x-data="{ 
         notifications: [],
         add(notification) {
-            const id = Date.now();
+            // Handle cases where notification might be a string (Livewire 3 fallback)
+            let data = typeof notification === 'string' ? { message: notification, type: 'info' } : notification;
+            
+            // Handle cases where notification might be wrapped in an array (some Livewire versions)
+            if (Array.isArray(data) && data.length > 0) {
+                data = data[0];
+            }
+
+            const id = Date.now() + Math.random();
             this.notifications.push({
                 id: id,
-                type: notification.type || 'info',
-                message: notification.message || '',
+                type: (data.type || 'info').toLowerCase(),
+                message: data.message || data.msg || '',
                 show: false
             });
+
             this.$nextTick(() => {
                 const index = this.notifications.findIndex(n => n.id === id);
-                if (index !== -1) this.notifications[index].show = true;
+                if (index !== -1) {
+                    this.notifications[index].show = true;
+                }
             });
+
             setTimeout(() => {
                 this.remove(id);
-            }, 3000);
+            }, 5000); // Increased to 5s for better readability
         },
         remove(id) {
             const index = this.notifications.findIndex(n => n.id === id);

@@ -94,6 +94,13 @@ class RevenueDashboard extends Component
             ->groupBy('doctor_id')
             ->get();
 
+        $visitTypeSplit = \App\Models\Consultation::query()
+            ->whereBetween('consultation_date', [$this->startDate, $this->endDate])
+            ->where('status', '!=', 'Cancelled')
+            ->select('visit_type', DB::raw('COUNT(*) as count'), DB::raw('SUM(fee) as total'))
+            ->groupBy('visit_type')
+            ->get();
+
         return view('livewire.reports.revenue-dashboard', [
             'totalRevenue' => $totalRevenue,
             'totalBills' => $totalBills,
@@ -104,6 +111,7 @@ class RevenueDashboard extends Component
             'doctorDiscountSplit' => $doctorDiscountSplit,
             'dailyTrend' => $dailyTrend,
             'recentBills' => $recentBills,
+            'visitTypeSplit' => $visitTypeSplit,
         ]);
     }
 }

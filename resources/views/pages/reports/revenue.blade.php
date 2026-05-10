@@ -17,6 +17,6 @@
         
         <x-master-nav />
 
-        <livewire:reports.revenue-dashboard />
+        <livewire:reports.revenue-report />
     </div>
 @endsection

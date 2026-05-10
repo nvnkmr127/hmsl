@@ -11,17 +11,21 @@
             <div class="absolute bottom-0 left-0 right-0 h-1.5 flex gap-[1px] opacity-80">
                 @foreach(range(0, 23) as $h)
                     @php 
-                        $hourData = $stats['trend'][$h] ?? collect();
-                        $hasFailures = $hourData->where('status', 'failed')->count() > 0;
+                        $hourData = $stats['trend'][$h] ?? null;
                     @endphp
-                    <div class="flex-1 h-full {{ $hourData->count() > 0 ? ($hasFailures ? 'bg-rose-500' : 'bg-emerald-500') : 'bg-slate-800' }}"></div>
+                    <div class="flex-1 h-full {{ $hourData ? ($hourData['has_failures'] ? 'bg-rose-500' : 'bg-emerald-500') : 'bg-slate-800' }}"></div>
                 @endforeach
             </div>
         </div>
 
         <div class="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
-            <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Active Endpoints</div>
-            <div class="text-3xl font-black text-slate-900 dark:text-white">{{ $stats['active'] }}<span class="text-sm text-slate-400 font-bold">/{{ $stats['total'] }}</span></div>
+            <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Sent (24h)</div>
+            <div class="text-3xl font-black text-slate-900 dark:text-white">{{ number_format($stats['total_sent']) }}</div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+            <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Received (24h)</div>
+            <div class="text-3xl font-black text-slate-900 dark:text-white">{{ number_format($stats['total_received']) }}</div>
         </div>
         
         <div class="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
@@ -33,12 +37,46 @@
             <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Avg Latency</div>
             <div class="text-3xl font-black text-slate-900 dark:text-white">{{ $stats['avg_latency'] }}<span class="text-sm text-slate-400 font-bold">ms</span></div>
         </div>
+    </div>
 
-        <div class="bg-gradient-to-tr from-emerald-500/10 to-teal-400/5 dark:from-emerald-900/40 dark:to-teal-800/10 p-6 rounded-[2rem] border border-emerald-100 dark:border-emerald-800/30 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
-            <div class="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-2">Reliability</div>
-            <div class="text-3xl font-black text-emerald-600 dark:text-emerald-400">99.9%</div>
-            <div class="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 group-hover:-rotate-12 transition-transform duration-500">
-                <svg class="w-24 h-24 text-emerald-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>
+    <!-- Operational Insights -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Top Failing Endpoints -->
+        <div class="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm">
+            <h4 class="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-6">Top Failing Endpoints (24h)</h4>
+            <div class="space-y-4">
+                @forelse($stats['top_failing'] as $failure)
+                    <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800/50">
+                        <div class="flex items-center gap-3 overflow-hidden">
+                            <div class="shrink-0 w-8 h-8 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 text-xs font-bold">{{ $loop->iteration }}</div>
+                            <div class="min-w-0">
+                                <p class="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{{ $failure->endpoint->name }}</p>
+                                <p class="text-[10px] text-slate-400 font-mono truncate">{{ $failure->endpoint->url }}</p>
+                            </div>
+                        </div>
+                        <span class="shrink-0 px-3 py-1 bg-rose-50 dark:bg-rose-900/20 text-rose-600 text-[10px] font-black rounded-lg">{{ $failure->count }} failures</span>
+                    </div>
+                @empty
+                    <p class="text-sm text-slate-400 italic">No failures recorded in the last 24 hours.</p>
+                @endforelse
+            </div>
+        </div>
+
+        <!-- Recent Failed Inbound -->
+        <div class="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm">
+            <h4 class="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-6">Recent Inbound Failures</h4>
+            <div class="space-y-4">
+                @forelse($stats['recent_failed_inbound'] as $failed)
+                    <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800/50">
+                        <div class="min-w-0">
+                            <p class="text-sm font-bold text-slate-700 dark:text-slate-200">{{ $failed->source }}</p>
+                            <p class="text-[10px] text-rose-500 font-medium truncate max-w-[250px]">{{ $failed->error_message }}</p>
+                        </div>
+                        <span class="text-[10px] text-slate-400 font-medium whitespace-nowrap">{{ $failed->created_at->diffForHumans() }}</span>
+                    </div>
+                @empty
+                    <p class="text-sm text-slate-400 italic">All systems clear. No recent inbound failures.</p>
+                @endforelse
             </div>
         </div>
     </div>
@@ -94,6 +132,9 @@
                                             <span class="text-[9px] font-black uppercase tracking-widest">{{ $ep->consecutive_failures }} Failures</span>
                                         </div>
                                     @endif
+                                    @if($ep->last_success_at)
+                                        <p class="text-[9px] text-slate-400 mt-1 font-bold">Last success: {{ $ep->last_success_at->diffForHumans() }}</p>
+                                    @endif
                                 </div>
                             </div>
                         </td>
@@ -101,12 +142,17 @@
                             @if($ep->is_active)
                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30 text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">
                                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                    Active
+                                    Healthy
+                                </span>
+                            @elseif($ep->consecutive_failures >= 15)
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800/30 text-[9px] font-black text-rose-600 dark:text-rose-400 uppercase tracking-widest">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                    Paused (Broken)
                                 </span>
                             @else
                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                                     <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                                    Suspended
+                                    Disabled
                                 </span>
                             @endif
                         </td>
@@ -396,7 +442,7 @@
                                             <span x-show="!showDocs">Show Setup Guide</span>
                                             <span x-show="showDocs">Hide Guide</span>
                                         </button>
-                                        <button type="button" wire:click="$set('secret', '{{ Str::random(32) }}')" class="text-[10px] font-black text-slate-500 hover:text-slate-800 dark:hover:text-white uppercase tracking-widest bg-white dark:bg-slate-700 px-3 py-1.5 rounded-lg shadow-sm border border-slate-200 dark:border-slate-600 transition-all">Regenerate</button>
+                                        <button type="button" wire:confirm="This will immediately invalidate the old secret. Rotate now?" wire:click="rotateSecret({{ ($editingEndpointId ?: $editingSourceId) ?: 'null' }}, '{{ $activeTab }}')" class="text-[10px] font-black text-slate-500 hover:text-slate-800 dark:hover:text-white uppercase tracking-widest bg-white dark:bg-slate-700 px-3 py-1.5 rounded-lg shadow-sm border border-slate-200 dark:border-slate-600 transition-all">Regenerate</button>
                                     </div>
                                 </div>
                                 

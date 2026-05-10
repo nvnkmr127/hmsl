@@ -45,6 +45,8 @@ class WebhookLogs extends Component
             }
         }
 
+        \App\Models\AuditLog::log('webhook.bulk_retry', null, [], ['count' => $count, 'log_ids' => $this->selectedLogs], ['webhook']);
+
         $this->selectedLogs = [];
         $this->dispatch('notify', type: 'success', message: "Successfully queued {$count} log(s) for retry.");
     }
@@ -126,6 +128,7 @@ class WebhookLogs extends Component
         if ($log->endpoint) {
             try {
                 \App\Jobs\SendWebhookJob::dispatch($log->endpoint, $log->payload, $log->attempt_number + 1, $log->correlation_id);
+                \App\Models\AuditLog::log('webhook.retry', $log, [], [], ['webhook']);
                 $this->dispatch('notify', type: 'success', message: 'Retry attempt queued successfully.');
             } catch (\Exception $e) {
                 $this->dispatch('notify', type: 'error', message: 'Retry attempt failed: ' . $e->getMessage());

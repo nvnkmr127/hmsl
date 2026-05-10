@@ -1,279 +1,118 @@
-# 11 — Webhooks System
+# 11 — Webhooks & Integration Platform
 
-> **Goal:** Build a configurable, reliable outbound webhook system that notifies external services (CRMs, billing software, notification platforms) on key HMS events in real time.
-
----
-
-## What Are Webhooks Here?
-
-The HMS system fires **outbound webhooks** when key events happen (patient registered, appointment booked, invoice paid, discharge finalized, etc.). Recipients can be any URL — WhatsApp API, SMS gateway, CRM, accounting software, or a custom automation.
-
-All webhooks are:
-- **Queued** (via Redis queue) — never block the main request
-- **Signed** (HMAC-SHA256) — so receivers can verify authenticity
-- **Retried** (exponential backoff) — up to 5 retries on failure
-- **Logged** — every delivery attempt recorded with status and response
+> **Goal:** A professional, enterprise-style inbound and outbound webhook platform. Connect HMS to CRMs, billing systems, and external labs with full auditability, security, and resiliency.
 
 ---
 
-## Database Tables
+## 1. Outbound Webhooks (HMS → External)
 
-### webhook_endpoints
+The HMS system fires **outbound webhooks** when key events happen. This allows external systems to react in real-time.
 
-| Column | Type | Notes |
-|---|---|---|
-| id | BIGINT UNSIGNED PK | |
-| name | VARCHAR(150) | e.g. "WhatsApp Notifications" |
-| url | VARCHAR(500) | Target URL |
-| secret | VARCHAR(255) | HMAC signing secret |
-| events | JSON | Array of event names to subscribe to |
-| is_active | TINYINT(1) DEFAULT 1 | |
-| timeout_seconds | TINYINT DEFAULT 10 | |
-| created_by | BIGINT UNSIGNED FK NULLABLE | |
-| created_at | TIMESTAMP | |
-| updated_at | TIMESTAMP | |
+### Setup Guide (Outbound)
+1. Navigate to **Settings > Webhooks** in the HMS Admin Panel.
+2. Under the **Outgoing Webhooks** tab, click **Add Endpoint**.
+3. Provide the target URL.
+4. Select the events you want to subscribe to from the **Event Catalog**.
+5. Save the endpoint. The system will display the **Webhook Secret**. Save this securely; it will be masked on subsequent views.
 
----
+### Security & Delivery Logic
+- **Signature Verification**: Every request includes `X-HMS-Signature` and `X-HMS-Timestamp` headers.
+- **SSRF Protection**: Internal IP ranges, metadata servers (`169.254.169.254`), and loopback addresses are strictly blocked.
+- **Circuit Breaker**: If an endpoint fails 15 consecutive times, it is automatically paused to prevent system strain.
+- **Data Redaction**: Sensitive patient data (Aadhar, PAN, phone numbers) are masked before logs are saved.
 
-### webhook_logs
+### Retry Behavior
+- **Transient Failures (5xx, Network Errors, Rate Limits - 429)**: The system implements an exponential backoff with jitter retry strategy.
+- **Permanent Failures (4xx errors except 429)**: The system immediately marks the delivery as failed without retrying (e.g., 401 Unauthorized or 404 Not Found).
+- **Manual Retry**: Administrators can manually retry deliveries via the UI or using the artisan command `php artisan webhooks:retry-outbound`.
 
-| Column | Type | Notes |
-|---|---|---|
-| id | BIGINT UNSIGNED PK | |
-| webhook_endpoint_id | BIGINT UNSIGNED FK | |
-| event_name | VARCHAR(100) | e.g. `patient.registered` |
-| payload | JSON | Sent payload |
-| response_status | SMALLINT NULLABLE | HTTP status code |
-| response_body | TEXT NULLABLE | |
-| attempt_number | TINYINT DEFAULT 1 | |
-| status | ENUM('pending','success','failed','retrying') | |
-| error_message | TEXT NULLABLE | |
-| delivered_at | TIMESTAMP NULLABLE | |
-| created_at | TIMESTAMP | |
-| updated_at | TIMESTAMP | |
+### Event Catalog
+Below are the stable events you can subscribe to:
+- `patient.registered` - Fired when a new patient profile is created.
+- `appointment.booked` - Fired when an OPD appointment is scheduled.
+- `bill.paid` - Fired when an invoice is settled.
+- `lab.order.completed` - Fired when lab results are finalized.
+- `system.daily.summary` - Dispatched automatically at midnight with aggregate metrics.
 
 ---
 
-## Webhook Events Catalog
+## 2. Inbound Webhooks (External → HMS)
 
-### Patient Events
-| Event Name | Trigger |
-|---|---|
-| `patient.registered` | New patient created |
-| `patient.updated` | Patient demographics updated |
+HMS provides a secure gateway to receive data from external providers (Stripe, GitHub, Shopify, Custom CRMs).
 
-### Appointment Events
-| Event Name | Trigger |
-|---|---|
-| `appointment.booked` | Appointment created |
-| `appointment.cancelled` | Appointment cancelled |
-| `appointment.token_called` | Token status → in_progress |
-| `appointment.completed` | Token status → completed |
+### Setup Guide (Inbound)
+1. Navigate to **Settings > Webhooks**.
+2. Switch to the **Incoming Sources** tab.
+3. Click **Add Source**.
+4. Define a **Slug** (this will be part of the URL) and choose the authentication type.
+5. The system will generate a secret. Configure your external provider to use this secret for signing requests.
+6. The endpoint URL will be: `https://your-hms-domain.com/api/v1/webhooks/{slug}`
 
-### OPD Events
-| Event Name | Trigger |
-|---|---|
-| `visit.created` | New OPD visit created |
-| `visit.case_sheet_finalized` | Case sheet finalized by doctor |
-| `prescription.created` | Prescription saved for a visit |
+### Inbound Features
+- **Idempotency**: Automatic replay protection. The system prevents duplicate processing by tracking external IDs or payload hashes.
+- **Correlation Tracking**: Every request is assigned a `correlation_id` for end-to-end tracing.
+- **Manual Replay**: Administrators can clone and replay failed inbound webhooks (with a new correlation ID) from the UI or via `php artisan webhooks:replay-inbound`.
 
-### IPD Events
-| Event Name | Trigger |
-|---|---|
-| `admission.created` | Patient admitted |
-| `admission.discharged` | Patient discharged |
-| `ipd.note_added` | Doctor/nurse note added |
+### Signature Verification (Security)
+To ensure the payload is genuinely from HMS (for outbound) or from an authorized source (for inbound), a timestamped HMAC-SHA256 signature is used.
 
-### Lab Events
-| Event Name | Trigger |
-|---|---|
-| `lab_order.created` | Lab order placed |
-| `lab_order.sample_collected` | Sample marked collected |
-| `lab_order.results_ready` | All results entered |
+**Example cURL Request (Simulating an Inbound Call)**
+```bash
+# Calculate Signature beforehand using your secret and current timestamp
+# echo -n "1715360000.{\"event\":\"test\"}" | openssl dgst -sha256 -hmac "your_secret"
 
-### Billing Events
-| Event Name | Trigger |
-|---|---|
-| `invoice.created` | Invoice generated |
-| `invoice.paid` | Invoice fully paid |
-| `invoice.partial_payment` | Partial payment recorded |
-| `invoice.cancelled` | Invoice cancelled |
+curl -X POST https://hms.test/api/v1/webhooks/my-crm \
+  -H "Content-Type: application/json" \
+  -H "X-HMS-Timestamp: 1715360000" \
+  -H "X-HMS-Signature: sha256=a1b2c3d4e5f6..." \
+  -d '{"event":"test"}'
+```
 
-### Pharmacy Events
-| Event Name | Trigger |
-|---|---|
-| `prescription.dispensed` | Prescription dispensed from pharmacy |
+**Developer Verification Example (PHP)**
+```php
+$payload = file_get_contents('php://input');
+$signature = $_SERVER['HTTP_X_HMS_SIGNATURE'];
+$timestamp = $_SERVER['HTTP_X_HMS_TIMESTAMP'];
 
-### Discharge Events
-| Event Name | Trigger |
-|---|---|
-| `discharge.finalized` | Discharge summary finalized |
+// Replay Attack Protection (5 minute tolerance)
+if (abs(time() - (int)$timestamp) > 300) {
+    http_response_code(401);
+    die('Timestamp expired');
+}
 
-### System Events
-| Event Name | Trigger |
-|---|---|
-| `daily.summary` | Automated daily summary (scheduled) |
-| `low_stock.alert` | Inventory item below reorder level |
-| `expiry.alert` | Medicine/item expiring within 30 days |
+$expected = 'sha256=' . hash_hmac('sha256', $timestamp . '.' . $payload, $secret);
 
----
-
-## Webhook Payload Format
-
-All payloads follow this standard envelope:
-
-```json
-{
-  "event": "patient.registered",
-  "timestamp": "2026-03-17T09:30:00+05:30",
-  "hospital": "City Health Clinic",
-  "data": {
-    "patient": {
-      "id": 1,
-      "uhid": "HMS-00001",
-      "name": "John Doe",
-      "phone": "9876543210",
-      "gender": "male",
-      "age": 35
-    }
-  }
+if (hash_equals($expected, $signature)) {
+    // Authenticated
 }
 ```
 
-### Signing Header
-
-Every request includes:
-```
-X-HMS-Signature: sha256=<HMAC-SHA256 of payload using endpoint secret>
-X-HMS-Event: patient.registered
-X-HMS-Timestamp: 1710658200
-```
-
 ---
 
-## Architecture
+## 3. Operations & Maintenance Commands
 
-```
-HMS Event (e.g. patient saved)
-        ↓
-Laravel Event fired (e.g. PatientRegistered)
-        ↓
-Event Listener: WebhookDispatcher
-        ↓
-Builds payload → finds subscribed endpoints
-        ↓
-Dispatches: SendWebhookJob (queued via Redis)
-        ↓
-Job runs → HTTP POST to endpoint URL
-        ↓
-Log result → success or schedule retry
-        ↓
-On retry: exponential backoff (1min, 5min, 15min, 1hr, 4hr)
+HMS provides robust CLI tools for webhook lifecycle management.
+
+```bash
+# Retry all failed outbound webhooks from the last 2 days
+php artisan webhooks:retry-outbound --days=2
+
+# Replay failed inbound webhooks for a specific source
+php artisan webhooks:replay-inbound --source=crm --failed-only
+
+# Prune old logs, outbox entries, and inbound records older than 30 days
+php artisan webhooks:prune --days=30
+
+# Manually dispatch the Daily Summary webhook
+php artisan webhook:daily-summary
 ```
 
 ---
 
-## Micro Tasks
+## 4. Database Architecture
 
-### MT-110.1 — Database Setup
-- [ ] Create migration: `create_webhook_endpoints_table`
-- [ ] Create migration: `create_webhook_logs_table`
-- [ ] Create `app/Models/WebhookEndpoint.php`
-- [ ] Create `app/Models/WebhookLog.php`
-
----
-
-### MT-110.2 — Webhook Service
-- [ ] Create `app/Services/WebhookService.php`
-- [ ] Methods:
-  - `dispatch(string $event, array $data)` — find subscribed endpoints, queue jobs
-  - `buildPayload(string $event, array $data)` — wrap in standard envelope
-  - `sign(string $payload, string $secret)` — HMAC-SHA256
-  - `logDelivery(WebhookEndpoint $endpoint, array $payload, $response)`
-  - `getSubscribedEndpoints(string $event)`
-
----
-
-### MT-110.3 — Webhook Queue Job
-- [ ] Create `app/Jobs/SendWebhookJob.php`
-- [ ] Accept: `WebhookEndpoint $endpoint`, `array $payload`, `int $attemptNumber`
-- [ ] Use Laravel HTTP client with timeout
-- [ ] On HTTP 2xx: log as success
-- [ ] On failure: log as failed, reschedule with backoff if `attempt_number < 5`
-- [ ] Dead letter: after 5 failures, mark as `failed`, alert admin
-
----
-
-### MT-110.4 — Laravel Events & Listeners
-- [ ] Create Laravel Events for each webhook trigger:
-  - `Events/Patients/PatientRegistered.php`
-  - `Events/Appointments/AppointmentBooked.php`
-  - `Events/OPD/CaseSheetFinalized.php`
-  - `Events/OPD/PrescriptionCreated.php`
-  - `Events/IPD/PatientAdmitted.php`
-  - `Events/IPD/PatientDischarged.php`
-  - `Events/Lab/LabResultsReady.php`
-  - `Events/Billing/InvoicePaid.php`
-  - `Events/Pharmacy/PrescriptionDispensed.php`
-  - `Events/Discharge/DischargeSummaryFinalized.php`
-- [ ] Create `Listeners/WebhookDispatcher.php` — single listener for all events, routes to `WebhookService::dispatch()`
-- [ ] Register in `EventServiceProvider`
-
----
-
-### MT-110.5 — Fire Events from Services
-- [ ] In `PatientService::create()` → fire `PatientRegistered`
-- [ ] In `AppointmentService::book()` → fire `AppointmentBooked`
-- [ ] In `CaseSheetService::finalize()` → fire `CaseSheetFinalized`
-- [ ] In `AdmissionService::admit()` → fire `PatientAdmitted`
-- [ ] In `AdmissionService::discharge()` → fire `PatientDischarged`
-- [ ] In `LabResultService::markComplete()` → fire `LabResultsReady`
-- [ ] In `InvoiceService::markPaid()` → fire `InvoicePaid`
-- [ ] In `PharmacyService::dispense()` → fire `PrescriptionDispensed`
-- [ ] In `DischargeSummaryService::finalize()` → fire `DischargeSummaryFinalized`
-
----
-
-### MT-110.6 — Webhook Management UI
-- [ ] Create `app/Livewire/Settings/WebhookEndpoints.php`
-- [ ] List all configured endpoints with status
-- [ ] Create/Edit form: Name, URL, Secret, Events (multi-select checkboxes)
-- [ ] Test button: send test ping to endpoint
-- [ ] Delete endpoint
-- [ ] Route: `/settings/webhooks`
-
----
-
-### MT-110.7 — Webhook Logs UI
-- [ ] Create `app/Livewire/Settings/WebhookLogs.php`
-- [ ] Filter: by endpoint, by event, by status, by date
-- [ ] Show: event, status badge, attempt number, delivered at
-- [ ] Expand row: show payload JSON and response
-- [ ] "Retry" button: manually re-queue failed deliveries
-- [ ] Route: `/settings/webhooks/logs`
-
----
-
-### MT-110.8 — API Endpoints for Webhooks
-- [ ] `GET /api/v1/webhooks` — list endpoints
-- [ ] `POST /api/v1/webhooks` — create endpoint
-- [ ] `PUT /api/v1/webhooks/{id}` — update endpoint
-- [ ] `DELETE /api/v1/webhooks/{id}` — delete endpoint
-- [ ] `GET /api/v1/webhooks/logs` — fetch delivery logs
-- [ ] `POST /api/v1/webhooks/{id}/test` — send test event
-
----
-
-## Estimated Hours
-
-| Task | Est. Hours |
-|---|---|
-| DB setup | 2h |
-| Webhook Service | 3h |
-| Queue Job with retry | 3h |
-| Laravel Events + Listeners | 4h |
-| Fire events from services | 3h |
-| Management UI | 4h |
-| Logs UI | 3h |
-| API endpoints | 2h |
-| **Total** | **~24h** |
+- **`webhook_endpoints` (Outbound)**: Configures where HMS sends data.
+- **`webhook_sources` (Inbound)**: Configures who HMS receives data from.
+- **`webhook_logs` (Outbound Logs)**: Complete audit trail of data sent OUT, including masked payloads and truncated responses.
+- **`inbound_webhooks` (Inbound Logs)**: Audit trail of data received IN.
+- **`webhook_outbox` (Persistence)**: Guarantees delivery by persisting events before background dispatch.
