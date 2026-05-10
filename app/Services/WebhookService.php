@@ -36,7 +36,7 @@ class WebhookService
 
         foreach ($endpoints as $endpoint) {
             // Queue the job
-            SendWebhookJob::dispatch($endpoint, $payload, 1, $correlationId);
+            SendWebhookJob::dispatch($endpoint, $payload, 1, $correlationId)->afterCommit();
         }
 
         $outbox->update(['status' => 'dispatched', 'dispatched_at' => now()]);

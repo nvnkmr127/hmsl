@@ -20,13 +20,8 @@ use App\Events\Pharmacy\MedicineLowStock;
 use App\Events\Laboratory\LabOrderCreated;
 use App\Events\Laboratory\LabOrderCompleted;
 use App\Services\WebhookService;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
-
-class WebhookDispatcher implements ShouldQueue
+class WebhookDispatcher
 {
-    public $afterCommit = true;
-
     protected $service;
 
     /**
