@@ -589,3 +589,19 @@ Did you mean one of these?
 [2026-05-10 10:42:45] testing.INFO: OPD_STATUS_UPDATED {"id":1,"status":"Cancelled","user_id":null} 
 [2026-05-10 10:42:45] testing.INFO: OPD_BOOKING_CREATED {"id":1,"patient_id":1,"doctor_id":1,"token":1,"user_id":null,"ip":"127.0.0.1"} 
 [2026-05-10 10:42:45] testing.INFO: Sending appointment confirmation to 9999999999 for Token #1  
+[2026-05-10 10:51:27] local.ERROR: The "--force" option does not exist. {"exception":"[object] (Symfony\\Component\\Console\\Exception\\RuntimeException(code: 0): The \"--force\" option does not exist. at /Users/naveenadicharla/Documents/hms/vendor/symfony/console/Input/ArgvInput.php:226)
+[stacktrace]
+#0 /Users/naveenadicharla/Documents/hms/vendor/symfony/console/Input/ArgvInput.php(155): Symfony\\Component\\Console\\Input\\ArgvInput->addLongOption('force', NULL)
+#1 /Users/naveenadicharla/Documents/hms/vendor/symfony/console/Input/ArgvInput.php(88): Symfony\\Component\\Console\\Input\\ArgvInput->parseLongOption('--force')
+#2 /Users/naveenadicharla/Documents/hms/vendor/symfony/console/Input/ArgvInput.php(77): Symfony\\Component\\Console\\Input\\ArgvInput->parseToken('--force', true)
+#3 /Users/naveenadicharla/Documents/hms/vendor/symfony/console/Input/Input.php(53): Symfony\\Component\\Console\\Input\\ArgvInput->parse()
+#4 /Users/naveenadicharla/Documents/hms/vendor/symfony/console/Command/Command.php(295): Symfony\\Component\\Console\\Input\\Input->bind(Object(Symfony\\Component\\Console\\Input\\InputDefinition))
+#5 /Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#6 /Users/naveenadicharla/Documents/hms/vendor/symfony/console/Application.php(1117): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#7 /Users/naveenadicharla/Documents/hms/vendor/symfony/console/Application.php(356): Symfony\\Component\\Console\\Application->doRunCommand(Object(Livewire\\Features\\SupportConsoleCommands\\Commands\\PublishCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#8 /Users/naveenadicharla/Documents/hms/vendor/symfony/console/Application.php(195): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#9 /Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#10 /Users/naveenadicharla/Documents/hms/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1235): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#11 /Users/naveenadicharla/Documents/hms/artisan(13): Illuminate\\Foundation\\Application->handleCommand(Object(Symfony\\Component\\Console\\Input\\ArgvInput))
+#12 {main}
+"} 

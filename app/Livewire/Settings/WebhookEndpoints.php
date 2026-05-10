@@ -30,7 +30,7 @@ class WebhookEndpoints extends Component
     public function loadStats()
     {
         $last24Hours = now()->subDay();
-        $isAdmin = auth()->user()->hasAnyRole(['admin', 'super_admin']);
+        $isAdmin = auth()->user()->can('manage settings');
         $baseQuery = WebhookLog::when(!$isAdmin, function($q) {
                 $q->whereHas('endpoint', fn($eq) => $eq->where('created_by', auth()->id()));
             })
@@ -56,7 +56,7 @@ class WebhookEndpoints extends Component
 
     protected function getHourlyTrend($since)
     {
-        $isAdmin = auth()->user()->hasAnyRole(['admin', 'super_admin']);
+        $isAdmin = auth()->user()->can('manage settings');
         return WebhookLog::when(!$isAdmin, function($q) {
                 $q->whereHas('endpoint', fn($eq) => $eq->where('created_by', auth()->id()));
             })
