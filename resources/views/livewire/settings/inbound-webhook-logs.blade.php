@@ -72,7 +72,7 @@
 
                 <div class="flex-1 overflow-y-auto p-8 space-y-8">
                     <!-- Metrics Grid -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div class="p-6 bg-slate-50 dark:bg-slate-800/40 rounded-3xl border border-slate-100 dark:border-slate-800">
                             <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-2">Process Status</span>
                             <span class="text-sm font-bold {{ $selectedLog->status === 'completed' ? 'text-emerald-500' : 'text-rose-500' }}">
@@ -82,6 +82,10 @@
                         <div class="p-6 bg-slate-50 dark:bg-slate-800/40 rounded-3xl border border-slate-100 dark:border-slate-800">
                             <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-2">Processed At</span>
                             <span class="text-sm font-bold text-slate-900 dark:text-white">{{ $selectedLog->processed_at ? $selectedLog->processed_at->format('H:i:s') : '--' }}</span>
+                        </div>
+                        <div class="p-6 bg-slate-50 dark:bg-slate-800/40 rounded-3xl border border-slate-100 dark:border-slate-800">
+                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-2">Correlation ID</span>
+                            <span class="text-[10px] font-mono font-bold text-indigo-600 dark:text-indigo-400 truncate block">{{ $selectedLog->correlation_id ?? 'N/A' }}</span>
                         </div>
                     </div>
 

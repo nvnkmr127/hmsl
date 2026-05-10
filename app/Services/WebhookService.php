@@ -25,7 +25,7 @@ class WebhookService
         ]);
 
         $endpoints = $this->getSubscribedEndpoints($event);
-        $payload = $this->buildPayload($event, $data);
+        $payload = $this->buildPayload($event, $data, null, $correlationId);
 
         if ($endpoints->isEmpty()) {
             $outbox->update(['status' => 'dispatched', 'dispatched_at' => now()]);
@@ -55,12 +55,16 @@ class WebhookService
     /**
      * Standardize the webhook payload envelope.
      */
-    public function buildPayload(string $event, array $data)
+    public function buildPayload(string $event, array $data, ?string $id = null, ?string $correlationId = null)
     {
         return [
+            'id' => $id ?? (string) \Illuminate\Support\Str::uuid(),
             'event' => $event,
+            'api_version' => '2024-05-01',
             'timestamp' => now()->toIso8601String(),
             'hospital' => config('app.name', 'HMS'),
+            'environment' => config('app.env', 'production'),
+            'correlation_id' => $correlationId,
             'data' => $data
         ];
     }

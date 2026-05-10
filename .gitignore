@@ -7,17 +7,51 @@
 /storage/pail
 /vendor
 .env
-.env.backup
-.env.production
+.env.*
+!.env.example
 .phpactor.json
 .phpunit.result.cache
 Homestead.json
 Homestead.yaml
 npm-debug.log
 yarn-error.log
+yarn-debug.log
+pnpm-debug.log
 /auth.json
+
+# IDEs
 /.fleet
 /.idea
 /.nova
 /.vscode
 /.zed
+/.cursor
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.swp
+*~
+
+# Laravel IDE Helper
+_ide_helper.php
+_ide_helper_models.php
+.phpstorm.meta.php
+
+# Coverage and caches
+/coverage
+.php-cs-fixer.cache
+
+# Databases
+*.sqlite
+*.sqlite3
+database/database.sqlite
+
+# Logs
+*.log
+/storage/logs/*.log

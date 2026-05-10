@@ -6,6 +6,7 @@ use App\Models\WebhookEndpoint;
 use App\Models\WebhookLog;
 use Livewire\Component;
 use Livewire\Attributes\Validate;
+use Livewire\Attributes\Computed;
 use Illuminate\Support\Str;
 
 class WebhookEndpoints extends Component
@@ -18,6 +19,7 @@ class WebhookEndpoints extends Component
     public $editingEndpointId;
     public $editingSourceId;
     public $stats = [];
+    public $selectedTestEvent = 'patient.registered';
 
     public function mount()
     {
@@ -27,32 +29,36 @@ class WebhookEndpoints extends Component
 
     public function loadStats()
     {
+        $last24Hours = now()->subDay();
+        $baseQuery = WebhookLog::whereHas('endpoint', fn($q) => $q->where('created_by', auth()->id()))
+            ->where('created_at', '>', $last24Hours);
+
+        $logStats = $baseQuery->selectRaw('
+            COUNT(*) as total_count,
+            SUM(CASE WHEN status = "success" THEN 1 ELSE 0 END) as success_count,
+            AVG(duration_ms) as avg_latency
+        ')->first();
+
         $this->stats = [
             'total' => WebhookEndpoint::where('created_by', auth()->id())->count(),
             'active' => WebhookEndpoint::where('created_by', auth()->id())->where('is_active', true)->count(),
-            'success_rate' => WebhookLog::whereHas('endpoint', fn($q) => $q->where('created_by', auth()->id()))
-                ->where('created_at', '>', now()->subDay())
-                ->count() > 0 
-                ? round((WebhookLog::whereHas('endpoint', fn($q) => $q->where('created_by', auth()->id()))
-                    ->where('created_at', '>', now()->subDay())
-                    ->where('status', 'success')->count() / 
-                  WebhookLog::whereHas('endpoint', fn($q) => $q->where('created_by', auth()->id()))
-                    ->where('created_at', '>', now()->subDay())->count()) * 100, 1)
-                : 0,
-            'avg_latency' => round(WebhookLog::whereHas('endpoint', fn($q) => $q->where('created_by', auth()->id()))
-                ->where('created_at', '>', now()->subDay())
-                ->avg('duration_ms') ?? 0),
+            'success_rate' => $logStats->total_count > 0 
+                ? round(($logStats->success_count / $logStats->total_count) * 100, 1) 
+                : 100,
+            'avg_latency' => round($logStats->avg_latency ?? 0),
             'pending_outbox' => \App\Models\WebhookOutbox::whereIn('status', ['pending', 'processing'])->count(),
+            'trend' => $this->getHourlyTrend($last24Hours),
         ];
     }
 
-    public function toggleAllEvents()
+    protected function getHourlyTrend($since)
     {
-        if (count($this->selectedEvents) === count($this->availableEvents)) {
-            $this->selectedEvents = [];
-        } else {
-            $this->selectedEvents = array_keys($this->availableEvents);
-        }
+        return WebhookLog::whereHas('endpoint', fn($q) => $q->where('created_by', auth()->id()))
+            ->where('created_at', '>', $since)
+            ->selectRaw('HOUR(created_at) as hour, status, COUNT(*) as count')
+            ->groupBy('hour', 'status')
+            ->get()
+            ->groupBy('hour');
     }
 
     // Common fields
@@ -70,18 +76,59 @@ class WebhookEndpoints extends Component
     public $slug;
 
     protected $availableEvents = [
-        'patient.registered' => 'Patient Registered',
-        'appointment.booked' => 'OPD Appointment Booked',
-        'consultation.completed' => 'OPD Consultation Completed',
-        'admission.created' => 'IPD Admission Created',
-        'invoice.paid' => 'Invoice Paid',
-        'payment.received' => 'Payment Received',
-        'prescription.dispensed' => 'Prescription Dispensed',
-        'medicine.low_stock' => 'Medicine Low Stock',
-        'lab.order_created' => 'Lab Order Created',
-        'lab.order_completed' => 'Lab Order Completed',
-        'daily.summary' => 'System: Daily Summary',
+        'Patient Management' => [
+            'patient.registered' => 'Patient Registered',
+            'patient.updated' => 'Patient Updated',
+            'patient.deleted' => 'Patient Deleted',
+        ],
+        'OPD / Consultations' => [
+            'appointment.booked' => 'Appointment Booked',
+            'consultation.created' => 'Consultation Created',
+            'consultation.completed' => 'Consultation Completed',
+        ],
+        'IPD / Admissions' => [
+            'admission.created' => 'Admission Created',
+            'admission.discharged' => 'Patient Discharged',
+        ],
+        'Billing & Payments' => [
+            'invoice.paid' => 'Invoice Paid',
+            'payment.received' => 'Payment Received',
+        ],
+        'Clinical Services' => [
+            'prescription.created' => 'Prescription Created',
+            'prescription.dispensed' => 'Prescription Dispensed',
+            'medicine.low_stock' => 'Medicine Low Stock',
+            'lab.order_created' => 'Lab Order Created',
+            'lab.order_completed' => 'Lab Order Completed',
+        ],
+        'System Events' => [
+            'daily.summary' => 'Daily Summary',
+        ],
     ];
+
+    #[Computed]
+    public function flatAvailableEvents()
+    {
+        $flat = [];
+        foreach ($this->availableEvents as $group) {
+            $flat = array_merge($flat, $group);
+        }
+        return $flat;
+    }
+
+    public function toggleAllEvents()
+    {
+        $allKeys = [];
+        foreach ($this->availableEvents as $group) {
+            $allKeys = array_merge($allKeys, array_keys($group));
+        }
+
+        if (count($this->selectedEvents) === count($allKeys)) {
+            $this->selectedEvents = [];
+        } else {
+            $this->selectedEvents = $allKeys;
+        }
+    }
 
 
     public function loadData()
@@ -213,26 +260,60 @@ class WebhookEndpoints extends Component
         $this->loadStats(); // Refresh dashboard
     }
 
-    public function testEndpoint($id)
+    public function testEndpoint($id, \App\Services\WebhookService $service)
     {
         $endpoint = \App\Models\WebhookEndpoint::findOrFail($id);
         
-        $payload = [
-            'event' => 'webhook.test',
-            'timestamp' => now()->toIso8601String(),
-            'hospital' => config('app.name', 'HMS'),
-            'data' => [
-                'message' => 'This is a test webhook from HMS.',
-                'triggered_by' => auth()->user()->name,
-            ]
-        ];
+        $data = $this->getMockDataForEvent($this->selectedTestEvent);
+        
+        $payload = $service->buildPayload($this->selectedTestEvent, $data);
 
         try {
             \App\Jobs\SendWebhookJob::dispatch($endpoint, $payload);
-            $this->dispatch('notify', type: 'success', message: 'Test webhook queued. Check logs in a few seconds.');
+            $this->dispatch('notify', ['type' => 'success', 'message' => "Test '{$this->selectedTestEvent}' queued. Check logs."]);
         } catch (\Exception $e) {
-            $this->dispatch('notify', type: 'error', message: 'Failed to send test: ' . $e->getMessage());
+            $this->dispatch('notify', ['type' => 'error', 'message' => 'Failed to send test: ' . $e->getMessage()]);
         }
+    }
+
+    protected function getMockDataForEvent($event): array
+    {
+        return match($event) {
+            'patient.registered', 'patient.updated' => [
+                'id' => 1,
+                'uhid' => 'P-2024-0001',
+                'first_name' => 'John',
+                'last_name' => 'Doe',
+                'full_name' => 'John Doe',
+                'phone' => '9876543210',
+                'email' => 'john.doe@example.com',
+                'gender' => 'Male',
+                'age' => 30,
+            ],
+            'admission.created', 'admission.discharged' => [
+                'id' => 1,
+                'admission_number' => 'ADM-2024-001',
+                'status' => $event === 'admission.created' ? 'Admitted' : 'Discharged',
+                'patient' => ['id' => 1, 'uhid' => 'P-001', 'full_name' => 'John Doe'],
+                'doctor' => ['id' => 5, 'full_name' => 'Dr. Smith'],
+            ],
+            'invoice.paid' => [
+                'id' => 10,
+                'bill_number' => 'BILL-2024-55',
+                'total_amount' => 1500.00,
+                'payment_method' => 'UPI',
+            ],
+            'medicine.low_stock' => [
+                'id' => 45,
+                'name' => 'Paracetamol 500mg',
+                'stock_quantity' => 5,
+                'min_stock_level' => 10,
+            ],
+            default => [
+                'message' => 'Generic test payload',
+                'timestamp' => now()->toIso8601String(),
+            ],
+        };
     }
 
     public function render()

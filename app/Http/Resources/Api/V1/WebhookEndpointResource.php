@@ -14,7 +14,9 @@ class WebhookEndpointResource extends JsonResource
             'name' => $this->name,
             'url' => $this->url,
             'events' => $this->events,
+            'api_version' => $this->api_version,
             'is_active' => $this->is_active,
+            'consecutive_failures' => $this->consecutive_failures,
             'created_at' => $this->created_at->toISOString(),
         ];
     }

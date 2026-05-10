@@ -77,7 +77,7 @@ class SendWebhookJob implements ShouldQueue, ShouldBeUnique
 
         $body = json_encode($this->payload);
         $timestamp = now()->timestamp;
-        $deliveryId = (string) \Illuminate\Support\Str::uuid();
+        $deliveryId = $this->payload['id'] ?? (string) \Illuminate\Support\Str::uuid();
         $signature = $service->sign($body, $this->endpoint->secret, $timestamp);
 
         $startTime = microtime(true);

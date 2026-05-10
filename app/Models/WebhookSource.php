@@ -16,6 +16,19 @@ class WebhookSource extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
-        'secret' => 'encrypted',
     ];
+    public function getSecretAttribute($value)
+    {
+        if (empty($value)) return $value;
+        try {
+            return decrypt($value);
+        } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
+            return $value;
+        }
+    }
+
+    public function setSecretAttribute($value)
+    {
+        $this->attributes['secret'] = empty($value) ? $value : encrypt($value);
+    }
 }

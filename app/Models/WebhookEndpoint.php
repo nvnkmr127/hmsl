@@ -24,7 +24,6 @@ class WebhookEndpoint extends Model
     protected $casts = [
         'events' => 'array',
         'is_active' => 'boolean',
-        'secret' => 'encrypted',
     ];
 
     public function logs()
@@ -35,5 +34,20 @@ class WebhookEndpoint extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function getSecretAttribute($value)
+    {
+        if (empty($value)) return $value;
+        try {
+            return decrypt($value);
+        } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
+            return $value;
+        }
+    }
+
+    public function setSecretAttribute($value)
+    {
+        $this->attributes['secret'] = empty($value) ? $value : encrypt($value);
     }
 }

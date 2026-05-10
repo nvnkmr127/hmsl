@@ -68,6 +68,31 @@ class IpdDischargeNotesTest extends TestCase
             'created_by' => $user->id,
         ]);
 
+        \App\Models\DischargeSummary::create([
+            'admission_id' => $admission->id,
+            'admission_number' => $admission->admission_number,
+            'admission_date' => $admission->admission_date,
+            'patient_id' => $patient->id,
+            'uhid' => $patient->uhid,
+            'doctor_id' => $doctor->id,
+            'status' => 'Finalized',
+            'is_finalized' => true,
+            'finalized_at' => now(),
+            'finalized_by' => $user->id,
+            'clinical_summary' => 'Test summary',
+        ]);
+
+        $ipdService = app(\App\Services\IpdService::class);
+        $billingService = app(\App\Services\BillingService::class);
+        
+        $admission->discharge_date = now();
+        $billItems = $ipdService->buildFinalBillItems($admission);
+        $bill = $billingService->upsertAdmissionFinalBill($admission, $billItems);
+        $billingService->markAsPaid($bill, 'Cash');
+        
+        $admission->discharge_date = null;
+        $admission->save();
+
         Livewire::actingAs($user)
             ->test('counter.ipd-admissions')
             ->call('dischargePatient', $admission->id)

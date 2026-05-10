@@ -9,6 +9,10 @@ class Prescription extends Model
 {
     use HasFactory;
 
+    protected $dispatchesEvents = [
+        'created' => \App\Events\Pharmacy\PrescriptionCreated::class,
+    ];
+
     protected $fillable = [
         'consultation_id',
         'admission_id',

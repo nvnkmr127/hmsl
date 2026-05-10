@@ -92,7 +92,7 @@ class ConsultationDesk extends Component
             ->first();
 
         // 2. Timeline Logic
-        $visits = Consultation::where('patient_id', $id)->latest()->get();
+        $visits = Consultation::where('patient_id', $id)->latest('consultation_date')->take(5)->get();
         $timeline = collect();
 
         foreach ($visits as $v) {
@@ -105,7 +105,7 @@ class ConsultationDesk extends Component
             ]);
         }
 
-        $admissions = \App\Models\Admission::with('bed.ward')->where('patient_id', $id)->get();
+        $admissions = \App\Models\Admission::with('bed.ward')->where('patient_id', $id)->latest('admission_date')->take(5)->get();
         foreach ($admissions as $a) {
             $timeline->push((object)[
                 'date' => \Carbon\Carbon::parse($a->admission_date),
@@ -142,8 +142,10 @@ class ConsultationDesk extends Component
         ];
 
         // 2. Secondary Alerts
-        $visits = Consultation::where('patient_id', $id)->latest()->get();
-        $visitCount = $visits->where('consultation_date', '>=', now()->subMonths(3))->count();
+        $visitCount = Consultation::where('patient_id', $id)
+            ->where('consultation_date', '>=', now()->subMonths(3))
+            ->count();
+            
         if ($visitCount > 5) {
             $this->alerts[] = ['type' => 'warning', 'label' => 'Frequent', 'msg' => "{$visitCount} visits in 3 months"];
         }

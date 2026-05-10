@@ -19,7 +19,8 @@ class WebhookController extends Controller
             ->firstOrFail();
 
         // 1. Atomic Check & Create for idempotency
-        $externalId = $request->header('X-Idempotency-Key') ?? $request->header('X-Request-ID');
+        $externalId = $request->header('X-Idempotency-Key') ?? $request->header('X-Request-ID') ?? $request->header('X-HMS-Delivery-ID');
+        $correlationId = $request->header('X-HMS-Correlation-ID');
         
         $webhook = \App\Models\InboundWebhook::firstOrCreate(
             ['external_id' => $externalId],
@@ -28,6 +29,7 @@ class WebhookController extends Controller
                 'payload' => $request->all(),
                 'headers' => $request->headers->all(),
                 'status' => 'pending',
+                'correlation_id' => $correlationId,
             ]
         );
 
@@ -78,15 +80,15 @@ class WebhookController extends Controller
         }
 
         if ($config->auth_type === 'secret') {
-            $signature = $request->header('X-Webhook-Signature');
-            $timestamp = $request->header('X-Webhook-Timestamp');
+            $signature = $request->header('X-HMS-Signature') ?? $request->header('X-Webhook-Signature');
+            $timestamp = $request->header('X-HMS-Timestamp') ?? $request->header('X-Webhook-Timestamp');
 
             if (!$signature || !$timestamp) {
                 throw new \Exception("Missing HMAC signature or timestamp header.");
             }
 
-            // 1. Check timestamp window (5 minutes)
-            if (abs(now()->timestamp - (int)$timestamp) > 300) {
+            // 1. Check timestamp window (15 minutes for inbound flexibility)
+            if (abs(now()->timestamp - (int)$timestamp) > 900) {
                 throw new \Exception("Webhook timestamp outside valid window.");
             }
 

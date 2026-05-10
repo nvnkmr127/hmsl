@@ -30,7 +30,10 @@ class PruneWebhookLogs extends Command
 
         $outboundCount = \App\Models\WebhookLog::where('created_at', '<', $date)->delete();
         $inboundCount = \App\Models\InboundWebhook::where('created_at', '<', $date)->delete();
+        $outboxCount = \App\Models\WebhookOutbox::where('created_at', '<', $date)
+            ->where('status', 'dispatched')
+            ->delete();
 
-        $this->info("Successfully pruned {$outboundCount} outbound and {$inboundCount} inbound logs older than {$days} days.");
+        $this->info("Successfully pruned {$outboundCount} outbound, {$inboundCount} inbound logs, and {$outboxCount} outbox entries older than {$days} days.");
     }
 }

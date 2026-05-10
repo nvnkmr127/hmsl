@@ -109,19 +109,14 @@ class WebhookEndpointApiController extends Controller
     /**
      * Send a test webhook.
      */
-    public function test(WebhookEndpoint $webhook_endpoint)
+    public function test(WebhookEndpoint $webhook_endpoint, \App\Services\WebhookService $service)
     {
         $this->authorize('update', $webhook_endpoint);
 
-        $payload = [
-            'event' => 'webhook.test',
-            'timestamp' => now()->toIso8601String(),
-            'hospital' => config('app.name', 'HMS'),
-            'data' => [
-                'message' => 'This is a test webhook from the HMS API.',
-                'triggered_by_api' => true,
-            ]
-        ];
+        $payload = $service->buildPayload('webhook.test', [
+            'message' => 'This is a test webhook from the HMS API.',
+            'triggered_by_api' => true,
+        ]);
 
         \App\Jobs\SendWebhookJob::dispatch($webhook_endpoint, $payload);
 
@@ -135,17 +130,34 @@ class WebhookEndpointApiController extends Controller
     {
         return response()->json([
             'data' => [
-                'patient.registered' => 'Patient Registered',
-                'appointment.booked' => 'OPD Appointment Booked',
-                'consultation.completed' => 'OPD Consultation Completed',
-                'admission.created' => 'IPD Admission Created',
-                'invoice.paid' => 'Invoice Paid',
-                'payment.received' => 'Payment Received',
-                'prescription.dispensed' => 'Prescription Dispensed',
-                'medicine.low_stock' => 'Medicine Low Stock',
-                'lab.order_created' => 'Lab Order Created',
-                'lab.order_completed' => 'Lab Order Completed',
-                'daily.summary' => 'System: Daily Summary',
+                'Patient Management' => [
+                    'patient.registered' => 'Patient Registered',
+                    'patient.updated' => 'Patient Updated',
+                    'patient.deleted' => 'Patient Deleted',
+                ],
+                'OPD / Consultations' => [
+                    'appointment.booked' => 'Appointment Booked',
+                    'consultation.created' => 'Consultation Created',
+                    'consultation.completed' => 'Consultation Completed',
+                ],
+                'IPD / Admissions' => [
+                    'admission.created' => 'Admission Created',
+                    'admission.discharged' => 'Patient Discharged',
+                ],
+                'Billing & Payments' => [
+                    'invoice.paid' => 'Invoice Paid',
+                    'payment.received' => 'Payment Received',
+                ],
+                'Clinical Services' => [
+                    'prescription.created' => 'Prescription Created',
+                    'prescription.dispensed' => 'Prescription Dispensed',
+                    'medicine.low_stock' => 'Medicine Low Stock',
+                    'lab.order_created' => 'Lab Order Created',
+                    'lab.order_completed' => 'Lab Order Completed',
+                ],
+                'System Events' => [
+                    'daily.summary' => 'Daily Summary',
+                ],
             ]
         ]);
     }

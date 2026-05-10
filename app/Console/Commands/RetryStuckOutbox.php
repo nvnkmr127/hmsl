@@ -48,10 +48,19 @@ class RetryStuckOutbox extends Command
             // We bypass the outbox creation inside dispatch for retries to avoid recursion
             // So we manually call the dispatch logic
             $endpoints = $service->getSubscribedEndpoints($entry->event_type);
-            $payload = $service->buildPayload($entry->event_type, $entry->payload);
+            
+            // Use a deterministic ID for retries to support idempotency
+            // Here we use outbox_uuid or similar if it existed, but we can derive it from the outbox entry
+            // For now, let's assume we want to keep the same payload data
+            $payload = $service->buildPayload(
+                $entry->event_type, 
+                $entry->payload, 
+                null, // buildPayload will generate one if we don't have a stable one in DB yet
+                $entry->correlation_id
+            );
 
             foreach ($endpoints as $endpoint) {
-                \App\Jobs\SendWebhookJob::dispatch($endpoint, $payload);
+                \App\Jobs\SendWebhookJob::dispatch($endpoint, $payload, 1, $entry->correlation_id);
             }
 
             $entry->update([

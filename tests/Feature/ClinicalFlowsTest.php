@@ -231,8 +231,32 @@ class ClinicalFlowsTest extends TestCase
             'created_by' => $doctorOwner->id,
         ]);
 
+        \App\Models\DischargeSummary::create([
+            'admission_id' => $admission->id,
+            'admission_number' => $admission->admission_number,
+            'admission_date' => $admission->admission_date,
+            'patient_id' => $patient->id,
+            'uhid' => $patient->uhid,
+            'doctor_id' => $doctor->id,
+            'status' => 'Finalized',
+            'is_finalized' => true,
+            'finalized_at' => now(),
+            'finalized_by' => $doctorOwner->id,
+            'clinical_summary' => 'Test summary',
+        ]);
+
         $manager = app(IpdService::class);
-        $manager->dischargePatient($admission, 'Discharge instructions');
+        $billingService = app(BillingService::class);
+        
+        $admission->discharge_date = now();
+        $billItems = $manager->buildFinalBillItems($admission);
+        $bill = $billingService->upsertAdmissionFinalBill($admission, $billItems);
+        $billingService->markAsPaid($bill, 'Cash');
+        
+        $admission->discharge_date = null;
+        $admission->save();
+
+        $manager->dischargePatient($admission->fresh(['bed']), 'Discharge instructions');
 
         $this->actingAs($doctorOwner)
             ->get(route('discharge.summary', ['admission' => $admission->id]))

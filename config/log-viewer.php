@@ -104,6 +104,7 @@ return [
 
     'middleware' => [
         'web',
+        'auth',
         AuthorizeLogViewer::class,
     ],
 

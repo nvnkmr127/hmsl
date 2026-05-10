@@ -483,3 +483,24 @@ Did you mean one of these?
 #19 /Users/naveenadicharla/Documents/hms/artisan(13): Illuminate\\Foundation\\Application->handleCommand(Object(Symfony\\Component\\Console\\Input\\ArgvInput))
 #20 {main}
 "} 
+[2026-05-10 10:26:53] testing.INFO: OPD_BOOKING_CREATED {"id":1,"patient_id":1,"doctor_id":1,"token":1,"user_id":null,"ip":"127.0.0.1"} 
+[2026-05-10 10:26:53] testing.INFO: Sending appointment confirmation to 9999999999 for Token #1  
+[2026-05-10 10:26:53] testing.INFO: OPD_BOOKING_CREATED {"id":1,"patient_id":1,"doctor_id":1,"token":1,"user_id":null,"ip":"127.0.0.1"} 
+[2026-05-10 10:26:53] testing.INFO: Sending appointment confirmation to 9999999999 for Token #1  
+[2026-05-10 10:26:53] testing.INFO: OPD_STATUS_UPDATED {"id":1,"status":"Cancelled","user_id":null} 
+[2026-05-10 10:26:53] testing.INFO: OPD_BOOKING_CREATED {"id":1,"patient_id":1,"doctor_id":1,"token":1,"user_id":null,"ip":"127.0.0.1"} 
+[2026-05-10 10:26:53] testing.INFO: Sending appointment confirmation to 9999999999 for Token #1  
+[2026-05-10 10:34:54] testing.INFO: OPD_BOOKING_CREATED {"id":1,"patient_id":1,"doctor_id":1,"token":1,"user_id":null,"ip":"127.0.0.1"} 
+[2026-05-10 10:34:54] testing.INFO: Sending appointment confirmation to 9999999999 for Token #1  
+[2026-05-10 10:34:54] testing.INFO: OPD_BOOKING_CREATED {"id":1,"patient_id":1,"doctor_id":1,"token":1,"user_id":null,"ip":"127.0.0.1"} 
+[2026-05-10 10:34:54] testing.INFO: Sending appointment confirmation to 9999999999 for Token #1  
+[2026-05-10 10:34:54] testing.INFO: OPD_STATUS_UPDATED {"id":1,"status":"Cancelled","user_id":null} 
+[2026-05-10 10:34:55] testing.INFO: OPD_BOOKING_CREATED {"id":1,"patient_id":1,"doctor_id":1,"token":1,"user_id":null,"ip":"127.0.0.1"} 
+[2026-05-10 10:34:55] testing.INFO: Sending appointment confirmation to 9999999999 for Token #1  
+[2026-05-10 10:35:30] testing.INFO: OPD_BOOKING_CREATED {"id":1,"patient_id":1,"doctor_id":1,"token":1,"user_id":null,"ip":"127.0.0.1"} 
+[2026-05-10 10:35:30] testing.INFO: Sending appointment confirmation to 9999999999 for Token #1  
+[2026-05-10 10:35:30] testing.INFO: OPD_BOOKING_CREATED {"id":1,"patient_id":1,"doctor_id":1,"token":1,"user_id":null,"ip":"127.0.0.1"} 
+[2026-05-10 10:35:30] testing.INFO: Sending appointment confirmation to 9999999999 for Token #1  
+[2026-05-10 10:35:30] testing.INFO: OPD_STATUS_UPDATED {"id":1,"status":"Cancelled","user_id":null} 
+[2026-05-10 10:35:30] testing.INFO: OPD_BOOKING_CREATED {"id":1,"patient_id":1,"doctor_id":1,"token":1,"user_id":null,"ip":"127.0.0.1"} 
+[2026-05-10 10:35:30] testing.INFO: Sending appointment confirmation to 9999999999 for Token #1  

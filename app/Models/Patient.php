@@ -13,6 +13,8 @@ class Patient extends Model
 
     protected $dispatchesEvents = [
         'created' => \App\Events\PatientCreated::class,
+        'updated' => \App\Events\Patients\PatientUpdated::class,
+        'deleted' => \App\Events\Patients\PatientDeleted::class,
     ];
 
     protected $fillable = [

@@ -556,17 +556,23 @@ class OpdBooking extends Component
     }
 
     #[Computed]
+    public function baseConsultationsQuery()
+    {
+        return Consultation::whereDate('consultation_date', now()->toDateString())
+            ->when($this->selectedDoctor && !$this->showBookingForm, fn($query) => $query->where('doctor_id', $this->selectedDoctor));
+    }
+
+    #[Computed]
     public function todayConsultationsQuery()
     {
-        return Consultation::with(['patient', 'service', 'doctor.user', 'bill', 'patient.vitals' => fn($q) => $q->latest()->limit(1)])
-            ->whereDate('consultation_date', now()->toDateString())
-            ->when($this->selectedDoctor && !$this->showBookingForm, fn($query) => $query->where('doctor_id', $this->selectedDoctor));
+        return $this->baseConsultationsQuery()
+            ->with(['patient', 'service', 'doctor.user', 'bill', 'patient.vitals' => fn($q) => $q->latest()->limit(1)]);
     }
 
     #[Computed]
     public function stats()
     {
-        $stats = $this->todayConsultationsQuery()
+        $stats = $this->baseConsultationsQuery()
             ->selectRaw('
                 COUNT(*) as total,
                 SUM(CASE WHEN status = "Pending" THEN 1 ELSE 0 END) as pending,

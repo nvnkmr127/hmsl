@@ -14,6 +14,7 @@ class InboundWebhook extends Model
         'status',
         'error_message',
         'processed_at',
+        'correlation_id',
     ];
 
     protected $casts = [

@@ -301,12 +301,20 @@ class BillingList extends Component
         ];
 
         // Specific OP Reports Stats
+        $opStatsRaw = (clone $opBaseQuery)->selectRaw('
+            COUNT(*) as total,
+            SUM(CASE WHEN visit_type = "Review" THEN 1 ELSE 0 END) as review,
+            SUM(CASE WHEN payment_status = "Paid" AND fee > 0 THEN 1 ELSE 0 END) as paid,
+            SUM(fee) as revenue,
+            SUM(discount_amount) as discount
+        ')->first();
+
         $opStats = [
-            'total' => (clone $opBaseQuery)->count(),
-            'review' => (clone $opBaseQuery)->where('visit_type', 'Review')->count(),
-            'paid' => (clone $opBaseQuery)->where('payment_status', 'Paid')->where('fee', '>', 0)->count(),
-            'revenue' => (float) (clone $opBaseQuery)->sum('fee'),
-            'discount' => (float) (clone $opBaseQuery)->sum('discount_amount'),
+            'total' => (int) ($opStatsRaw->total ?? 0),
+            'review' => (int) ($opStatsRaw->review ?? 0),
+            'paid' => (int) ($opStatsRaw->paid ?? 0),
+            'revenue' => (float) ($opStatsRaw->revenue ?? 0),
+            'discount' => (float) ($opStatsRaw->discount ?? 0),
         ];
 
         $doctors = \App\Models\Doctor::all();

@@ -9,6 +9,10 @@ class Consultation extends Model
 {
     use HasFactory;
 
+    protected $dispatchesEvents = [
+        'created' => \App\Events\OPD\ConsultationCreated::class,
+    ];
+
     protected $fillable = [
         'patient_id',
         'service_id',

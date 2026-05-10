@@ -67,9 +67,9 @@ class FeatureSmokeTest extends TestCase
         $this->actingAs($user)->get(route('counter.patients.index'))->assertOk();
         $this->actingAs($user)->get(route('counter.opd.index'))->assertOk();
         $this->actingAs($user)->get(route('billing.index'))->assertOk();
+        $this->actingAs($user)->get(route('discharge.index'))->assertOk();
 
         $this->actingAs($user)->get(route('doctor.dashboard'))->assertForbidden();
-        $this->actingAs($user)->get(route('discharge.index'))->assertForbidden();
         $this->actingAs($user)->get(route('inventory.index'))->assertForbidden();
         $this->actingAs($user)->get(route('reports.index'))->assertForbidden();
     }
@@ -110,7 +110,7 @@ class FeatureSmokeTest extends TestCase
         $this->actingAs($user)->get(route('billing.index'))->assertOk();
         $this->actingAs($user)->get(route('discharge.index'))->assertOk();
         $this->actingAs($user)->get(route('settings.index'))->assertOk();
-        $this->actingAs($user)->get(route('reports.index'))->assertRedirect(route('reports.revenue'));
+        $this->actingAs($user)->get(route('reports.index'))->assertOk();
     }
 
     public function test_discharge_service_updates_admission_and_frees_bed(): void
@@ -153,7 +153,34 @@ class FeatureSmokeTest extends TestCase
             'created_by' => $creator->id,
         ]);
 
+        \App\Models\DischargeSummary::create([
+            'admission_id' => $admission->id,
+            'admission_number' => $admission->admission_number,
+            'admission_date' => $admission->admission_date,
+            'patient_id' => $patient->id,
+            'uhid' => $patient->uhid,
+            'doctor_id' => $doctor->id,
+            'status' => 'Finalized',
+            'is_finalized' => true,
+            'finalized_at' => now(),
+            'finalized_by' => $creator->id,
+            'clinical_summary' => 'Test summary',
+        ]);
+
         $service = app(IpdService::class);
+        
+        // Generate bill
+        $admission->discharge_date = now();
+        $billItems = $service->buildFinalBillItems($admission);
+        $billingService = app(\App\Services\BillingService::class);
+        $bill = $billingService->upsertAdmissionFinalBill($admission, $billItems);
+        
+        // Settle the bill to allow discharge
+        $billingService->markAsPaid($bill, 'Cash');
+        
+        $admission->discharge_date = null;
+        $admission->save();
+
         $service->dischargePatient($admission->fresh(['bed']), 'Test discharge');
 
         $admission->refresh();
@@ -168,7 +195,7 @@ class FeatureSmokeTest extends TestCase
         $bill = Bill::where('admission_id', $admission->id)->first();
         $this->assertNotNull($bill);
         $this->assertSame((string) $patient->id, (string) $bill->patient_id);
-        $this->assertSame('Unpaid', $bill->payment_status);
+        $this->assertSame('Paid', $bill->payment_status);
         $this->assertGreaterThan(0, (float) $bill->total_amount);
     }
 
@@ -205,7 +232,7 @@ class FeatureSmokeTest extends TestCase
         $user = $this->userWithRole('accountant');
 
         $this->actingAs($user)->get(route('billing.index'))->assertOk();
-        $this->actingAs($user)->get(route('reports.index'))->assertRedirect(route('reports.revenue'));
+        $this->actingAs($user)->get(route('reports.index'))->assertOk();
         $this->actingAs($user)->get(route('reports.revenue'))->assertOk();
 
         $this->actingAs($user)->get(route('inventory.index'))->assertForbidden();

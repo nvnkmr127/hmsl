@@ -10,12 +10,23 @@
                 <input wire:model.live.debounce.300ms="search" type="text" class="block w-full pl-10 pr-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl leading-5 bg-white dark:bg-slate-800 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition duration-150 ease-in-out sm:text-sm" placeholder="Search logs...">
             </div>
             
-            <select wire:model.live="status" class="block w-40 pl-3 pr-10 py-2 text-base border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-xl bg-white dark:bg-slate-800">
+            <select wire:model.live="status" class="block w-40 pl-3 pr-10 py-2 text-base border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-xl bg-white dark:bg-slate-800 font-bold">
                 <option value="all">All Status</option>
                 <option value="success">Success</option>
                 <option value="failed">Failed</option>
                 <option value="retrying">Retrying</option>
             </select>
+
+            <select wire:model.live="eventFilter" class="block w-48 pl-3 pr-10 py-2 text-base border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-xl bg-white dark:bg-slate-800 font-bold uppercase tracking-tight">
+                <option value="all">All Events</option>
+                @foreach($availableEventNames as $eventName)
+                    <option value="{{ $eventName }}">{{ $eventName }}</option>
+                @endforeach
+            </select>
+
+            <button wire:click="exportLogs" class="p-2 bg-slate-100 dark:bg-slate-700 rounded-xl text-slate-500 hover:text-indigo-600 transition-colors" title="Export CSV">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+            </button>
 
             @if($endpointId)
                 <div class="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/30 px-4 py-2 rounded-xl border border-indigo-100 dark:border-indigo-800/50">

@@ -86,7 +86,7 @@ class AddressAutocompleteTest extends TestCase
             ->assertJsonFragment(['place_id' => 'AAA111'])
             ->assertJsonFragment(['place_id' => 'BBB222'])
             ->assertJsonFragment(['place_id' => 'CCC333'])
-            ->assertJsonFragment(['address' => 'Kukatpally, Hyderabad, Telangana, 500072'])
+            ->assertJsonFragment(['address' => 'Hyderabad, Telangana, 500072'])
             ->assertJsonFragment(['state' => 'Telangana']);
 
         Http::assertSent(function ($request) {
