@@ -119,6 +119,7 @@ return [
 
     'api_middleware' => [
         EnsureFrontendRequestsAreStateful::class,
+        'auth',
         AuthorizeLogViewer::class,
     ],
 

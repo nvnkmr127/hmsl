@@ -30,7 +30,10 @@ class WebhookEndpoints extends Component
     public function loadStats()
     {
         $last24Hours = now()->subDay();
-        $baseQuery = WebhookLog::whereHas('endpoint', fn($q) => $q->where('created_by', auth()->id()))
+        $isAdmin = auth()->user()->hasAnyRole(['admin', 'super_admin']);
+        $baseQuery = WebhookLog::when(!$isAdmin, function($q) {
+                $q->whereHas('endpoint', fn($eq) => $eq->where('created_by', auth()->id()));
+            })
             ->where('created_at', '>', $last24Hours);
 
         $logStats = $baseQuery->selectRaw('
@@ -40,8 +43,8 @@ class WebhookEndpoints extends Component
         ')->first();
 
         $this->stats = [
-            'total' => WebhookEndpoint::where('created_by', auth()->id())->count(),
-            'active' => WebhookEndpoint::where('created_by', auth()->id())->where('is_active', true)->count(),
+            'total' => $isAdmin ? WebhookEndpoint::count() : WebhookEndpoint::where('created_by', auth()->id())->count(),
+            'active' => $isAdmin ? WebhookEndpoint::where('is_active', true)->count() : WebhookEndpoint::where('created_by', auth()->id())->where('is_active', true)->count(),
             'success_rate' => $logStats->total_count > 0 
                 ? round(($logStats->success_count / $logStats->total_count) * 100, 1) 
                 : 100,
@@ -53,7 +56,10 @@ class WebhookEndpoints extends Component
 
     protected function getHourlyTrend($since)
     {
-        return WebhookLog::whereHas('endpoint', fn($q) => $q->where('created_by', auth()->id()))
+        $isAdmin = auth()->user()->hasAnyRole(['admin', 'super_admin']);
+        return WebhookLog::when(!$isAdmin, function($q) {
+                $q->whereHas('endpoint', fn($eq) => $eq->where('created_by', auth()->id()));
+            })
             ->where('created_at', '>', $since)
             ->selectRaw('HOUR(created_at) as hour, status, COUNT(*) as count')
             ->groupBy('hour', 'status')
@@ -263,14 +269,15 @@ class WebhookEndpoints extends Component
     public function testEndpoint($id, \App\Services\WebhookService $service)
     {
         $endpoint = \App\Models\WebhookEndpoint::findOrFail($id);
+        $this->authorize('view', $endpoint); // Security check
         
+        $correlationId = (string) \Illuminate\Support\Str::uuid();
         $data = $this->getMockDataForEvent($this->selectedTestEvent);
+        $payload = $service->buildPayload($this->selectedTestEvent, $data, null, $correlationId);
         
-        $payload = $service->buildPayload($this->selectedTestEvent, $data);
-
         try {
-            \App\Jobs\SendWebhookJob::dispatch($endpoint, $payload);
-            $this->dispatch('notify', ['type' => 'success', 'message' => "Test '{$this->selectedTestEvent}' queued. Check logs."]);
+            \App\Jobs\SendWebhookJob::dispatch($endpoint, $payload, 1, $correlationId);
+            $this->dispatch('notify', ['type' => 'success', 'message' => "Test '{$this->selectedTestEvent}' queued (ID: " . substr($correlationId, 0, 8) . "). Check logs."]);
         } catch (\Exception $e) {
             $this->dispatch('notify', ['type' => 'error', 'message' => 'Failed to send test: ' . $e->getMessage()]);
         }

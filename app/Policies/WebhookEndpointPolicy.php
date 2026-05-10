@@ -21,7 +21,7 @@ class WebhookEndpointPolicy
      */
     public function view(User $user, WebhookEndpoint $webhookEndpoint): bool
     {
-        return $webhookEndpoint->created_by === $user->id;
+        return $user->hasAnyRole(['admin', 'super_admin']) || $webhookEndpoint->created_by === $user->id;
     }
 
     /**
@@ -37,7 +37,7 @@ class WebhookEndpointPolicy
      */
     public function update(User $user, WebhookEndpoint $webhookEndpoint): bool
     {
-        return $webhookEndpoint->created_by === $user->id;
+        return $user->hasAnyRole(['admin', 'super_admin']) || $webhookEndpoint->created_by === $user->id;
     }
 
     /**
@@ -45,7 +45,7 @@ class WebhookEndpointPolicy
      */
     public function delete(User $user, WebhookEndpoint $webhookEndpoint): bool
     {
-        return $webhookEndpoint->created_by === $user->id;
+        return $user->hasAnyRole(['admin', 'super_admin']) || $webhookEndpoint->created_by === $user->id;
     }
 
     /**
