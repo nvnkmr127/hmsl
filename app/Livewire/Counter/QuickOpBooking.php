@@ -110,10 +110,53 @@ class QuickOpBooking extends Component
     }
 
     #[On('quick-op-booking')]
-    public function open()
+    public function open($edit_id = null, $patient_id = null)
     {
-        $this->reset(['searchPatient', 'selectedPatient', 'selectedService', 'weight', 'height', 'temperature', 'notes', 'isEditing', 'isReview', 'isFollowUp']);
+        if ($edit_id) {
+            $this->editBooking($edit_id);
+        } else {
+            $this->reset(['searchPatient', 'selectedPatient', 'selectedService', 'weight', 'height', 'temperature', 'notes', 'isEditing', 'editingId', 'isReview', 'isFollowUp']);
+            
+            if ($patient_id) {
+                $this->selectPatient($patient_id);
+            } else {
+                $this->dispatch('open-modal', name: 'quick-op-modal');
+            }
+        }
+    }
+
+    public function editBooking($id)
+    {
+        $consultation = Consultation::with(['patient', 'bill.payments'])->findOrFail($id);
+        $this->editingId = $id;
+        $this->isEditing = true;
+        $this->selectedPatient = $consultation->patient;
+        $this->selectedService = $consultation->service_id;
+        $this->selectedDoctor = $consultation->doctor_id;
+
+        $this->weight = $consultation->weight ? (float)$consultation->weight : null;
+        $this->height = $consultation->height ? (float)$consultation->height : null;
+        $this->temperature = $consultation->temperature ? (float)$consultation->temperature : null;
+        
+        $this->consultation_date = \Carbon\Carbon::parse($consultation->consultation_date)->format('Y-m-d');
+        $this->valid_upto = $consultation->valid_upto ? \Carbon\Carbon::parse($consultation->valid_upto)->format('Y-m-d') : null;
+
+        $this->fee = $consultation->fee;
+        $this->paymentMode = $consultation->payment_method ?: 'Cash';
+        $this->notes = $consultation->notes;
+        
         $this->dispatch('open-modal', name: 'quick-op-modal');
+
+        // Refresh clinical logic (Review/Follow-up badges)
+        $this->recalculateDetails();
+        
+        // Re-set values that recalculateDetails might have overwritten with defaults
+        $this->fee = $consultation->fee;
+        $this->valid_upto = $consultation->valid_upto ? \Carbon\Carbon::parse($consultation->valid_upto)->format('Y-m-d') : null;
+
+        if ($this->weight || $this->height) {
+            $this->updateGrowthStatus();
+        }
     }
 
     public function selectPatient($id)
@@ -263,28 +306,48 @@ class QuickOpBooking extends Component
             'selectedService' => 'required|exists:services,id',
             'fee' => 'required|numeric|min:0',
             'paymentMode' => 'required|in:Cash,UPI,Card',
+        ], [
+            'selectedPatient.required' => 'Please select a patient first.',
+            'selectedService.required' => 'Please select a consultation service.',
         ]);
 
         try {
-            $consultation = $service->bookAppointment([
-                'patient_id' => $this->selectedPatient->id,
-                'service_id' => $this->selectedService,
-                'visit_type' => $this->isReview ? 'Review' : ($this->isFollowUp ? 'Follow-up' : 'New'),
-                'doctor_id' => $this->selectedDoctor,
-                'weight' => $this->weight,
-                'height' => $this->height,
-                'temperature' => $this->temperature,
-                'fee' => $this->fee,
-                'consultation_date' => $this->consultation_date,
-                'valid_upto' => $this->valid_upto,
-                'payment_status' => 'Paid',
-                'payment_method' => $this->paymentMode,
-                'notes' => $this->notes,
-            ]);
+            if ($this->isEditing) {
+                $consultation = Consultation::findOrFail($this->editingId);
+                
+                $service->updateAppointment($consultation, [
+                    'service_id' => $this->selectedService,
+                    'doctor_id' => $this->selectedDoctor,
+                    'weight' => $this->weight,
+                    'height' => $this->height,
+                    'temperature' => $this->temperature,
+                    'fee' => $this->fee,
+                    'consultation_date' => $this->consultation_date,
+                    'valid_upto' => $this->valid_upto,
+                    'payment_method' => $this->paymentMode,
+                    'notes' => $this->notes,
+                ]);
 
-            \Illuminate\Support\Facades\Log::info('QUICK_OP_BOOKING_SUCCESS', ['id' => $consultation->id]);
+                $this->dispatch('notify', ['type' => 'success', 'message' => "Visit updated successfully."]);
 
-            $this->dispatch('notify', ['type' => 'success', 'message' => "Registration Success: #{$consultation->token_number}"]);
+            } else {
+                $consultation = $service->bookAppointment([
+                    'patient_id' => $this->selectedPatient->id,
+                    'service_id' => $this->selectedService,
+                    'visit_type' => $this->isReview ? 'Review' : ($this->isFollowUp ? 'Follow-up' : 'New'),
+                    'doctor_id' => $this->selectedDoctor,
+                    'weight' => $this->weight,
+                    'height' => $this->height,
+                    'temperature' => $this->temperature,
+                    'fee' => $this->fee,
+                    'consultation_date' => $this->consultation_date,
+                    'valid_upto' => $this->valid_upto,
+                    'payment_status' => 'Paid',
+                    'payment_method' => $this->paymentMode,
+                    'notes' => $this->notes,
+                ]);
+                $this->dispatch('notify', ['type' => 'success', 'message' => "Registration Success: #{$consultation->token_number}"]);
+            }
             
             if ($shouldPrint) {
                 \Illuminate\Support\Facades\Log::debug('QUICK_OP_BOOKING_DISPATCH_PRINT', ['id' => $consultation->id]);

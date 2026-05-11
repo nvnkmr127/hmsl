@@ -166,8 +166,12 @@
             <!-- Modal Footer -->
             <div class="flex items-center justify-end gap-3 pt-8 border-t border-gray-100 dark:border-gray-800">
                 <button type="button" @click="$dispatch('close-modal', { name: 'patient-modal' })" 
-                        class="px-8 py-4 text-tiny font-black uppercase tracking-[0.2em] text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                        class="px-4 py-4 text-tiny font-black uppercase tracking-[0.2em] text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
                     Discard
+                </button>
+                <button type="button" wire:click="resetFields"
+                        class="px-4 py-4 text-tiny font-black uppercase tracking-[0.2em] text-rose-500 hover:text-rose-600 transition-colors border-l border-gray-100 dark:border-gray-800">
+                    Reset Form
                 </button>
                 @if(!$duplicateFound)
                     <button type="submit" class="px-12 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[1.5rem] text-tiny font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-500/30 hover:scale-[1.02] active:scale-95 transition-all">

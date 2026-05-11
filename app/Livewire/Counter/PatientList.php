@@ -26,7 +26,7 @@ class PatientList extends Component
     public function updatedGenderFilter() { $this->resetPage(); }
     public function updatedSortBy() { $this->resetPage(); }
 
-    #[On('patient-saved')]
+    #[On('patient-saved'), On('booking-completed')]
     public function refreshList()
     {
         $this->resetPage();

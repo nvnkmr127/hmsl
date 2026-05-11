@@ -2,10 +2,10 @@
     <x-page-header :title="'Patient History: ' . $patient->full_name" subtitle="Comprehensive clinical history and records" :back="route('counter.patients.index')" backLabel="Patients">
         <x-slot:actions>
             @can('view opd')
-            <a href="{{ route('counter.opd.index', ['patient_id' => $patient->id]) }}" class="btn btn-primary">
+            <button @click="$dispatch('quick-op-booking', { patient_id: {{ $patient->id }} })" class="btn btn-primary">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 New OP Token
-            </a>
+            </button>
             @endcan
 
             <button @click="$dispatch('edit-patient', { id: {{ $patient->id }} })" class="btn btn-secondary">
@@ -517,7 +517,14 @@
                                 <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ $v->consultation_date?->format('d M Y') }} · {{ $v->doctor?->full_name }}</p>
                                 <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ $v->status }} · {{ $v->payment_status }}</p>
                             </div>
-                            <a target="_blank" href="{{ route('counter.opd.print', ['id' => $v->id]) }}" class="btn btn-secondary px-3 py-2 text-xs">Print</a>
+                            <div class="flex items-center gap-2">
+                                @can('view opd')
+                                    @if($v->status !== 'Cancelled')
+                                        <button @click="$dispatch('quick-op-booking', { edit_id: {{ $v->id }} })" class="btn btn-secondary px-3 py-2 text-xs">Edit</button>
+                                    @endif
+                                @endcan
+                                <a target="_blank" href="{{ route('counter.opd.print', ['id' => $v->id]) }}" class="btn btn-secondary px-3 py-2 text-xs">Print</a>
+                            </div>
                         </div>
                     </div>
                 @empty
@@ -546,7 +553,14 @@
                                 <td class="px-6 py-4 text-sm font-bold text-gray-700 dark:text-gray-300">{{ $v->status }}</td>
                                 <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{{ $v->payment_status }} · {{ $v->payment_method ?? '—' }}</td>
                                 <td class="px-6 py-4 text-right">
-                                    <a target="_blank" href="{{ route('counter.opd.print', ['id' => $v->id]) }}" class="btn btn-ghost px-3 py-2 text-xs">Print</a>
+                                    <div class="flex items-center justify-end gap-2">
+                                        @can('view opd')
+                                            @if($v->status !== 'Cancelled')
+                                                <button @click="$dispatch('quick-op-booking', { edit_id: {{ $v->id }} })" class="btn btn-ghost px-3 py-2 text-xs text-indigo-600 hover:bg-indigo-50">Edit</button>
+                                            @endif
+                                        @endcan
+                                        <a target="_blank" href="{{ route('counter.opd.print', ['id' => $v->id]) }}" class="btn btn-ghost px-3 py-2 text-xs">Print</a>
+                                    </div>
                                 </td>
                             </tr>
                         @empty

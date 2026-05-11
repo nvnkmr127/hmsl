@@ -74,13 +74,8 @@ class PatientForm extends Component
                 $names = $patients->pluck('first_name')->unique()->implode(', ');
                 $this->matchedPatientName = $names . ($lastPatient->city ? ' · ' . $lastPatient->city : '');
                 
-                $this->autofillFromRecord($lastPatient);
                 $this->checkDuplicate();
-            } else {
-                $this->resetFields();
             }
-        } else {
-            $this->resetFields();
         }
     }
 
@@ -124,7 +119,7 @@ class PatientForm extends Component
         }
     }
 
-    private function resetFields()
+    public function resetFields()
     {
         $this->matchedPatientName = null;
         $this->duplicateFound = false;
@@ -184,8 +179,6 @@ class PatientForm extends Component
                 $lastPatient = $patients->first();
                 $names = $patients->pluck('first_name')->unique()->implode(', ');
                 $this->matchedPatientName = $names . ($lastPatient->city ? ' · ' . $lastPatient->city : '');
-                
-                $this->autofillFromRecord($lastPatient);
             }
         }
 

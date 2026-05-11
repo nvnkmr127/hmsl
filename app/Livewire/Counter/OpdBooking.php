@@ -66,13 +66,14 @@ class OpdBooking extends Component
     public $showBookingForm = false;
     public $activeBookingFound = false;
 
-    public function mount(OpdService $service, $patient_id = null)
+    public function mount(OpdService $service, $patient_id = null, $edit_id = null)
     {
         $this->consultation_date = now()->toDateString();
         $this->valid_upto = $service->getValidityDate($this->consultation_date);
 
-        
-        if ($patient_id) {
+        if ($edit_id) {
+            $this->editBooking($edit_id);
+        } elseif ($patient_id) {
             // Note: We now let the global QuickOpBooking handle the patient_id popup
             // for a more "express" experience as requested.
             // $this->selectPatient($patient_id);
@@ -408,112 +409,35 @@ class OpdBooking extends Component
         }
 
         if ($this->isEditing) {
-            $billing = app(BillingService::class);
+            $consultation = Consultation::findOrFail($this->editingId);
 
-            $consultation = Consultation::with(['bill.payments', 'service', 'doctor'])->findOrFail($this->editingId);
-
-            $bill = $consultation->bill;
-            $feeChanged = (float) $this->fee !== (float) $consultation->fee;
-
-            if ($bill && $bill->payments()->exists() && $feeChanged) {
-                $this->dispatch('notify', [
-                    'type' => 'error',
-                    'message' => 'Cannot change fee after payments. Use Billing to refund/adjust.',
-                ]);
-                return;
-            }
-
-            $newConsultationStatus = ($this->fee <= 0 || $this->paymentStatus === 'Paid') ? 'Paid' : 'Unpaid';
-
-            $consultation->update([
-                'service_id' => $this->selectedService,
-                'doctor_id' => $this->selectedDoctor,
-                'weight' => $this->weight,
-                'height' => $this->height,
-                'temperature' => $this->temperature,
-                'fee' => $this->fee,
-                'notes' => $this->notes,
-                'payment_status' => $newConsultationStatus,
-                'payment_method' => $newConsultationStatus === 'Paid' ? $this->paymentMode : null,
-            ]);
-
-            $hasAnyVitals = $this->weight !== null || $this->height !== null || $this->temperature !== null;
-            if ($hasAnyVitals) {
-                $bmi = null;
-                if ($this->weight !== null && $this->height !== null && (float) $this->height > 0) {
-                    $heightInMeters = (float) $this->height / 100;
-                    $bmi = round(((float) $this->weight) / ($heightInMeters * $heightInMeters), 1);
-                }
-
-                PatientVital::updateOrCreate(
-                    [
-                        'patient_id' => $consultation->patient_id,
-                        'consultation_id' => $consultation->id,
-                    ],
-                    [
-                        'recorded_by' => Auth::id(),
-                        'weight' => $this->weight,
-                        'height' => $this->height,
-                        'bmi' => $bmi,
-                        'temperature' => $this->temperature,
-                    ]
-                );
-            }
-
-            if ($this->fee > 0) {
-                $itemName = ($consultation->service?->name ?? 'Consultation Fee') . ($consultation->doctor ? ' - ' . $consultation->doctor->full_name : '');
-                $billData = [
-                    'patient_id' => $consultation->patient_id,
-                    'consultation_id' => $consultation->id,
-                    'discount_amount' => $consultation->discount_amount ?? 0,
-                    'tax_amount' => 0,
-                    'payment_status' => $this->paymentStatus,
-                    'paid_amount' => (float) $this->amountPaid,
+            try {
+                $opdService = app(\App\Services\OpdService::class);
+                $opdService->updateAppointment($consultation, [
+                    'service_id' => $this->selectedService,
+                    'doctor_id' => $this->selectedDoctor,
+                    'weight' => $this->weight,
+                    'height' => $this->height,
+                    'temperature' => $this->temperature,
+                    'fee' => $this->fee,
+                    'notes' => $this->notes,
+                    'payment_status' => ($this->fee <= 0 || $this->paymentStatus === 'Paid') ? 'Paid' : 'Unpaid',
                     'payment_method' => $this->paymentMode,
-                    'notes' => 'Bill for ' . ($consultation->service?->name ?? 'OPD Consultation'),
-                ];
-                $items = [[
-                    'name' => $itemName,
-                    'type' => 'Consultation',
-                    'quantity' => 1,
-                    'unit_price' => (float) $this->fee,
-                ]];
+                ]);
 
-                if ($bill) {
-                    DB::transaction(function () use ($bill, $items, $billData, $billing) {
-                        $bill->update([
-                            'discount_amount' => $billData['discount_amount'] ?? 0,
-                            'tax_amount' => $billData['tax_amount'] ?? 0,
-                            'notes' => $billData['notes'] ?? null,
-                        ]);
-
-                        $bill->items()->delete();
-                        $subtotal = 0;
-                        foreach ($items as $item) {
-                            $totalPrice = $item['quantity'] * $item['unit_price'];
-                            $bill->items()->create([
-                                'item_name' => $item['name'],
-                                'item_type' => $item['type'] ?? 'General',
-                                'quantity' => $item['quantity'],
-                                'unit_price' => $item['unit_price'],
-                                'total_price' => $totalPrice,
-                            ]);
-                            $subtotal += $totalPrice;
-                        }
-                        $totalAmount = $subtotal - ($bill->discount_amount ?? 0) + ($bill->tax_amount ?? 0);
-                        $bill->update(['subtotal' => $subtotal, 'total_amount' => $totalAmount]);
-
-                        $billing->recalculatePaymentStatus($bill);
-                    });
-                } else {
-                    $billing->createBill($billData, $items);
-                }
+                $this->dispatch('notify', ['type' => 'success', 'message' => 'Visit updated successfully.']);
+                $this->isEditing = false;
+                $this->editingId = null;
+                $this->selectedPatient = null;
+                $this->reset(['weight', 'height', 'temperature', 'notes', 'fee', 'amountPaid']);
+                $this->loadTodayQueue();
+                $this->dispatch('booking-completed');
+                return;
+                
+            } catch (\Exception $e) {
+                $this->dispatch('notify', ['type' => 'error', 'message' => $e->getMessage()]);
             }
-
-            $message = "Appointment updated successfully!";
-            if ($shouldPrint) {
-                $this->dispatch('print-op-slip', ['id' => $consultation->id]);
-            }
+            return;
         } else {
             try {
                 $consultation = $service->bookAppointment([

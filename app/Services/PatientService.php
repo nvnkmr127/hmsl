@@ -24,6 +24,7 @@ class PatientService
     public function getAll(?string $search = null, array $filters = [], string $sortBy = 'latest')
     {
         return Patient::query()
+            ->with(['latestConsultation.doctor'])
             ->when($search, fn($q) => $q->search($search))
             ->when($filters['gender'] ?? null, fn($q) => $q->where('gender', $filters['gender']))
 

@@ -90,6 +90,11 @@ class Patient extends Model
         return $this->hasMany(Consultation::class);
     }
 
+    public function latestConsultation()
+    {
+        return $this->hasOne(Consultation::class)->latestOfMany();
+    }
+
     public function scopeSearch($query, $term)
     {
         return $query->where(function ($q) use ($term) {

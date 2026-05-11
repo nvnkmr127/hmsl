@@ -443,4 +443,72 @@ class OpdService
             return $consultation;
         });
     }
+
+    public function updateAppointment(Consultation $consultation, array $data)
+    {
+        return DB::transaction(function () use ($consultation, $data) {
+            $fee = isset($data['fee']) ? (float)$data['fee'] : $consultation->fee;
+            
+            // 1. Revenue Protection: Block fee change if payments exist
+            if ($consultation->bill && $consultation->bill->payments()->exists() && (float)$fee !== (float)$consultation->fee) {
+                throw new \Exception('Cannot change fee: Payments have already been recorded for this visit.');
+            }
+
+            // 2. Update Consultation
+            $consultation->update($data);
+
+            // 3. Update Vitals
+            $weight = $data['weight'] ?? $consultation->weight;
+            $height = $data['height'] ?? $consultation->height;
+            $temperature = $data['temperature'] ?? $consultation->temperature;
+
+            if ($weight !== null || $height !== null || $temperature !== null) {
+                $bmi = null;
+                if ($weight !== null && $height !== null && (float) $height > 0) {
+                    $heightInMeters = (float) $height / 100;
+                    $bmi = round(((float) $weight) / ($heightInMeters * $heightInMeters), 1);
+                }
+
+                PatientVital::updateOrCreate(
+                    [
+                        'patient_id' => $consultation->patient_id,
+                        'consultation_id' => $consultation->id,
+                    ],
+                    [
+                        'recorded_by' => Auth::id(),
+                        'weight' => $weight,
+                        'height' => $height,
+                        'bmi' => $bmi,
+                        'temperature' => $temperature,
+                    ]
+                );
+            }
+
+            // 4. Update Bill
+            if ($consultation->bill) {
+                $bill = $consultation->bill;
+                
+                // Reload relations to get new names if IDs changed
+                $consultation->load(['service', 'doctor']);
+                
+                $bill->update([
+                    'total_amount' => $fee,
+                    'payment_method' => $data['payment_method'] ?? $bill->payment_method,
+                ]);
+
+                // Update bill items
+                $bill->items()->delete();
+                $itemName = ($consultation->service?->name ?? 'Consultation Fee') . ($consultation->doctor ? ' - ' . $consultation->doctor->full_name : '');
+                $bill->items()->create([
+                    'item_name' => $itemName,
+                    'item_type' => 'Consultation',
+                    'quantity' => 1,
+                    'unit_price' => $fee,
+                    'total_price' => $fee,
+                ]);
+            }
+
+            return $consultation;
+        });
+    }
 }

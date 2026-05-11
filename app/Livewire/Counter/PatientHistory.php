@@ -53,7 +53,7 @@ class PatientHistory extends Component
         $this->patient = Patient::findOrFail($id);
     }
 
-    #[On('patient-saved')]
+    #[On('patient-saved'), On('booking-completed')]
     public function refreshPatient(): void
     {
         $this->patient = Patient::findOrFail($this->patientId);
