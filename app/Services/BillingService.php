@@ -79,7 +79,9 @@ class BillingService
             $bill->update([
                 'subtotal' => $subtotal,
                 'tax_amount' => $taxAmount,
-                'total_amount' => $totalAmount
+                'total_amount' => $totalAmount,
+                'paid_amount' => 0,
+                'balance_amount' => $totalAmount,
             ]);
 
             $this->applyInitialPayment($bill, $data);
