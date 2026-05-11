@@ -35,10 +35,8 @@ class PatientService
             // Clear cache for this setting
             \Illuminate\Support\Facades\Cache::forget("setting.next_uhid");
 
-            // 2. Apply prefix if configured
-            $prefix = Setting::get('uhid_prefix', '');
-            
-            return $prefix . $nextId;
+            // 2. Return the numeric ID (prefix removed for consistency with existing records)
+            return (string) $nextId;
         });
     }
 
