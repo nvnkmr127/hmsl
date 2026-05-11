@@ -36,7 +36,7 @@ class BillGenerate extends Component
         $this->patientId = $consultation->patient_id;
         $this->patientName = $consultation->patient->full_name;
         
-        $doctorName = $consultation->doctor ? ' - Dr. ' . $consultation->doctor->full_name : '';
+        $doctorName = $consultation->doctor ? ' - ' . $consultation->doctor->full_name : '';
         $this->items = [
             [
                 'name' => ($consultation->service?->name ?? 'Consultation Fee') . $doctorName,

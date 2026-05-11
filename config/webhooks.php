@@ -62,6 +62,11 @@ return [
             'group' => 'System',
             'desc'  => 'Automated daily activity report dispatch.',
         ],
+        'system.cron.failed' => [
+            'label' => 'Cron Job Failed',
+            'group' => 'System',
+            'desc'  => 'Triggered when a configured cron job fails.',
+        ],
     ],
 
     'api_version' => '1.0.0',

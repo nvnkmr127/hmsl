@@ -225,7 +225,7 @@ class OpdService
                 if ($doctor && $service && $service->department_id && $doctor->department_id !== $service->department_id) {
                     $doctorDept = $doctor->department?->name ?? 'Doctor\'s Dept';
                     $serviceDept = $service->department?->name ?? 'Service\'s Dept';
-                    throw new \Exception("Department mismatch: This service belongs to {$serviceDept}, but Dr. {$doctor->full_name} is in {$doctorDept}.");
+                    throw new \Exception("Department mismatch: This service belongs to {$serviceDept}, but {$doctor->full_name} is in {$doctorDept}.");
                 }
             }
             
@@ -353,7 +353,7 @@ class OpdService
                     'notes' => 'Bill for ' . ($consultation->service?->name ?? 'OPD Consultation'),
                 ], [
                     [
-                        'name' => ($consultation->service?->name ?? 'Consultation Fee') . ($consultation->doctor ? ' - Dr. ' . $consultation->doctor->full_name : ''),
+                        'name' => ($consultation->service?->name ?? 'Consultation Fee') . ($consultation->doctor ? ' - ' . $consultation->doctor->full_name : ''),
                         'type' => 'Consultation',
                         'quantity' => 1,
                         'unit_price' => $consultation->fee
@@ -427,7 +427,7 @@ class OpdService
                     'notes' => 'Settlement for ' . ($consultation->service?->name ?? 'OPD Consultation'),
                 ], [
                     [
-                        'name' => ($consultation->service?->name ?? 'Consultation Fee') . ($consultation->doctor ? ' - Dr. ' . $consultation->doctor->full_name : ''),
+                        'name' => ($consultation->service?->name ?? 'Consultation Fee') . ($consultation->doctor ? ' - ' . $consultation->doctor->full_name : ''),
                         'type' => 'Consultation',
                         'quantity' => 1,
                         'unit_price' => $consultation->fee

@@ -77,12 +77,9 @@ composer require --dev barryvdh/laravel-debugbar
 
 ### MT-000.7 — Queue and Scheduler
 
-- [ ] Register `App\Console\Kernel` for scheduled tasks
-- [ ] Configure supervisor or cron for queue worker:
-  ```
-  * * * * * php /path/to/artisan schedule:run >> /dev/null 2>&1
-  ```
-- [ ] Add queue worker config to supervisor or `Procfile`
+- [ ] Configure cPanel cron jobs using `config/cron.php` and `php artisan hms:cron-run <job-key>`
+- [ ] Ensure a queue worker is running (in cPanel, use the `queue-worker` cron job)
+- [ ] See `docs/cron-jobs.md` for copy/paste cron lines and troubleshooting
 
 ---
 

@@ -21,7 +21,7 @@
         </div>
 
         <p>Dear <strong>{{ $prescription->patient->full_name }}</strong>,</p>
-        <p>Please find the clinical prescription details from your recent consultation with <strong>Dr. {{ $prescription->doctor->full_name }}</strong>.</p>
+        <p>Please find the clinical prescription details from your recent consultation with <strong>{{ $prescription->doctor->full_name }}</strong>.</p>
 
         <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-top: 20px;">
             <p style="margin: 0; font-size: 14px;"><strong>Diagnosis:</strong> {{ $prescription->diagnosis ?: 'N/A' }}</p>

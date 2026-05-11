@@ -13,7 +13,7 @@
     <div style="text-align:right">
         <p style="font-size:22pt; font-weight:700; color:#4F46E5; margin:0; font-style:italic">℞ Prescription</p>
         <p style="color:#888; margin:4px 0">Date: {{ $prescription->created_at->format('d/m/Y') }}</p>
-        <p style="margin:2px 0"><strong>Dr. {{ $prescription->doctor->full_name }}</strong></p>
+        <p style="margin:2px 0"><strong>{{ $prescription->doctor->full_name }}</strong></p>
         <p style="color:#666; font-size:9pt;">{{ $prescription->doctor->qualification ?? '' }} | {{ $prescription->doctor->specialization ?? '' }}</p>
     </div>
 </div>
@@ -100,7 +100,7 @@
     {{-- Doctor Signature --}}
     <div style="margin-top:40px; display:flex; justify-content:flex-end;">
         <div style="text-align:center; min-width:200px; border-top:1px solid #374151; padding-top:8px;">
-            <p style="margin:0; font-weight:700;">Dr. {{ $prescription->doctor->full_name }}</p>
+            <p style="margin:0; font-weight:700;">{{ $prescription->doctor->full_name }}</p>
             <p style="margin:2px 0; font-size:9pt; color:#666;">{{ $prescription->doctor->qualification ?? '' }}</p>
             <p style="margin:0; font-size:8pt; color:#888;">Reg. No: {{ $prescription->doctor->registration_number ?? 'N/A' }}</p>
         </div>

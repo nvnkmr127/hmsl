@@ -33,6 +33,7 @@ class AppServiceProvider extends ServiceProvider
             \App\Events\Billing\BillSettled::class,
             \App\Events\Billing\PaymentReceived::class,
             \App\Events\System\DailySummaryGenerated::class,
+            \App\Events\System\CronJobFailed::class,
             \App\Events\OPD\ConsultationCreated::class,
             \App\Events\OPD\ConsultationCompleted::class,
             \App\Events\Pharmacy\PrescriptionCreated::class,

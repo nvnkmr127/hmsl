@@ -27,12 +27,22 @@ class Doctor extends Model
     ];
 
     /**
-     * Normalize doctor name by stripping "Dr." prefix if present.
+     * Normalize doctor name by stripping "Dr." prefix when saving.
      */
     public function setFullNameAttribute($value)
     {
         $normalized = preg_replace('/^(Dr\.?|Doctor)\s+/i', '', trim($value));
         $this->attributes['full_name'] = $normalized;
+    }
+
+    /**
+     * Always prepend "Dr. " when retrieving.
+     */
+    public function getFullNameAttribute($value)
+    {
+        if (empty($value)) return $value;
+        $normalized = preg_replace('/^(Dr\.?|Doctor)\s+/i', '', trim($value));
+        return 'Dr. ' . $normalized;
     }
 
     protected $casts = [

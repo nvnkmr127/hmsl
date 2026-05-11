@@ -461,7 +461,7 @@ class OpdBooking extends Component
             }
 
             if ($this->fee > 0) {
-                $itemName = ($consultation->service?->name ?? 'Consultation Fee') . ($consultation->doctor ? ' - Dr. ' . $consultation->doctor->full_name : '');
+                $itemName = ($consultation->service?->name ?? 'Consultation Fee') . ($consultation->doctor ? ' - ' . $consultation->doctor->full_name : '');
                 $billData = [
                     'patient_id' => $consultation->patient_id,
                     'consultation_id' => $consultation->id,

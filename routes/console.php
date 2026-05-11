@@ -7,6 +7,6 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Illuminate\Support\Facades\Schedule::command('hms:report-summary')->dailyAt('08:00');
-Illuminate\Support\Facades\Schedule::command('hms:prune-webhooks')->daily();
-Illuminate\Support\Facades\Schedule::command('hms:retry-outbox')->everyThirtyMinutes();
+Illuminate\Support\Facades\Schedule::command('hms:cron-run report-summary')->dailyAt('08:00');
+Illuminate\Support\Facades\Schedule::command('hms:cron-run prune-webhooks')->daily();
+Illuminate\Support\Facades\Schedule::command('hms:cron-run retry-outbox')->everyThirtyMinutes();

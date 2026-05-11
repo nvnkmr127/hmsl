@@ -114,7 +114,7 @@
 
     <div style="margin-top: 15px;">
         <span class="label">Consultant:</span><br>
-        <span class="value" style="font-size: 12pt;">{{ $consultation->doctor ? 'Dr. ' . $consultation->doctor->full_name : 'Resident Doctor' }}</span>
+        <span class="value" style="font-size: 12pt;">{{ $consultation->doctor ? $consultation->doctor->full_name : 'Resident Doctor' }}</span>
     </div>
 
 

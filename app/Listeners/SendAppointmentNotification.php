@@ -29,7 +29,7 @@ class SendAppointmentNotification implements ShouldQueue
         // Example:
         // Http::post('gateway-url', [
         //     'to' => $patient->phone,
-        //     'message' => "Hi {$patient->first_name}, your appointment with Dr. {$consultation->doctor->full_name} is confirmed. Token: #{$consultation->token_number}."
+        //     'message' => "Hi {$patient->first_name}, your appointment with {$consultation->doctor->full_name} is confirmed. Token: #{$consultation->token_number}."
         // ]);
     }
 }

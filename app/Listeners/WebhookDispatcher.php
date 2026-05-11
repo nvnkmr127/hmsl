@@ -11,6 +11,7 @@ use App\Events\IPD\PatientDischarged;
 use App\Events\Billing\BillSettled;
 use App\Events\Billing\PaymentReceived;
 use App\Events\System\DailySummaryGenerated;
+use App\Events\System\CronJobFailed;
 use App\Events\OPD\ConsultationCompleted;
 use App\Events\OPD\ConsultationCreated;
 use App\Events\OPD\AppointmentBooked;
@@ -98,6 +99,10 @@ class WebhookDispatcher
         // System Events
         if ($event instanceof DailySummaryGenerated) {
             $this->service->dispatch('system.daily.summary', $event->summary);
+        }
+
+        if ($event instanceof CronJobFailed) {
+            $this->service->dispatch('system.cron.failed', $event->payload);
         }
     }
 }

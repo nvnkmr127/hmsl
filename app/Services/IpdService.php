@@ -188,7 +188,7 @@ class IpdService
             
             if ($doctorVisitDays > 0) {
                 $items[] = [
-                    'name' => 'Doctor Visit Charges - Dr. ' . $doctor->full_name . ' (' . $doctorVisitDays . ' days)',
+                    'name' => 'Doctor Visit Charges - ' . $doctor->full_name . ' (' . $doctorVisitDays . ' days)',
                     'type' => 'Consultation',
                     'quantity' => $doctorVisitDays,
                     'unit_price' => $visitCharge,

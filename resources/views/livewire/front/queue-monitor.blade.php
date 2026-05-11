@@ -10,7 +10,7 @@
                     <!-- Doctor Header (Only if multiple) -->
                     <div class="p-6 bg-indigo-600 text-white relative">
                         <div class="relative z-10">
-                            <h2 class="text-xl font-black uppercase tracking-tight">DR. {{ data_get($stat, 'doctor.full_name', 'Unassigned') }}</h2>
+                            <h2 class="text-xl font-black uppercase tracking-tight">{{ data_get($stat, 'doctor.full_name', 'Unassigned') }}</h2>
                             <p class="text-tiny font-black text-indigo-200 uppercase tracking-widest mt-0.5">{{ data_get($stat, 'doctor.department.name', 'No Department') }}</p>
                         </div>
                     </div>

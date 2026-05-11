@@ -87,7 +87,7 @@
             @if($bill->patient->mother_name) MOTHER: {{ strtoupper($bill->patient->mother_name) }} @elseif($bill->patient->father_name) FATHER: {{ strtoupper($bill->patient->father_name) }} @else SELF @endif
         </span></div>
         <div class="info-line"><span class="info-label">Contact No</span><span class="info-colon">:</span><span class="info-value">{{ $bill->patient->phone ?? '—' }}</span></div>
-        <div class="info-line"><span class="info-label">Admitting Unit</span><span class="info-colon">:</span><span class="info-value">DR. {{ strtoupper($bill->admission?->doctor?->full_name ?? $bill->consultation?->doctor?->full_name ?? 'MEDICAL TEAM') }}</span></div>
+        <div class="info-line"><span class="info-label">Admitting Unit</span><span class="info-colon">:</span><span class="info-value">{{ strtoupper($bill->admission?->doctor?->full_name ?? $bill->consultation?->doctor?->full_name ?? 'MEDICAL TEAM') }}</span></div>
         <div class="info-line"><span class="info-label">Patient Address</span><span class="info-colon">:</span><span class="info-value">{{ strtoupper($bill->patient->address) }}, {{ strtoupper($bill->patient->city) }}</span></div>
     </div>
     <div class="info-group">

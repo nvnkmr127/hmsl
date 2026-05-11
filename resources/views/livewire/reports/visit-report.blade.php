@@ -58,7 +58,7 @@
                         <div class="text-[10px] text-slate-500">{{ $visit->patient->uhid }} | {{ $visit->patient->phone }}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm text-slate-700 dark:text-slate-300">Dr. {{ $visit->doctor->full_name ?? '—' }}</div>
+                        <div class="text-sm text-slate-700 dark:text-slate-300">{{ $visit->doctor->full_name ?? '—' }}</div>
                         <div class="text-[10px] text-slate-500 uppercase font-medium">{{ $visit->service->name ?? 'OPD Consultation' }}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">

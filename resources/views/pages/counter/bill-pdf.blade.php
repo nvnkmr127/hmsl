@@ -55,7 +55,7 @@
         </tr>
         <tr>
             <td class="info-label">Doctor:</td>
-            <td class="info-value">DR. {{ strtoupper($bill->admission?->doctor?->full_name ?? $bill->consultation?->doctor?->full_name ?? 'MEDICAL TEAM') }}</td>
+            <td class="info-value">{{ strtoupper($bill->admission?->doctor?->full_name ?? $bill->consultation?->doctor?->full_name ?? 'MEDICAL TEAM') }}</td>
             <td class="info-label">Date:</td>
             <td class="info-value">{{ $bill->created_at->format('d/m/Y h:i A') }}</td>
         </tr>
