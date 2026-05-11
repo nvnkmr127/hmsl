@@ -124,7 +124,7 @@
                                     </div>
                                 </div>
                                 <div class="min-w-0">
-                                    <h3 class="text-sm font-black text-slate-900 dark:text-white tracking-tight truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors cursor-pointer" wire:click="openModal({{ $ep->id }}, 'outbound')">{{ $ep->name }}</h3>
+                                    <h3 class="text-sm font-black text-slate-900 dark:text-white tracking-tight truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors cursor-pointer" wire:click="openModal('{{ $ep->id }}', 'outbound')">{{ $ep->name }}</h3>
                                     <p class="text-[10px] text-slate-500 font-mono font-bold truncate mt-1">{{ $ep->url }}</p>
                                     @if($ep->consecutive_failures > 0)
                                         <div class="mt-2 inline-flex items-center gap-1.5 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 px-2 py-1 rounded-md border border-rose-100 dark:border-rose-800/30">
@@ -175,21 +175,21 @@
                         <td class="px-6 py-5 align-top text-right whitespace-nowrap">
                             <div class="flex flex-col items-end gap-2">
                                 <div class="flex items-center gap-1 bg-slate-50 dark:bg-slate-800/50 rounded-xl p-1 border border-slate-200/50 dark:border-slate-700/50">
-                                    <button wire:click="openModal({{ $ep->id }}, 'outbound')" class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all" title="Edit Endpoint">
+                                    <button wire:click="openModal('{{ $ep->id }}', 'outbound')" class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all" title="Edit Endpoint">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                                     </button>
                                     <a href="{{ route('settings.webhooks.logs', ['endpointId' => $ep->id]) }}" class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all" title="View Logs">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                                     </a>
                                     <div class="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-1"></div>
-                                    <button wire:click="toggleStatus({{ $ep->id }}, 'outbound')" class="p-2 text-slate-400 hover:text-amber-500 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all" title="{{ $ep->is_active ? 'Pause' : 'Resume' }}">
+                                    <button wire:click="toggleStatus('{{ $ep->id }}', 'outbound')" class="p-2 text-slate-400 hover:text-amber-500 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all" title="{{ $ep->is_active ? 'Pause' : 'Resume' }}">
                                         @if($ep->is_active)
                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                         @else
                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                         @endif
                                     </button>
-                                    <button wire:confirm="Permanent deletion of this endpoint?" wire:click="delete({{ $ep->id }}, 'outbound')" class="p-2 text-slate-400 hover:text-rose-500 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all" title="Delete">
+                                    <button wire:confirm="Permanent deletion of this endpoint?" wire:click="delete('{{ $ep->id }}', 'outbound')" class="p-2 text-slate-400 hover:text-rose-500 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all" title="Delete">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                     </button>
                                 </div>
@@ -203,9 +203,9 @@
                                             </optgroup>
                                         @endforeach
                                     </select>
-                                    <button wire:click="testEndpoint({{ $ep->id }})" wire:loading.attr="disabled" class="text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest hover:underline disabled:opacity-50 flex items-center gap-1">
-                                        <span wire:loading.remove wire:target="testEndpoint({{ $ep->id }})">Ping</span>
-                                        <span wire:loading wire:target="testEndpoint({{ $ep->id }})" class="animate-pulse">Ping...</span>
+                                    <button wire:click="testEndpoint('{{ $ep->id }}')" wire:loading.attr="disabled" class="text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest hover:underline disabled:opacity-50 flex items-center gap-1">
+                                        <span wire:loading.remove wire:target="testEndpoint('{{ $ep->id }}')">Ping</span>
+                                        <span wire:loading wire:target="testEndpoint('{{ $ep->id }}')" class="animate-pulse">Ping...</span>
                                     </button>
                                 </div>
                             </div>
@@ -255,7 +255,7 @@
                                     </div>
                                 </div>
                                 <div class="min-w-0">
-                                    <h3 class="text-sm font-black text-slate-900 dark:text-white tracking-tight truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors cursor-pointer" wire:click="openModal({{ $src->id }}, 'inbound')">{{ $src->name }}</h3>
+                                    <h3 class="text-sm font-black text-slate-900 dark:text-white tracking-tight truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors cursor-pointer" wire:click="openModal('{{ $src->id }}', 'inbound')">{{ $src->name }}</h3>
                                     <div class="mt-1.5 flex items-center gap-2">
                                         <code class="text-[9px] bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200/50 dark:border-slate-700/50 text-indigo-600 dark:text-indigo-400 font-bold truncate max-w-full">
                                             /api/v1/webhooks/{{ $src->slug }}
@@ -294,21 +294,21 @@
                         <td class="px-6 py-5 align-top text-right whitespace-nowrap">
                             <div class="flex items-center justify-end gap-1">
                                 <div class="flex items-center gap-1 bg-slate-50 dark:bg-slate-800/50 rounded-xl p-1 border border-slate-200/50 dark:border-slate-700/50">
-                                    <button wire:click="openModal({{ $src->id }}, 'inbound')" class="p-2 text-slate-400 hover:text-emerald-600 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all" title="Edit Source">
+                                    <button wire:click="openModal('{{ $src->id }}', 'inbound')" class="p-2 text-slate-400 hover:text-emerald-600 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all" title="Edit Source">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                                     </button>
                                     <a href="{{ route('settings.webhooks.inbound', ['sourceSlug' => $src->slug]) }}" class="p-2 text-slate-400 hover:text-emerald-600 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all" title="View Logs">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                                     </a>
                                     <div class="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-1"></div>
-                                    <button wire:click="toggleStatus({{ $src->id }}, 'inbound')" class="p-2 text-slate-400 hover:text-amber-500 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all" title="{{ $src->is_active ? 'Disable' : 'Enable' }}">
+                                    <button wire:click="toggleStatus('{{ $src->id }}', 'inbound')" class="p-2 text-slate-400 hover:text-amber-500 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all" title="{{ $src->is_active ? 'Disable' : 'Enable' }}">
                                         @if($src->is_active)
                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
                                         @else
                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
                                         @endif
                                     </button>
-                                    <button wire:confirm="Permanent deletion of this source?" wire:click="delete({{ $src->id }}, 'inbound')" class="p-2 text-slate-400 hover:text-rose-500 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all" title="Delete">
+                                    <button wire:confirm="Permanent deletion of this source?" wire:click="delete('{{ $src->id }}', 'inbound')" class="p-2 text-slate-400 hover:text-rose-500 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all" title="Delete">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                     </button>
                                 </div>
@@ -442,7 +442,7 @@
                                             <span x-show="!showDocs">Show Setup Guide</span>
                                             <span x-show="showDocs">Hide Guide</span>
                                         </button>
-                                        <button type="button" wire:confirm="This will immediately invalidate the old secret. Rotate now?" wire:click="rotateSecret({{ ($editingEndpointId ?: $editingSourceId) ?: 'null' }}, '{{ $activeTab }}')" class="text-[10px] font-black text-slate-500 hover:text-slate-800 dark:hover:text-white uppercase tracking-widest bg-white dark:bg-slate-700 px-3 py-1.5 rounded-lg shadow-sm border border-slate-200 dark:border-slate-600 transition-all">Regenerate</button>
+                                        <button type="button" wire:confirm="This will immediately invalidate the old secret. Rotate now?" wire:click="rotateSecret('{{ $editingEndpointId ?: $editingSourceId }}', '{{ $activeTab }}')" class="text-[10px] font-black text-slate-500 hover:text-slate-800 dark:hover:text-white uppercase tracking-widest bg-white dark:bg-slate-700 px-3 py-1.5 rounded-lg shadow-sm border border-slate-200 dark:border-slate-600 transition-all">Regenerate</button>
                                     </div>
                                 </div>
                                 

@@ -100,8 +100,8 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div class="flex items-center justify-end gap-3">
-                            <button wire:click="showDetails({{ $log->id }})" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 font-bold uppercase tracking-widest text-[10px]">Details</button>
-                            <button wire:click="retry({{ $log->id }})" class="text-emerald-600 hover:text-emerald-900 dark:text-emerald-400 dark:hover:text-emerald-300 font-bold uppercase tracking-widest text-[10px]">Retry</button>
+                            <button wire:click="showDetails('{{ $log->id }}')" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 font-bold uppercase tracking-widest text-[10px]">Details</button>
+                            <button wire:click="retry('{{ $log->id }}')" class="text-emerald-600 hover:text-emerald-900 dark:text-emerald-400 dark:hover:text-emerald-300 font-bold uppercase tracking-widest text-[10px]">Retry</button>
                         </div>
                     </td>
                 </tr>

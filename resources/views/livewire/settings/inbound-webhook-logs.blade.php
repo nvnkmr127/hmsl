@@ -80,15 +80,15 @@
                             </td>
                             <td class="px-8 py-5 text-right">
                                     <div class="flex items-center justify-end gap-2">
-                                        <button wire:click="replay({{ $log->id }})" class="p-2 text-slate-400 hover:text-amber-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all" title="Replay (Clones with new CID)">
+                                        <button wire:click="replay('{{ $log->id }}')" class="p-2 text-slate-400 hover:text-amber-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all" title="Replay (Clones with new CID)">
                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h8m0 0l-4-4m4 4l-4 4m0 6H8m0 0l4 4m-4-4l4-4" /></svg>
                                         </button>
                                         @if($log->status === 'failed')
-                                            <button wire:click="retryProcessing({{ $log->id }})" class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all" title="Retry Processing">
+                                            <button wire:click="retryProcessing('{{ $log->id }}')" class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all" title="Retry Processing">
                                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                                             </button>
                                         @endif
-                                        <button wire:click="showDetails({{ $log->id }})" class="px-4 py-2 bg-slate-900 dark:bg-indigo-600/10 text-white dark:text-indigo-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:scale-105 transition-all">Audit</button>
+                                        <button wire:click="showDetails('{{ $log->id }}')" class="px-4 py-2 bg-slate-900 dark:bg-indigo-600/10 text-white dark:text-indigo-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:scale-105 transition-all">Audit</button>
                                     </div>
                             </td>
                         </tr>
@@ -202,7 +202,7 @@
                 <div class="p-10 bg-slate-50/80 dark:bg-slate-800/80 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center relative z-10">
                     <div class="flex items-center gap-4">
                         @if($selectedLog->status === 'failed')
-                            <button wire:click="retryProcessing({{ $selectedLog->id }})" class="px-8 py-3 bg-indigo-600 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl hover:scale-105 transition-all shadow-lg shadow-indigo-500/20 active:scale-95">Retry Processing</button>
+                            <button wire:click="retryProcessing('{{ $selectedLog->id }}')" class="px-8 py-3 bg-indigo-600 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl hover:scale-105 transition-all shadow-lg shadow-indigo-500/20 active:scale-95">Retry Processing</button>
                         @endif
                     </div>
                     <button wire:click="closeDetails" class="px-8 py-3 bg-slate-900 dark:bg-slate-700 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl hover:bg-slate-800 dark:hover:bg-slate-600 transition-all active:scale-95">Dismiss Audit</button>

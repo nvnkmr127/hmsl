@@ -304,10 +304,11 @@ class WebhookEndpoints extends Component
         );
         
         try {
-            \App\Jobs\SendWebhookJob::dispatch($endpoint, $payload, 1, $correlationId);
-            $this->dispatch('notify', ['type' => 'success', 'message' => "Test '{$this->selectedTestEvent}' queued (ID: " . substr($correlationId, 0, 8) . "). Check logs."]);
+            \App\Jobs\SendWebhookJob::dispatchSync($endpoint, $payload, 1, $correlationId);
+            $this->loadStats();
+            $this->dispatch('notify', ['type' => 'success', 'message' => "Test '{$this->selectedTestEvent}' completed (ID: " . substr($correlationId, 0, 8) . "). Check logs."]);
         } catch (\Exception $e) {
-            $this->dispatch('notify', ['type' => 'error', 'message' => 'Failed to queue test: ' . $e->getMessage()]);
+            $this->dispatch('notify', ['type' => 'error', 'message' => 'Test failed: ' . $e->getMessage()]);
         }
     }
 
