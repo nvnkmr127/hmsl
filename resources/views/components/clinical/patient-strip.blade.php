@@ -33,10 +33,10 @@
                 'text-white' => $active,
                 'text-gray-900 dark:text-white group-hover:text-indigo-500' => !$active,
             ])>
-                {{ $patient->full_name }}
+                {{ $patient->full_name ?? 'Unknown Patient' }}
             </span>
             @if($size !== 'sm')
-                <x-badge color="{{ $active ? 'white' : 'indigo' }}" size="sm">{{ $patient->uhid }}</x-badge>
+                <x-badge color="{{ $active ? 'white' : 'indigo' }}" size="sm">{{ $patient->uhid ?? 'N/A' }}</x-badge>
             @endif
         </div>
         
@@ -48,12 +48,12 @@
             'text-gray-400 dark:text-gray-500' => !$active,
         ])>
             @if($size === 'sm')
-                <span class="text-indigo-300">{{ $patient->uhid }}</span>
+                <span class="text-indigo-300">{{ $patient->uhid ?? 'N/A' }}</span>
                 <span class="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-700"></span>
             @endif
-            <span>{{ $patient->age }} · {{ $patient->gender }}</span>
+            <span>{{ $patient->age ?? 'N/A' }} · {{ $patient->gender ?? 'N/A' }}</span>
             <span class="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-700 opacity-30"></span>
-            <span @class(['text-emerald-500' => !$active, 'text-white' => $active])>{{ $patient->phone }}</span>
+            <span @class(['text-emerald-500' => !$active, 'text-white' => $active])>{{ $patient->phone ?? 'N/A' }}</span>
         </div>
     </div> 
 

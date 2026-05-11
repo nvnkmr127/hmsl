@@ -195,14 +195,14 @@
                                         <x-clinical.status-badge :status="$consult->status" size="sm" />
                                     </div>
                                     <p class="font-black text-gray-900 dark:text-white uppercase tracking-tight text-sm truncate mt-2">
-                                        {{ $consult->patient->full_name }}
+                                        {{ $consult->patient?->full_name ?? 'Unknown Patient' }}
                                     </p>
                                     <p class="text-tiny font-black tracking-widest text-violet-600 dark:text-violet-400 uppercase truncate mt-0.5">
                                         {{ $consult->service?->name ?? 'OPD Visit' }} · {{ $consult->doctor?->full_name ?? 'Any' }}
                                     </p>
 
                                     <p class="text-tiny font-black tracking-widest text-gray-400 uppercase truncate mt-0.5">
-                                        {{ $consult->patient->uhid }} · {{ $consult->patient->gender }} · {{ $consult->patient->age }}
+                                        {{ $consult->patient?->uhid ?? 'N/A' }} · {{ $consult->patient?->gender ?? 'N/A' }} · {{ $consult->patient?->age ?? 'N/A' }}
                                     </p>
                                 </div>
                                 <div class="flex-shrink-0 text-right">
@@ -289,17 +289,17 @@
                                         <div class="flex items-center gap-4">
                                             <div class="flex flex-col">
                                                 <div class="flex items-center gap-2">
-                                                    <span class="font-black text-gray-900 dark:text-white uppercase tracking-tight text-sm">{{ $consult->patient->full_name }}</span>
-                                                    @if($consult->patient->vitals->count() > 0)
+                                                    <span class="font-black text-gray-900 dark:text-white uppercase tracking-tight text-sm">{{ $consult->patient?->full_name ?? 'Unknown Patient' }}</span>
+                                                    @if($consult->patient && $consult->patient->vitals->count() > 0)
                                                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500" title="Vitals recorded"></span>
-                                                    @else
+                                                    @elseif($consult->patient)
                                                         <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" title="Vitals missing"></span>
                                                     @endif
                                                 </div>
                                                 <div class="flex items-center gap-2 text-tiny font-black tracking-widest text-gray-400 uppercase">
-                                                    <span>ID: {{ $consult->patient->uhid }}</span>
+                                                    <span>ID: {{ $consult->patient?->uhid ?? 'N/A' }}</span>
                                                     <span class="w-1 h-1 rounded-full bg-gray-200 dark:bg-gray-700"></span>
-                                                    <span>{{ $consult->patient->gender }} · {{ $consult->patient->age }}</span>
+                                                    <span>{{ $consult->patient?->gender ?? 'N/A' }} · {{ $consult->patient?->age ?? 'N/A' }}</span>
                                                 </div>
                                             </div>
                                         </div>
