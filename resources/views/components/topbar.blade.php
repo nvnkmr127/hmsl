@@ -15,11 +15,7 @@
             <h2 class="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">
                 {{ ucwords(str_replace(['-','_'], ' ', request()->segment(1) ?: 'Dashboard')) }}
             </h2>
-            <div class="flex items-center gap-1.5 mt-0.5">
-                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                    {{ ucwords(str_replace(['-','_'], ' ', request()->segment(2) ?: 'Overview')) }}
-                </span>
-            </div>
+
         </div>
     </div>
 
