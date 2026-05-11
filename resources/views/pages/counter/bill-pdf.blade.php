@@ -35,8 +35,17 @@
 <body>
     <table class="header-table">
         <tr>
-            <td class="hospital-name">{{ config('app.name', 'HMS') }}</td>
-            <td class="bill-title">FINAL BILL</td>
+            <td>
+                <div class="hospital-name">{{ \App\Models\Setting::get('hospital_name', config('app.name')) }}</div>
+                <div style="font-size: 8pt; color: #666; font-style: italic;">{{ \App\Models\Setting::get('hospital_tagline') }}</div>
+                <div style="font-size: 8pt; color: #444;">
+                    {{ \App\Models\Setting::get('hospital_address') }}, {{ \App\Models\Setting::get('hospital_city') }}, {{ \App\Models\Setting::get('hospital_state') }} - {{ \App\Models\Setting::get('hospital_pincode') }}
+                </div>
+            </td>
+            <td style="text-align: right; vertical-align: top;">
+                <div class="bill-title">FINAL BILL</div>
+                <div style="font-size: 9pt;">PH: {{ \App\Models\Setting::get('hospital_phone') }}</div>
+            </td>
         </tr>
     </table>
 
@@ -161,7 +170,7 @@
             </td>
             <td style="text-align: right;">
                 <div style="display: inline-block; text-align: center;">
-                    <div style="margin-bottom: 40px;">For {{ config('app.name') }}</div>
+                    <div style="margin-bottom: 40px;">For {{ \App\Models\Setting::get('hospital_name', config('app.name')) }}</div>
                     <div style="border-top: 1px solid #000; width: 150px;">Authorized Signatory</div>
                 </div>
             </td>

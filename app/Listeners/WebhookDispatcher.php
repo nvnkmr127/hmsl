@@ -42,6 +42,8 @@ class WebhookDispatcher
      */
     public function handle(object $event): void
     {
+        \Illuminate\Support\Facades\Log::debug("WebhookDispatcher handling event: " . get_class($event));
+        
         // Patient Events
         if ($event instanceof PatientRegistered || $event instanceof PatientCreated) {
             $this->service->dispatch('patient.registered', PatientPayloadFactory::forPatient($event->patient));

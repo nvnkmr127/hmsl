@@ -18,10 +18,14 @@ class WebhookService
     public function dispatch(string $event, array $data, ?string $correlationId = null): void
     {
         // Validate event against catalog
-        if (!config("webhooks.events.{$event}")) {
-            Log::warning("Attempted to dispatch unregistered webhook event: {$event}", [
+        $event = trim($event);
+        $catalog = config('webhooks.events', []);
+        
+        if (!isset($catalog[$event])) {
+            Log::warning("Attempted to dispatch unregistered webhook event: '{$event}'", [
                 'correlation_id' => $correlationId,
-                'event' => $event
+                'event_length' => strlen($event),
+                'available_events' => array_keys($catalog)
             ]);
         }
 

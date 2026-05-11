@@ -323,6 +323,8 @@ class BillingService
         $bill->update([
             'discount_amount' => $totalDiscounts,
             'total_amount' => $total,
+            'paid_amount' => $paid,
+            'balance_amount' => $balance,
             'payment_status' => $newStatus,
             'payment_method' => $latestMethod ?: $bill->payment_method,
         ]);

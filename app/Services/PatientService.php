@@ -10,15 +10,36 @@ class PatientService
 {
     public function generateUHID()
     {
-        // Use a lock to prevent race conditions during UHID generation
-        // We look for the maximum numeric UHID to increment
-        $maxUhid = (int) Patient::whereRaw('uhid REGEXP "^[0-9]+$"')
-            ->lockForUpdate()
-            ->max('uhid');
+        return DB::transaction(function () {
+            // 1. Get current counter from settings with lock
+            $setting = Setting::where('key', 'next_uhid')->lockForUpdate()->first();
             
-        $nextId = $maxUhid > 0 ? $maxUhid + 1 : 1001;
-        
-        return (string) $nextId;
+            if (!$setting) {
+                // Initialize if it doesn't exist. 
+                // We jump to 1150 to move past the problematic 1122 entry reported by the user.
+                $currentMax = (int) Patient::withTrashed()->whereRaw('uhid REGEXP "^[0-9]+$"')->max('uhid');
+                $startValue = max($currentMax, 1150);
+                
+                $setting = Setting::create([
+                    'key' => 'next_uhid',
+                    'value' => (string) ($startValue + 1),
+                    'group' => 'system'
+                ]);
+                
+                $nextId = $startValue;
+            } else {
+                $nextId = (int) $setting->value;
+                $setting->update(['value' => (string) ($nextId + 1)]);
+            }
+
+            // Clear cache for this setting
+            \Illuminate\Support\Facades\Cache::forget("setting.next_uhid");
+
+            // 2. Apply prefix if configured
+            $prefix = Setting::get('uhid_prefix', '');
+            
+            return $prefix . $nextId;
+        });
     }
 
     public function getAll(?string $search = null, array $filters = [], string $sortBy = 'latest')

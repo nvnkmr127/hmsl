@@ -18,8 +18,10 @@ class OutstandingDues extends Component
             ->where('balance_amount', '>', 0)
             ->where('payment_status', '!=', 'Cancelled')
             ->when($this->search, function($q) {
-                $q->whereHas('patient', fn($p) => $p->where('full_name', 'like', "%{$this->search}%")->orWhere('uhid', 'like', "%{$this->search}%"))
-                  ->orWhere('bill_number', 'like', "%{$this->search}%");
+                $q->where(function($sq) {
+                    $sq->whereHas('patient', fn($p) => $p->where('full_name', 'like', "%{$this->search}%")->orWhere('uhid', 'like', "%{$this->search}%"))
+                      ->orWhere('bill_number', 'like', "%{$this->search}%");
+                });
             })
             ->latest()
             ->paginate(15);

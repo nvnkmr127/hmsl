@@ -307,7 +307,7 @@
                                     <td class="px-8 py-5">
                                         <div class="flex flex-col">
                                             <span class="font-black text-gray-900 dark:text-white uppercase tracking-tight text-xs">{{ $consult->service?->name ?? 'Consultation' }}</span>
-                                            <span class="text-tiny font-black tracking-widest text-violet-600 dark:text-violet-400 uppercase">Dr. {{ $consult->doctor?->full_name ?? 'TBD' }}</span>
+                                            <span class="text-tiny font-black tracking-widest text-violet-600 dark:text-violet-400 uppercase">{{ $consult->doctor?->full_name ?? 'TBD' }}</span>
                                         </div>
                                     </td>
                                     
@@ -437,7 +437,7 @@
                                 <select wire:model.live="selectedDoctor" class="w-full bg-white dark:bg-gray-950 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 outline-none transition-all font-black text-gray-900 dark:text-white appearance-none text-sm shadow-sm">
                                     <option value="">Any Available Doctor</option>
                                     @foreach($doctors as $doctor)
-                                        <option value="{{ $doctor->id }}">Dr. {{ $doctor->full_name }} ({{ $doctor->department?->name ?? 'General' }})</option>
+                                        <option value="{{ $doctor->id }}">{{ $doctor->full_name }} ({{ $doctor->department?->name ?? 'General' }})</option>
                                     @endforeach
                                 </select>
                                 @error('selectedDoctor') <span class="text-[10px] font-bold text-rose-500 ml-1">{{ $message }}</span> @enderror

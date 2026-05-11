@@ -93,7 +93,7 @@
                                         DR
                                     </div>
                                     <div>
-                                        <p class="text-xs font-bold text-gray-700 dark:text-gray-200">Dr. {{ $discount->doctor->full_name }}</p>
+                                        <p class="text-xs font-bold text-gray-700 dark:text-gray-200">{{ $discount->doctor->full_name }}</p>
                                         <p class="text-[10px] text-violet-500/80 font-black uppercase tracking-widest">Clinically Authorized</p>
                                     </div>
                                 </div>

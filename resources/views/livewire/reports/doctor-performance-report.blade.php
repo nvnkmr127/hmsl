@@ -26,7 +26,7 @@
                 @foreach($doctors as $doctor)
                 <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm font-bold text-slate-900 dark:text-white">Dr. {{ $doctor->full_name }}</div>
+                        <div class="text-sm font-bold text-slate-900 dark:text-white">{{ $doctor->full_name }}</div>
                         <div class="text-[10px] text-slate-500 font-medium uppercase tracking-tighter">{{ $doctor->specialization }}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-center">

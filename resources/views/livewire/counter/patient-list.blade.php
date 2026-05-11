@@ -97,7 +97,7 @@
                                 @if($patient->latestConsultation)
                                     <div class="flex items-center gap-2">
                                         <div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-                                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Last: {{ $patient->latestConsultation->consultation_date->format('d M') }} · Dr. {{ explode(' ', $patient->latestConsultation->doctor?->full_name)[0] }}</span>
+                                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Last: {{ $patient->latestConsultation->consultation_date->format('d M') }} · {{ $patient->latestConsultation->doctor?->full_name }}</span>
                                     </div>
                                 @endif
                             </div>
@@ -188,7 +188,7 @@
                                             <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
                                             <span class="font-black text-gray-900 dark:text-white text-xs tracking-tight">{{ $patient->latestConsultation->consultation_date->format('d M, Y') }}</span>
                                         </div>
-                                        <span class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-0.5">Dr. {{ $patient->latestConsultation->doctor?->full_name ?? 'Resident' }}</span>
+                                        <span class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-0.5">{{ $patient->latestConsultation->doctor?->full_name ?? 'Resident' }}</span>
                                     </div>
                                 @else
                                     <div class="flex items-center gap-1.5">

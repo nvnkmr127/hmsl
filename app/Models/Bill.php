@@ -18,6 +18,8 @@ class Bill extends Model
         'tax_amount',
         'discount_amount',
         'total_amount',
+        'paid_amount',
+        'balance_amount',
         'payment_status',
         'payment_method',
         'notes',
@@ -29,6 +31,8 @@ class Bill extends Model
         'tax_amount' => 'decimal:2',
         'discount_amount' => 'decimal:2',
         'total_amount' => 'decimal:2',
+        'paid_amount' => 'decimal:2',
+        'balance_amount' => 'decimal:2',
     ];
 
 
@@ -75,7 +79,7 @@ class Bill extends Model
         return \Illuminate\Support\Number::spell((float) $this->total_amount);
     }
 
-    public function getPaidAmountAttribute(): float
+    public function getCalculatedPaidAmountAttribute(): float
     {
         $payments = $this->relationLoaded('payments') ? $this->payments : $this->payments()->get();
         $paid = (float) $payments->where('type', 'payment')->sum('amount');
@@ -83,8 +87,8 @@ class Bill extends Model
         return $paid - $refunded;
     }
 
-    public function getBalanceAmountAttribute(): float
+    public function getCalculatedBalanceAmountAttribute(): float
     {
-        return (float) $this->total_amount - (float) $this->paid_amount;
+        return (float) $this->total_amount - (float) $this->calculated_paid_amount;
     }
 }
