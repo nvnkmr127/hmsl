@@ -24,7 +24,7 @@ document.addEventListener('livewire:initialized', () => {
     let chartOptions = @json($options);
 
     const chart = new Chart(ctx, {
-        type: '{{ $type }}',
+        type: '{{ $type === "donut" ? "doughnut" : $type }}',
         data: {
             labels: Object.keys(chartData),
             datasets: [{

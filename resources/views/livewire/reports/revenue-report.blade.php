@@ -72,7 +72,7 @@
                     <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Income distribution by department</p>
                 </div>
             </div>
-            <x-chart type="donut" :data="$stats['revenue_by_type']" id="revenue-mix-chart" label="Revenue (₹)" />
+            <x-chart type="doughnut" :data="$stats['revenue_by_type']" id="revenue-mix-chart" label="Revenue (₹)" />
         </div>
 
         <!-- Payment Methods -->
