@@ -89,8 +89,8 @@ class BillingList extends Component
         $bill = Bill::findOrFail($billId);
         
         try {
-            if (!$bill->patient->email) {
-                $this->dispatch('notify', ['type' => 'error', 'message' => 'Patient has no email address.']);
+            if (!$bill->patient || !$bill->patient->email) {
+                $this->dispatch('notify', ['type' => 'error', 'message' => 'Patient record or email address is missing.']);
                 return;
             }
 

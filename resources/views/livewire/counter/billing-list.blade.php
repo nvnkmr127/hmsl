@@ -205,8 +205,8 @@
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <p class="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400 truncate">{{ $bill->bill_number }}</p>
-                                <p class="font-bold text-gray-900 dark:text-white text-sm truncate">{{ $bill->patient->full_name }}</p>
-                                <p class="text-xs text-gray-400 truncate">{{ $bill->patient->uhid }}</p>
+                                <p class="font-bold text-gray-900 dark:text-white text-sm truncate">{{ $bill->patient?->full_name ?? 'N/A' }}</p>
+                                <p class="text-xs text-gray-400 truncate">{{ $bill->patient?->uhid ?? '—' }}</p>
                             </div>
                             <div class="text-right flex-shrink-0">
                                 <p class="text-sm font-black text-gray-900 dark:text-white">₹{{ number_format($bill->total_amount, 2) }}</p>
@@ -259,8 +259,8 @@
                                 <span class="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">{{ $bill->bill_number }}</span>
                             </td>
                             <td class="px-4 py-3">
-                                <p class="font-bold text-gray-900 dark:text-white text-sm">{{ $bill->patient->full_name }}</p>
-                                <p class="text-xs text-gray-400">{{ $bill->patient->uhid }}</p>
+                                <p class="font-bold text-gray-900 dark:text-white text-sm">{{ $bill->patient?->full_name ?? 'N/A' }}</p>
+                                <p class="text-xs text-gray-400">{{ $bill->patient?->uhid ?? '—' }}</p>
                             </td>
                             <td class="px-4 py-3 text-right font-bold text-gray-900 dark:text-white">
                                 ₹{{ number_format($bill->total_amount, 2) }}
@@ -301,13 +301,13 @@
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <p class="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400 truncate">TOKEN #{{ $op->token_number }}</p>
-                                <p class="font-black text-gray-900 dark:text-white text-sm truncate">{{ $op->patient->full_name }}</p>
+                                <p class="font-black text-gray-900 dark:text-white text-sm truncate">{{ $op->patient?->full_name ?? 'N/A' }}</p>
                                 <div class="mt-1 flex items-center gap-2">
-                                    <span class="text-[10px] font-black text-rose-500 uppercase">M/O: {{ $op->patient->mother_name ?? '—' }}</span>
+                                    <span class="text-[10px] font-black text-rose-500 uppercase">M/O: {{ $op->patient?->mother_name ?? '—' }}</span>
                                     <span class="text-gray-300">•</span>
-                                    <span class="text-[10px] font-black text-emerald-600 uppercase">{{ $op->patient->address ?? '—' }}</span>
+                                    <span class="text-[10px] font-black text-emerald-600 uppercase">{{ $op->patient?->address ?? '—' }}</span>
                                 </div>
-                                <p class="text-xs text-gray-400 truncate mt-1">{{ $op->patient->uhid }}</p>
+                                <p class="text-xs text-gray-400 truncate mt-1">{{ $op->patient?->uhid ?? '—' }}</p>
                             </div>
                             <div class="text-right flex-shrink-0">
                                 <p class="text-sm font-black text-gray-900 dark:text-white">₹{{ number_format($op->fee, 0) }}</p>
@@ -373,15 +373,15 @@
                                     </div>
                                     <div class="min-w-0">
                                         <div class="flex items-center gap-2">
-                                            <p class="font-black text-gray-900 dark:text-white text-sm truncate">{{ $op->patient->full_name }}</p>
+                                            <p class="font-black text-gray-900 dark:text-white text-sm truncate">{{ $op->patient?->full_name ?? 'N/A' }}</p>
                                             <span class="px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-900/30 text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase">Child</span>
                                         </div>
                                         <div class="mt-1 flex items-center gap-2">
-                                            <span class="text-[10px] font-black text-rose-500 uppercase tracking-tight">M/O: {{ $op->patient->mother_name ?? '—' }}</span>
+                                            <span class="text-[10px] font-black text-rose-500 uppercase tracking-tight">M/O: {{ $op->patient?->mother_name ?? '—' }}</span>
                                             <span class="text-gray-300">•</span>
-                                            <span class="text-[10px] font-black text-emerald-600 uppercase tracking-tight">{{ $op->patient->address ?? '—' }}</span>
+                                            <span class="text-[10px] font-black text-emerald-600 uppercase tracking-tight">{{ $op->patient?->address ?? '—' }}</span>
                                         </div>
-                                        <p class="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-tighter">{{ $op->patient->uhid }}</p>
+                                        <p class="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-tighter">{{ $op->patient?->uhid ?? '—' }}</p>
                                     </div>
                                 </div>
                             </td>
