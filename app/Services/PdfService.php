@@ -29,4 +29,15 @@ class PdfService
         
         return $pdf->stream($filename . '.pdf');
     }
+
+    /**
+     * Generate and return raw PDF binary content.
+     */
+    public function output(string $view, array $data)
+    {
+        $pdf = Pdf::loadView($view, $data);
+        $pdf->setPaper('a5', 'portrait');
+        
+        return $pdf->output();
+    }
 }

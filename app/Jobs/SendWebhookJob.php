@@ -60,10 +60,10 @@ class SendWebhookJob implements ShouldQueue, ShouldBeUnique
             return;
         }
 
-        // 3. Request Size Limit (Max 1MB)
+        // 3. Request Size Limit (Max 10MB)
         $payloadSize = strlen(json_encode($this->payload));
-        if ($payloadSize > 1024 * 1024) {
-            $this->handleFailure($deliveryId, null, 0, 'CLIENT_ERROR', 'Request payload exceeds 1MB limit.');
+        if ($payloadSize > 10 * 1024 * 1024) {
+            $this->handleFailure($deliveryId, null, 0, 'CLIENT_ERROR', 'Request payload exceeds 10MB limit.');
             return;
         }
 

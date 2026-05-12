@@ -20,6 +20,12 @@ class OpdPayloadFactory
             'fees' => (float) $consultation->fee,
             'status' => $consultation->status,
             'date' => $consultation->consultation_date,
+            'pdf_base64' => base64_encode(app(\App\Services\PdfService::class)->output('pages.counter.opd-slip-pdf', ['consultation' => $consultation])),
+            'pdf_url' => \Illuminate\Support\Facades\URL::temporarySignedRoute(
+                'public.opd.download', 
+                now()->addDays(7), 
+                ['id' => $consultation->id]
+            ),
             'created_at' => $consultation->created_at->toISOString(),
         ];
     }
