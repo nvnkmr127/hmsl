@@ -97,9 +97,16 @@
 
     <div class="letterhead-data">
         {{-- LINE 1 --}}
-        <div class="field pos-name">
-            {{ trim($consultation->patient->first_name . ' ' . $consultation->patient->last_name) ?: 'NAME NOT FOUND' }}
-            <span class="uhid-label">(UHID: {{ $consultation->patient->uhid }})</span>
+        <div class="field pos-name" style="display: flex; align-items: center; gap: 15px;">
+            <div>
+                {{ trim($consultation->patient->first_name . ' ' . $consultation->patient->last_name) ?: 'NAME NOT FOUND' }}
+                <span class="uhid-label">(UHID: {{ $consultation->patient->uhid }})</span>
+            </div>
+            @if(\App\Models\Setting::get('enable_barcodes', false))
+            <div style="margin-top: -5px;">
+                {!! \App\Helpers\BarcodeHelper::generate($consultation->patient->uhid, 'TYPE_CODE_128', 1, 25) !!}
+            </div>
+            @endif
         </div>
 
         <div class="field pos-date">

@@ -184,22 +184,24 @@ class PatientHistory extends Component
         }
 
         if ($type === 'vitals') {
-            $query = PatientVital::with(['recorder'])->where('patient_id', $id)->orderByDesc('created_at');
+            $query = PatientVital::with(['recorder', 'consultation.doctor'])->where('patient_id', $id)->orderByDesc('created_at');
             $query = $this->applyDateFilter($query, 'created_at');
             
             $vitals = $query->get();
             $rows = $vitals->map(function (PatientVital $v) {
                 return [
                     $v->created_at?->format('Y-m-d H:i'),
-                    $v->temperature,
-                    $v->weight,
+                    $v->consultation ? ('T#' . $v->consultation->token_number . ' - ' . ($v->consultation->doctor?->full_name ?? 'Any')) : 'N/A',
+                    $v->weight ? $v->weight . ' kg' : '—',
                     $v->bp_systolic . ($v->bp_diastolic ? '/' . $v->bp_diastolic : ''),
-                    $v->spo2,
+                    $v->pulse ? $v->pulse . ' bpm' : '—',
+                    $v->temperature ? $v->temperature . '°F' : '—',
+                    $v->spo2 ? $v->spo2 . '%' : '—',
                     $v->recorder?->name
                 ];
             });
 
-            return $this->exportCsv("{$safeName}_vitals_{$date}.csv", ['Date/Time', 'Temp', 'Weight', 'BP', 'Spo2', 'Staff'], $rows);
+            return $this->exportCsv("{$safeName}_vitals_{$date}.csv", ['Date/Time', 'OPD Visit', 'Weight', 'BP', 'Pulse', 'Temp', 'SpO2', 'Staff'], $rows);
         }
 
         if ($type === 'visits') {

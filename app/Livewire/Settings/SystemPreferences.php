@@ -35,6 +35,8 @@ class SystemPreferences extends Component
     #[Validate('required|numeric|min:0')]
     public $consultation_fee_default;
 
+    #[Validate('boolean')]
+    public $enable_barcodes;
 
     public function mount(SettingsService $settings)
     {
@@ -49,7 +51,7 @@ class SystemPreferences extends Component
         $this->invoice_prefix = $data['invoice_prefix'] ?? 'INV-';
         $this->opd_validity_days = $data['opd_validity_days'] ?? '7';
         $this->consultation_fee_default = $data['consultation_fee_default'] ?? '500';
-
+        $this->enable_barcodes = filter_var($data['enable_barcodes'] ?? false, FILTER_VALIDATE_BOOLEAN);
     }
 
     public function save(SettingsService $settings)
@@ -66,7 +68,7 @@ class SystemPreferences extends Component
             'invoice_prefix' => $this->invoice_prefix,
             'opd_validity_days' => $this->opd_validity_days,
             'consultation_fee_default' => $this->consultation_fee_default,
-
+            'enable_barcodes' => $this->enable_barcodes,
         ];
 
         $settings->updateGroup('system', $data);

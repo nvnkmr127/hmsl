@@ -8,6 +8,7 @@
         </svg>
         <input 
             wire:model.live.debounce.300ms="query" 
+            wire:keydown.enter="handleEnter"
             type="text" 
             placeholder="Search patients, doctors or tokens..." 
             class="bg-transparent text-sm font-bold text-gray-700 dark:text-gray-200 placeholder-gray-400 outline-none flex-1 min-w-0"

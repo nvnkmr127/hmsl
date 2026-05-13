@@ -41,6 +41,24 @@ class GlobalSearch extends Component
         ];
     }
 
+    public function handleEnter()
+    {
+        $query = trim($this->query);
+        if (empty($query) || !\App\Models\Setting::get('enable_barcodes', false)) return;
+
+        // Try to find a patient by exact UHID first (Barcode scanning case)
+        $patient = Patient::where('uhid', $query)->first();
+        
+        if ($patient) {
+            return redirect()->route('counter.patients.history', $patient->id);
+        }
+
+        // If not a direct UHID match, but we have exactly one result in patients, go there
+        if (count($this->results['patients'] ?? []) === 1) {
+            return redirect()->route('counter.patients.history', $this->results['patients'][0]->id);
+        }
+    }
+
     public function render()
     {
         return view('livewire.front.global-search');

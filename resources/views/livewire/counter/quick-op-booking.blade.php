@@ -43,6 +43,7 @@
                         <input 
                             type="text"
                             wire:model.live.debounce.300ms="searchPatient"
+                            wire:keydown.enter="handleEnter"
                             x-ref="searchInput"
                             id="quick-appointment-search"
                             placeholder="Search by {{ [

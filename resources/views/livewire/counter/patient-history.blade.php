@@ -130,7 +130,7 @@
             <button wire:click="$set('tab','prescriptions')" wire:loading.attr="disabled" wire:target="$set('tab','prescriptions')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'prescriptions' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Rx ({{ $counts['prescriptions'] }})</button>
             <button wire:click="$set('tab','labs')" wire:loading.attr="disabled" wire:target="$set('tab','labs')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'labs' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Labs ({{ $counts['labs'] }})</button>
             <button wire:click="$set('tab','billing')" wire:loading.attr="disabled" wire:target="$set('tab','billing')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'billing' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Bills ({{ $counts['bills'] }})</button>
-            <button wire:click="$set('tab','vitals')" wire:loading.attr="disabled" wire:target="$set('tab','vitals')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'vitals' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Vitals</button>
+            <button wire:click="$set('tab','vitals')" wire:loading.attr="disabled" wire:target="$set('tab','vitals')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'vitals' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Vitals ({{ $counts['vitals'] }})</button>
             <button wire:click="$set('tab','vaccinations')" wire:loading.attr="disabled" wire:target="$set('tab','vaccinations')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'vaccinations' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Vaccines</button>
             <button wire:click="$set('tab','consents')" wire:loading.attr="disabled" wire:target="$set('tab','consents')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'consents' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Consents ({{ $counts['consents'] ?? 0 }})</button>
         </div>
@@ -928,23 +928,39 @@
                     <thead>
                         <tr>
                             <x-table.th>Date</x-table.th>
-                            <x-table.th class="text-right">Temp</x-table.th>
-                            <x-table.th class="text-right">Weight</x-table.th>
+                            <x-table.th>OPD / Token</x-table.th>
+                            <x-table.th class="text-right">Wt (kg)</x-table.th>
                             <x-table.th class="text-right">BP</x-table.th>
+                            <x-table.th class="text-right">Pulse</x-table.th>
+                            <x-table.th class="text-right">Temp</x-table.th>
                             <x-table.th class="text-right">SPO2</x-table.th>
-                            <x-table.th>Recorded By</x-table.th>
+                            <x-table.th>Staff</x-table.th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($datasets['vitals'] as $v)
                             <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
-                                <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{{ $v->created_at?->format('d M Y H:i') }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300 text-right">{{ $v->temperature ? $v->temperature . '°F' : '—' }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300 text-right">{{ $v->weight ? $v->weight . ' kg' : '—' }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
+                                    {{ $v->created_at?->format('d M Y') }}
+                                    <span class="block text-[10px] opacity-50">{{ $v->created_at?->format('h:i A') }}</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    @if($v->consultation)
+                                        <div class="flex flex-col">
+                                            <span class="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-tighter">Token #{{ $v->consultation->token_number }}</span>
+                                            <span class="text-tiny font-black text-gray-400 uppercase tracking-widest">{{ $v->consultation->doctor?->full_name ?? 'Any Doctor' }}</span>
+                                        </div>
+                                    @else
+                                        <span class="text-tiny font-black text-gray-400 uppercase tracking-widest italic">General</span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 text-sm font-black text-gray-900 dark:text-white text-right">{{ $v->weight ? $v->weight . ' kg' : '—' }}</td>
                                 <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300 text-right">
                                     {{ $v->bp_systolic && $v->bp_diastolic ? ($v->bp_systolic . '/' . $v->bp_diastolic) : '—' }}
                                 </td>
-                                <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300 text-right">{{ $v->spo2 ?? '—' }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300 text-right">{{ $v->pulse ? $v->pulse . ' bpm' : '—' }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300 text-right">{{ $v->temperature ? $v->temperature . '°F' : '—' }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300 text-right">{{ $v->spo2 ? $v->spo2 . '%' : '—' }}</td>
                                 <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{{ $v->recorder?->name ?? '—' }}</td>
                             </tr>
                         @empty
@@ -956,9 +972,20 @@
             <div class="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
                 @forelse($datasets['vitals'] as $v)
                     <div class="p-4">
-                        <p class="text-sm font-black text-gray-900 dark:text-white">{{ $v->created_at?->format('d M Y H:i') }}</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Temp: {{ $v->temperature ? $v->temperature . '°F' : '—' }} · Wt: {{ $v->weight ? $v->weight . 'kg' : '—' }}</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">BP: {{ $v->bp_systolic && $v->bp_diastolic ? ($v->bp_systolic . '/' . $v->bp_diastolic) : '—' }} · SPO2: {{ $v->spo2 ?? '—' }}</p>
+                        <div class="flex items-start justify-between mb-2">
+                            <p class="text-sm font-black text-gray-900 dark:text-white">{{ $v->created_at?->format('d M Y H:i') }}</p>
+                            @if($v->consultation)
+                                <span class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">T#{{ $v->consultation->token_number }}</span>
+                            @endif
+                        </div>
+                        <div class="grid grid-cols-2 gap-y-1">
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Wt: <span class="font-bold text-gray-700 dark:text-gray-300">{{ $v->weight ? $v->weight . 'kg' : '—' }}</span></p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Temp: <span class="font-bold text-gray-700 dark:text-gray-300">{{ $v->temperature ? $v->temperature . '°F' : '—' }}</span></p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">BP: <span class="font-bold text-gray-700 dark:text-gray-300">{{ $v->bp_systolic && $v->bp_diastolic ? ($v->bp_systolic . '/' . $v->bp_diastolic) : '—' }}</span></p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Pulse: <span class="font-bold text-gray-700 dark:text-gray-300">{{ $v->pulse ? $v->pulse . 'bpm' : '—' }}</span></p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">SPO2: <span class="font-bold text-gray-700 dark:text-gray-300">{{ $v->spo2 ? $v->spo2 . '%' : '—' }}</span></p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Staff: <span class="font-bold text-gray-700 dark:text-gray-300">{{ $v->recorder?->name ?? '—' }}</span></p>
+                        </div>
                     </div>
                 @empty
                     <div class="p-8 text-center text-sm font-semibold text-gray-500 dark:text-gray-400">No vital logs.</div>

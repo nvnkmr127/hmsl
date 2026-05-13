@@ -24,8 +24,13 @@
         <div>
             <p style="font-size:8pt; font-weight:700; color:#6b7280; text-transform:uppercase; margin:0 0 4px;">Patient</p>
             <p style="font-weight:700; font-size:13pt; margin:0 0 2px;">{{ $prescription->patient->full_name }}</p>
-            <p style="color:#555; margin:0">UHID: {{ $prescription->patient->uhid }} &nbsp;|&nbsp;
-               Age/Sex: {{ $prescription->patient->age }}Y / {{ $prescription->patient->gender }}</p>
+            <p style="color:#555; margin:0; display: flex; align-items: center; gap: 8px;">
+                <span>UHID: {{ $prescription->patient->uhid }}</span>
+                @if(\App\Models\Setting::get('enable_barcodes', false))
+                <span style="opacity: 0.8;">{!! \App\Helpers\BarcodeHelper::generate($prescription->patient->uhid, 'TYPE_CODE_128', 1, 15) !!}</span>
+                @endif
+                <span>&nbsp;|&nbsp; Age/Sex: {{ $prescription->patient->age }}Y / {{ $prescription->patient->gender }}</span>
+            </p>
         </div>
         <div>
             <p style="font-size:8pt; font-weight:700; color:#6b7280; text-transform:uppercase; margin:0 0 4px;">Visit</p>

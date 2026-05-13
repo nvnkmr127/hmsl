@@ -71,6 +71,26 @@ class QuickOpBooking extends Component
         }
     }
 
+    public function handleEnter()
+    {
+        $query = trim($this->searchPatient);
+        if (empty($query) || !\App\Models\Setting::get('enable_barcodes', false)) return;
+
+        // Try to find a patient by exact UHID first (Barcode scanning case)
+        $patient = Patient::where('uhid', $query)->first();
+        
+        if ($patient) {
+            $this->selectPatient($patient->id);
+            return;
+        }
+
+        // If not a direct UHID match, but we have exactly one result in the current search, select it
+        $results = Patient::search($this->searchPatient)->limit(2)->get();
+        if ($results->count() === 1) {
+            $this->selectPatient($results->first()->id);
+        }
+    }
+
     public function updatedSearchPatient($value)
     {
         // Auto search/select or trigger registration after 10 digits for phone search

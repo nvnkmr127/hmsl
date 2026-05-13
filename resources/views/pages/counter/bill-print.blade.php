@@ -219,14 +219,20 @@
 
 <div class="bottom-identity">
     <div class="barcode-group">
+        @if(\App\Models\Setting::get('enable_barcodes', false))
         <div class="barcode-item">
-            <p class="barcode-display">*{{ $bill->patient->uhid ?? '2024001' }}*</p>
-            <p class="barcode-label">UHID (MR NO)</p>
+            <div style="margin-bottom: 2px;">
+                {!! \App\Helpers\BarcodeHelper::generate($bill->patient->uhid, 'TYPE_CODE_128', 1, 35) !!}
+            </div>
+            <p class="barcode-label">UHID: {{ $bill->patient->uhid }}</p>
         </div>
         <div class="barcode-item">
-            <p class="barcode-display">*{{ $bill->bill_number }}*</p>
-            <p class="barcode-label">Invoice Number</p>
+            <div style="margin-bottom: 2px;">
+                {!! \App\Helpers\BarcodeHelper::generate($bill->bill_number, 'TYPE_CODE_128', 1, 35) !!}
+            </div>
+            <p class="barcode-label">Invoice: {{ $bill->bill_number }}</p>
         </div>
+        @endif
     </div>
     
     <div class="signature-area">

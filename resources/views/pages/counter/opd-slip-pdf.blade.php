@@ -24,8 +24,13 @@
         <tr>
             <td width="55%">
                 <span class="label">Patient Name:</span><br>
-                <span class="value" style="font-size: 14pt; letter-spacing: -0.05em;">{{ strtoupper($consultation->patient->full_name) }}</span>
-                <span style="font-size: 8pt; color: #666; margin-left: 5px;">(UHID: {{ $consultation->patient->uhid }})</span>
+                <span class="value" style="font-size: 14pt; letter-spacing: -0.05em;">{{ strtoupper($consultation->patient->full_name) }}</span><br>
+                @if(\App\Models\Setting::get('enable_barcodes', false))
+                <div style="margin-top: 5px; display: inline-block;">
+                    {!! \App\Helpers\BarcodeHelper::generateHtml($consultation->patient->uhid, 'TYPE_CODE_128', 1, 20) !!}
+                </div>
+                @endif
+                <span style="font-size: 8pt; color: #666; vertical-align: top; margin-left: 5px;">(UHID: {{ $consultation->patient->uhid }})</span>
             </td>
             <td width="45%" align="right">
                 <span class="label">Token No:</span><br>
