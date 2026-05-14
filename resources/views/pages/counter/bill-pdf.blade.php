@@ -4,83 +4,185 @@
     <meta charset="utf-8">
     <title>Bill — {{ $bill->bill_number }}</title>
     <style>
-        body { font-family: sans-serif; font-size: 9pt; color: #333; line-height: 1.4; margin: 0; padding: 0; }
-        .header-table { width: 100%; border-bottom: 2px solid #000; margin-bottom: 10px; }
-        .hospital-name { font-size: 18pt; font-weight: bold; }
-        .bill-title { font-size: 14pt; font-weight: bold; text-align: right; }
+        @page { size: a5 portrait; margin: 10mm; }
+        body { 
+            font-family: 'Helvetica', 'Arial', sans-serif; 
+            font-size: 8pt; 
+            color: #1e293b; 
+            line-height: 1.3; 
+            margin: 0; 
+            padding: 0; 
+        }
+        .header {
+            border-bottom: 2px solid #0f172a;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .hospital-name { 
+            font-size: 14pt; 
+            font-weight: bold; 
+            text-transform: uppercase;
+            color: #0f172a;
+        }
+        .bill-title { 
+            font-size: 12pt; 
+            font-weight: bold; 
+            text-align: right; 
+        }
         
-        .info-table { width: 100%; border: 1px solid #000; padding: 5px; margin-bottom: 15px; }
-        .info-label { font-weight: bold; width: 120px; }
-        .info-value { font-weight: normal; }
+        .patient-table { 
+            width: 100%; 
+            margin-bottom: 15px; 
+        }
+        .info-label { 
+            font-weight: bold; 
+            color: #64748b;
+            width: 80px;
+            font-size: 7pt;
+            text-transform: uppercase;
+        }
+        .info-val { 
+            font-weight: bold; 
+            color: #000;
+            text-transform: uppercase;
+        }
 
-        .billing-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-        .billing-table th { background: #eee; border: 1px solid #000; padding: 5px; text-align: left; font-weight: bold; }
-        .billing-table td { border: 1px solid #ccc; padding: 5px; }
-        
-        .group-header { background: #f9f9f9; font-weight: bold; }
-        .group-total { text-align: right; font-weight: bold; background: #fff; }
+        .items-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-bottom: 15px; 
+        }
+        .items-table th { 
+            background: #0f172a; 
+            color: #fff;
+            padding: 6px 8px; 
+            text-align: left; 
+            font-weight: bold; 
+            text-transform: uppercase;
+            font-size: 7.5pt;
+        }
+        .items-table td { 
+            border-bottom: 1px solid #f1f5f9; 
+            padding: 6px 8px; 
+        }
+        .group-header { 
+            background: #f8fafc; 
+            font-weight: bold; 
+            color: #6366f1;
+        }
 
-        .summary-table { width: 100%; margin-top: 10px; }
-        .totals-table { width: 300px; float: right; border: 1px solid #000; border-collapse: collapse; }
-        .totals-table td { padding: 5px; border: 1px solid #eee; }
-        .grand-total { background: #eee; font-weight: bold; font-size: 11pt; }
+        .footer-row {
+            margin-top: 10px;
+        }
+        .payments-table {
+            width: 55%;
+            float: left;
+        }
+        .totals-table { 
+            width: 40%; 
+            float: right; 
+        }
+        .total-line {
+            padding: 3px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .total-line.grand {
+            border-top: 2px solid #0f172a;
+            font-weight: bold;
+            font-size: 10pt;
+            margin-top: 5px;
+            padding-top: 5px;
+        }
 
-        .footer-table { width: 100%; margin-top: 30px; border-top: 1px solid #ccc; padding-top: 10px; }
-        .barcode { font-family: monospace; font-size: 10pt; }
-        .signature { text-align: center; width: 200px; border-top: 1px solid #000; margin-top: 40px; padding-top: 5px; }
+        .amount-words {
+            background: #f8fafc;
+            padding: 6px;
+            font-style: italic;
+            margin: 10px 0;
+            font-size: 7pt;
+        }
+
+        .signature-area {
+            margin-top: 30px;
+        }
+        .sig-box {
+            float: right;
+            text-align: center;
+            width: 150px;
+        }
+        .sig-line {
+            border-top: 1.5px solid #0f172a;
+            margin-top: 30px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
         
         .clear { clear: both; }
     </style>
 </head>
 <body>
-    <table class="header-table">
-        <tr>
-            <td>
-                <div class="hospital-name">{{ \App\Models\Setting::get('hospital_name', config('app.name')) }}</div>
-                <div style="font-size: 8pt; color: #666; font-style: italic;">{{ \App\Models\Setting::get('hospital_tagline') }}</div>
-                <div style="font-size: 8pt; color: #444;">
-                    {{ \App\Models\Setting::get('hospital_address') }}, {{ \App\Models\Setting::get('hospital_city') }}, {{ \App\Models\Setting::get('hospital_state') }} - {{ \App\Models\Setting::get('hospital_pincode') }}
-                </div>
-            </td>
-            <td style="text-align: right; vertical-align: top;">
-                <div class="bill-title">FINAL BILL</div>
-                <div style="font-size: 9pt;">PH: {{ \App\Models\Setting::get('hospital_phone') }}</div>
-            </td>
-        </tr>
-    </table>
+    <div class="header">
+        <table style="width: 100%;">
+            <tr>
+                <td>
+                    <div class="hospital-name">{{ \App\Models\Setting::get('hospital_name', config('app.name')) }}</div>
+                    <div style="font-size: 7pt; color: #64748b;">
+                        {{ \App\Models\Setting::get('hospital_address') }}, {{ \App\Models\Setting::get('hospital_city') }}<br>
+                        Ph: {{ \App\Models\Setting::get('hospital_phone') }} | Email: {{ \App\Models\Setting::get('hospital_email') }}
+                    </div>
+                </td>
+                <td style="text-align: right; vertical-align: top;">
+                    <div class="bill-title">{{ $bill->admission_id ? 'FINAL BILL' : 'OP BILL' }}</div>
+                    <div style="font-size: 9pt; font-weight: bold; color: #6366f1;">#{{ $bill->bill_number }}</div>
+                </td>
+            </tr>
+        </table>
+    </div>
 
-    <table class="info-table">
+    <table class="patient-table">
         <tr>
-            <td class="info-label">Patient Name:</td>
-            <td class="info-value">{{ strtoupper($bill->patient->full_name) }}</td>
+            <td class="info-label">Patient:</td>
+            <td class="info-val">{{ $bill->patient->full_name }}</td>
             <td class="info-label">UHID:</td>
-            <td class="info-value">{{ $bill->patient->uhid }}</td>
+            <td class="info-val">{{ $bill->patient->uhid }}</td>
         </tr>
         <tr>
             <td class="info-label">Age / Gender:</td>
-            <td class="info-value">{{ $bill->patient->age }} / {{ $bill->patient->gender }}</td>
-            <td class="info-label">Bill No:</td>
-            <td class="info-value">{{ $bill->bill_number }}</td>
+            <td class="info-val">{{ $bill->patient->age }} / {{ $bill->patient->gender }}</td>
+            <td class="info-label">Bill Date:</td>
+            <td class="info-val">{{ $bill->created_at->format('d/m/Y h:i A') }}</td>
         </tr>
         <tr>
             <td class="info-label">Doctor:</td>
-            <td class="info-value">{{ strtoupper($bill->admission?->doctor?->full_name ?? $bill->consultation?->doctor?->full_name ?? 'MEDICAL TEAM') }}</td>
-            <td class="info-label">Date:</td>
-            <td class="info-value">{{ $bill->created_at->format('d/m/Y h:i A') }}</td>
+            <td class="info-val">{{ strtoupper($bill->admission?->doctor?->full_name ?? $bill->consultation?->doctor?->full_name ?? 'MEDICAL TEAM') }}</td>
+            @if($bill->admission)
+                <td class="info-label">IP Number:</td>
+                <td class="info-val">{{ $bill->admission->admission_number }}</td>
+            @else
+                <td class="info-label">Visit Type:</td>
+                <td class="info-val">{{ strtoupper($bill->consultation?->visit_type ?? 'OPD') }}</td>
+            @endif
         </tr>
         <tr>
-            <td class="info-label">Address:</td>
-            <td colspan="3" class="info-value">{{ $bill->patient->address }}, {{ $bill->patient->city }}</td>
+            <td class="info-label">Contact:</td>
+            <td class="info-val">{{ $bill->patient->phone ?? '—' }}</td>
+            @if($bill->admission)
+                <td class="info-label">Ward / Bed:</td>
+                <td class="info-val">{{ strtoupper($bill->admission->ward_name) }}</td>
+            @else
+                <td class="info-label"></td>
+                <td class="info-val"></td>
+            @endif
         </tr>
     </table>
 
-    <table class="billing-table">
+    <table class="items-table">
         <thead>
             <tr>
                 <th>Description</th>
-                <th style="width: 60px; text-align: center;">Qty</th>
-                <th style="width: 80px; text-align: right;">Rate</th>
-                <th style="width: 80px; text-align: right;">Amount</th>
+                <th style="width: 30px; text-align: center;">Qty</th>
+                <th style="width: 70px; text-align: right;">Rate</th>
+                <th style="width: 70px; text-align: right;">Total</th>
             </tr>
         </thead>
         <tbody>
@@ -89,92 +191,42 @@
             @endphp
             @foreach($groupedItems as $type => $items)
                 <tr class="group-header">
-                    <td colspan="4">{{ strtoupper($type ?: 'SERVICES') }}</td>
+                    <td colspan="4" style="font-size: 7pt; padding: 4px 8px;">{{ strtoupper($type ?: 'SERVICES') }}</td>
                 </tr>
                 @foreach($items as $item)
                     <tr>
-                        <td>{{ strtoupper($item->item_name) }}</td>
+                        <td style="font-weight: 500;">{{ str_replace('DR. DR.', 'DR.', strtoupper($item->item_name)) }}</td>
                         <td style="text-align: center;">{{ $item->quantity }}</td>
                         <td style="text-align: right;">{{ number_format($item->unit_price, 2) }}</td>
-                        <td style="text-align: right;">{{ number_format($item->total_price, 2) }}</td>
+                        <td style="text-align: right; font-weight: bold;">{{ number_format($item->total_price, 2) }}</td>
                     </tr>
                 @endforeach
-                <tr>
-                    <td colspan="3" class="group-total">{{ strtoupper($type) }} TOTAL:</td>
-                    <td style="text-align: right; font-weight: bold;">{{ number_format($items->sum('total_price'), 2) }}</td>
-                </tr>
             @endforeach
         </tbody>
     </table>
 
-    <div style="font-weight: bold; margin-bottom: 20px;">
-        IN WORDS: RUPEES {{ strtoupper($bill->amount_in_words) }} ONLY
+    <div class="amount-words">
+        RUPEES {{ strtoupper($bill->amount_in_words) }} ONLY
     </div>
 
-    <div class="summary-area">
-        <table style="width: 100%;">
-            <tr>
-                <td style="vertical-align: top;">
-                    <table class="billing-table" style="width: 300px;">
-                        <thead>
-                            <tr>
-                                <th>Payment Method</th>
-                                <th style="text-align: right;">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($bill->payments as $payment)
-                                <tr>
-                                    <td>{{ strtoupper($payment->method) }}</td>
-                                    <td style="text-align: right;">{{ number_format($payment->amount, 2) }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </td>
-                <td style="vertical-align: top;">
-                    <table class="totals-table">
-                        <tr>
-                            <td>Gross Amount</td>
-                            <td style="text-align: right;">{{ number_format($bill->subtotal, 2) }}</td>
-                        </tr>
-                        <tr>
-                            <td>Discount</td>
-                            <td style="text-align: right;">{{ number_format($bill->discount_amount, 2) }}</td>
-                        </tr>
-                        <tr>
-                            <td>Net Bill</td>
-                            <td style="text-align: right; font-weight: bold;">{{ number_format($bill->total_amount, 2) }}</td>
-                        </tr>
-                        <tr>
-                            <td>Paid Amount</td>
-                            <td style="text-align: right;">{{ number_format($bill->paid_amount, 2) }}</td>
-                        </tr>
-                        <tr class="grand-total">
-                            <td>Balance Payable</td>
-                            <td style="text-align: right;">{{ number_format($bill->balance_amount, 2) }}</td>
-                        </tr>
-                    </table>
-                </td>
-            </tr>
-        </table>
+    <div class="footer-row">
+        <div class="totals-table" style="width: 180px; float: right;">
+            <div class="total-line">Subtotal <span style="float: right;">₹{{ number_format($bill->subtotal, 2) }}</span><div class="clear"></div></div>
+            <div class="total-line">Discount <span style="float: right;">- ₹{{ number_format($bill->discount_amount, 2) }}</span><div class="clear"></div></div>
+            <div class="total-line">Paid <span style="float: right;">₹{{ number_format($bill->paid_amount, 2) }}</span><div class="clear"></div></div>
+            <div class="total-line grand">Balance <span style="float: right;">₹{{ number_format($bill->balance_amount, 2) }}</span><div class="clear"></div></div>
+        </div>
+        <div class="clear"></div>
     </div>
 
-    <div class="clear"></div>
-
-    <table class="footer-table">
-        <tr>
-            <td>
-                <div class="barcode">UHID: {{ $bill->patient->uhid }}</div>
-                <div class="barcode">BILL: {{ $bill->bill_number }}</div>
-            </td>
-            <td style="text-align: right;">
-                <div style="display: inline-block; text-align: center;">
-                    <div style="margin-bottom: 40px;">For {{ \App\Models\Setting::get('hospital_name', config('app.name')) }}</div>
-                    <div style="border-top: 1px solid #000; width: 150px;">Authorized Signatory</div>
-                </div>
-            </td>
-        </tr>
-    </table>
+    <div class="signature-area">
+        <div style="float: left; font-size: 6pt; color: #94a3b8; margin-top: 40px;">
+            Generated by: {{ strtoupper($bill->creator?->name ?? 'Admin') }}
+        </div>
+        <div class="sig-box">
+            <div class="sig-line">Authorized Signatory</div>
+        </div>
+        <div class="clear"></div>
+    </div>
 </body>
 </html>

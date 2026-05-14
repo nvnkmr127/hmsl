@@ -24,7 +24,12 @@ class BillController extends Controller
     public function print(Bill $bill)
     {
         $bill->load(['patient', 'items', 'consultation.doctor.department', 'admission.bed.ward', 'admission.doctor', 'creator']);
-        return view('pages.counter.bill-print', compact('bill'));
+        
+        $view = $bill->admission_id 
+            ? 'pages.counter.bill-ipd-print' 
+            : 'pages.counter.bill-opd-print';
+            
+        return view($view, compact('bill'));
     }
 
     /**
@@ -39,8 +44,12 @@ class BillController extends Controller
 
         $bill->load(['patient', 'items', 'consultation.doctor.department', 'admission.bed.ward', 'admission.doctor', 'creator']);
         
-        $pdf = Pdf::loadView('pages.counter.bill-pdf', compact('bill'))
-                  ->setPaper('a4', 'portrait')
+        $view = $bill->admission_id 
+            ? 'pages.counter.bill-ipd-pdf' 
+            : 'pages.counter.bill-opd-pdf';
+            
+        $pdf = Pdf::loadView($view, compact('bill'))
+                  ->setPaper('a5', 'portrait')
                   ->setOptions(['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true]);
 
         return $pdf->stream("Bill-{$bill->bill_number}.pdf");
