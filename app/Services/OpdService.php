@@ -278,7 +278,7 @@ class OpdService
             }
             
             // Still enforce fee if no recent visit and no price found
-            if ($data['fee'] == 0) {
+            if ($data['fee'] == 0 && !$isNewbornBenefit) {
                 $hasRecentVisit = false;
                 if ($service && $service->validity_days > 0) {
                     $hasRecentVisit = Consultation::where('patient_id', $data['patient_id'])

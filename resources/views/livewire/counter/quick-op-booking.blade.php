@@ -357,7 +357,7 @@
                             @endif
                         </div>
 
-                        @if(!$isReview)
+                        @if(!$isReview && !$isNewbornBenefit && !$isFollowUp)
                         <div class="space-y-4">
                             <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
@@ -395,10 +395,14 @@
                             </h4>
                             <div class="bg-emerald-500 p-5 rounded-3xl text-white shadow-2xl shadow-emerald-500/20 relative overflow-hidden group">
                                 <div class="relative z-10">
-                                    <p class="text-[10px] font-black uppercase opacity-60 tracking-widest mb-2">Review Visit</p>
+                                    <p class="text-[10px] font-black uppercase opacity-60 tracking-widest mb-2">
+                                        {{ $isNewbornBenefit ? 'Newborn Benefit' : ($isReview ? 'Review Visit' : 'Follow-up Visit') }}
+                                    </p>
                                     <p class="text-2xl font-black mb-4">No Charge</p>
                                     <p class="text-[10px] font-bold opacity-80 leading-relaxed uppercase tracking-widest">
-                                        This visit is recorded as a follow-up review for the previous consultation.
+                                        {{ $isNewbornBenefit 
+                                            ? 'Complimentary consultation for newborns born at our facility.' 
+                                            : 'This visit is within the validity period of a previous consultation.' }}
                                     </p>
                                 </div>
                                 <svg class="absolute -right-4 -bottom-4 w-24 h-24 text-white/10 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
