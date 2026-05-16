@@ -17,6 +17,13 @@ return new class extends Migration
         // Force convert webhook tables to UUID format (CHAR 36)
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
+        // 0. PRE-EMPTIVE: Drop FK if it exists to allow column modification in BOTH tables
+        if (Schema::hasTable('webhook_logs')) {
+            try {
+                DB::statement('ALTER TABLE webhook_logs DROP FOREIGN KEY webhook_logs_webhook_endpoint_id_foreign');
+            } catch (\Exception $e) {}
+        }
+
         // 1. Force Endpoints ID
         if (Schema::hasTable('webhook_endpoints')) {
             try {
@@ -31,11 +38,6 @@ return new class extends Migration
 
         // 2. Force Logs ID and Foreign Key
         if (Schema::hasTable('webhook_logs')) {
-            // Drop FK if it exists to allow column modification
-            try {
-                DB::statement('ALTER TABLE webhook_logs DROP FOREIGN KEY webhook_logs_webhook_endpoint_id_foreign');
-            } catch (\Exception $e) {}
-
             // Fix primary id of the logs table
             try {
                 DB::statement('ALTER TABLE webhook_logs MODIFY id CHAR(36) NOT NULL');
