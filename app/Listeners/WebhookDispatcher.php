@@ -30,6 +30,8 @@ use App\Services\Webhooks\Factories\IpdPayloadFactory;
 
 class WebhookDispatcher
 {
+    public static bool $disabled = false;
+
     /**
      * Create the event listener.
      */
@@ -42,6 +44,8 @@ class WebhookDispatcher
      */
     public function handle(object $event): void
     {
+        if (static::$disabled) return;
+
         \Illuminate\Support\Facades\Log::debug("WebhookDispatcher handling event: " . get_class($event));
         
         // Patient Events

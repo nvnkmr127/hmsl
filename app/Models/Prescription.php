@@ -50,4 +50,9 @@ class Prescription extends Model
     {
         return $this->belongsTo(Admission::class);
     }
+
+    public function items()
+    {
+        return $this->hasMany(PrescriptionItem::class);
+    }
 }

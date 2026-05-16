@@ -26,6 +26,13 @@ class ComprehensiveDataSeeder extends Seeder
 {
     public function run(): void
     {
+        if (class_exists(\Laravel\Telescope\Telescope::class)) {
+            \Laravel\Telescope\Telescope::stopRecording();
+        }
+
+        // Disable WebhookDispatcher to prevent memory exhaustion from payload generation (PDFs, encryption) during seeding
+        \App\Listeners\WebhookDispatcher::$disabled = true;
+
         // Use Indian Locale for realistic names
         $faker = \Faker\Factory::create('en_IN');
         $patientService = new PatientService();
