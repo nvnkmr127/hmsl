@@ -80,7 +80,7 @@ class SyncEngine
                 ]);
 
             if ($response->successful()) {
-                $deltas = $response->json('deltas');
+                $deltas = $response->json('deltas') ?? [];
                 $processed = 0;
                 foreach ($deltas as $delta) {
                     try {
