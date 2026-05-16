@@ -49,6 +49,16 @@ class User extends Authenticatable
         ];
     }
 
+    public function getNameAttribute($value)
+    {
+        if ($this->hasAnyRole(['doctor', 'doctor_owner'])) {
+            if (!str_starts_with($value, 'Dr. ')) {
+                return 'Dr. ' . $value;
+            }
+        }
+        return $value;
+    }
+
     /**
      * Get the first role name in a human-readable format.
      */

@@ -20,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
             'hospital_owner' => \App\Http\Middleware\EnsureHospitalOwner::class,
         ]);
+
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

@@ -140,7 +140,9 @@
                 <x-nav-link href="{{ route('settings.webhooks.logs') }}" :active="request()->routeIs('settings.webhooks.logs')" icon="clipboard">Delivery Logs</x-nav-link>
             </x-nav-group>
             <x-nav-link href="{{ route('settings.api-tokens.index') }}" :active="request()->routeIs('settings.api-tokens.*')" icon="key">API Tokens</x-nav-link>
+            @if (Route::has('log-viewer.index'))
             <x-nav-link href="{{ route('log-viewer.index') }}" :active="request()->routeIs('log-viewer.*')" icon="clipboard" target="_blank">System Logs</x-nav-link>
+            @endif
         </x-nav-group>
         @endcan
     </div>

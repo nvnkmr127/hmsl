@@ -71,14 +71,24 @@ class IpdService
 
             $admission = Admission::create($data);
 
-            if (isset($data['weight']) || isset($data['height'])) {
-                \App\Models\PatientVital::create([
+            if (isset($data['weight']) || isset($data['height']) || isset($data['temperature'])) {
+                $vitalData = [
                     'patient_id' => $admission->patient_id,
                     'admission_id' => $admission->id,
                     'weight' => $data['weight'] ?? null,
                     'height' => $data['height'] ?? null,
+                    'temperature' => $data['temperature'] ?? null,
+                    'pulse' => $data['pulse'] ?? null,
+                    'bp_systolic' => $data['bp_systolic'] ?? null,
+                    'bp_diastolic' => $data['bp_diastolic'] ?? null,
                     'recorded_by' => Auth::id(),
-                ]);
+                ];
+
+                \App\Models\PatientVital::create($vitalData);
+
+                // Also create an IPD specific vital record for the chart
+                $vitalData['recorded_at'] = now();
+                \App\Models\IpdVital::create($vitalData);
             }
 
             event(new \App\Events\IPD\PatientAdmitted($admission->load(['patient', 'bed.ward', 'doctor.user'])));
@@ -155,7 +165,7 @@ class IpdService
 
     public function buildFinalBillItems(Admission $admission): array
     {
-        $admission->loadMissing(['bed.ward', 'bed', 'labOrders.labTest', 'ipdMedications']);
+        $admission->load(['bed.ward', 'bed', 'labOrders.labTest', 'ipdMedications.medicine']);
 
         $items = [];
 
@@ -196,14 +206,15 @@ class IpdService
             }
         }
 
-        foreach ($admission->labOrders as $order) {
-            $price = (float) ($order->labTest?->price ?? 0);
-            if ($price <= 0) {
-                continue;
-            }
+        $labOrders = \App\Models\LabOrder::with('labTest')
+            ->where('admission_id', $admission->id)
+            ->get();
 
+        foreach ($labOrders as $order) {
+            $price = (float) ($order->labTest?->price ?? 0);
+            
             $items[] = [
-                'name' => $order->labTest?->name ?? 'Lab Test',
+                'name' => ($order->labTest?->name ?? 'Lab Test') . ' (#' . $order->order_number . ')',
                 'type' => 'Lab',
                 'quantity' => 1,
                 'unit_price' => $price,
@@ -212,7 +223,11 @@ class IpdService
             ];
         }
 
-        foreach ($admission->ipdMedications as $rx) {
+        $medications = \App\Models\IpdMedicationChart::with('medicine')
+            ->where('admission_id', $admission->id)
+            ->get();
+
+        foreach ($medications as $rx) {
             $medicine = $rx->medicine;
             if (!$medicine) continue;
 
@@ -271,6 +286,9 @@ class IpdService
 
     public function getDischargeDetails(Admission $admission): Admission
     {
+        // Automatically sync bill items before showing details
+        $this->ensureFinalBill($admission);
+
         $relations = [
             'patient',
             'doctor.user',

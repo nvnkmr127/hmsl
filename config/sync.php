@@ -1,0 +1,71 @@
+<?php
+
+return [
+    /*
+    |--------------------------------------------------------------------------
+    | Sync Server Configuration
+    |--------------------------------------------------------------------------
+    |
+    | This value determines the URL of the central production web app that
+    | this local installation will synchronize with.
+    |
+    */
+    'server_url' => env('SYNC_SERVER_URL'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Sync Security Token
+    |--------------------------------------------------------------------------
+    |
+    | The Sanctum token used to authenticate requests to the sync server.
+    |
+    */
+    'token' => env('SYNC_TOKEN'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Device Identity
+    |--------------------------------------------------------------------------
+    |
+    | A unique identifier for this installation.
+    |
+    */
+    'device_id' => env('DEVICE_ID', 'default_device'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Sync Schedule
+    |--------------------------------------------------------------------------
+    |
+    | How often (in minutes) the background sync should run.
+    |
+    */
+    'interval' => env('SYNC_INTERVAL', 1),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Syncable Tables
+    |--------------------------------------------------------------------------
+    |
+    | The list of database tables that should be included in the sync process.
+    |
+    */
+    'tables' => [
+        'patients',
+        'doctors',
+        'appointments',
+        'bills',
+        'bill_items',
+        'medicines',
+        'prescriptions',
+        'lab_orders',
+        'lab_results',
+        'admissions',
+        'beds',
+        'wards',
+        'departments',
+        'vital_signs',
+        'inventory_items',
+        'stock_movements',
+    ],
+];

@@ -47,8 +47,7 @@
                         </div>
                     @endif
                 </div>
-                <input type="hidden" wire:model="medicine_name">
-                @error('medicine_name') <span class="text-xs text-rose-500">{{ $message }}</span> @enderror
+                @error('medicine_name') <span class="text-xs text-rose-500 font-bold block mt-1">{{ $message }}</span> @enderror
             </div>
 
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
@@ -64,6 +63,7 @@
                             <option value="{{ $freq }}">{{ $freq }}</option>
                         @endforeach
                     </select>
+                    @error('frequency') <span class="text-xs text-rose-500 block mt-1">{{ $message }}</span> @enderror
                 </div>
                 <div>
                     <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Route</label>
@@ -72,10 +72,7 @@
                             <option value="{{ $route }}">{{ $route }}</option>
                         @endforeach
                     </select>
-                </div>
-                <div>
-                    <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Duration</label>
-                    <input type="text" wire:model="duration" class="w-full rounded-lg border-gray-200 dark:border-gray-700 text-sm" placeholder="e.g., 5 days">
+                    @error('route') <span class="text-xs text-rose-500 block mt-1">{{ $message }}</span> @enderror
                 </div>
             </div>
 
@@ -96,18 +93,16 @@
         </div>
     @endif
 
-    @if($stoppingId)
-        <x-modal name="stop-medication-modal" title="Stop Medication">
-            <div class="p-4">
-                <label class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 block">Reason for stopping</label>
-                <textarea wire:model="stopReason" rows="3" class="w-full rounded-lg border-gray-200 dark:border-gray-700 text-sm" placeholder="Enter reason..."></textarea>
-                <div class="flex justify-end gap-2 mt-4">
-                    <button @click="$dispatch('close-modal', { name: 'stop-medication-modal' })" class="btn btn-secondary">Cancel</button>
-                    <button wire:click="stopMedication" wire:loading.attr="disabled" wire:target="stopMedication" class="btn btn-rose">Stop Medication</button>
-                </div>
+    <x-modal name="stop-medication-modal" title="Stop Medication">
+        <div class="p-4">
+            <label class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 block">Reason for stopping</label>
+            <textarea wire:model="stopReason" rows="3" class="w-full rounded-lg border-gray-200 dark:border-gray-700 text-sm" placeholder="Enter reason..."></textarea>
+            <div class="flex justify-end gap-2 mt-4">
+                <button type="button" @click="$dispatch('close-modal', { name: 'stop-medication-modal' })" class="btn btn-secondary text-xs">Cancel</button>
+                <button wire:click="stopMedication" wire:loading.attr="disabled" wire:target="stopMedication" class="btn btn-rose text-xs">Stop Medication</button>
             </div>
-        </x-modal>
-    @endif
+        </div>
+    </x-modal>
 
     <div class="space-y-3">
         @forelse(($activeTab === 'active' ? $this->activeMedications : ($activeTab === 'stopped' ? $this->stoppedMedications : ($activeTab === 'completed' ? $this->completedMedications : $this->allMedications))) as $med)
@@ -127,7 +122,6 @@
                             @if($med->dosage){{ $med->dosage }}@endif
                             @if($med->frequency) · {{ $med->frequency }}@endif
                             @if($med->route) · {{ $med->route }}@endif
-                            @if($med->duration) · {{ $med->duration }}@endif
                         </p>
                         <div class="flex items-center gap-3 mt-1 text-xs text-gray-500">
                             <span>Start: {{ $med->start_date ? $med->start_date->format('d M Y') : 'N/A' }}</span>
@@ -149,15 +143,21 @@
                         </div>
                     </div>
                     @if($med->status === 'Active' && $admission->status !== 'Discharged')
-                        <div class="flex items-center gap-2">
-                            <button wire:click="administerDose({{ $med->id }})" wire:loading.attr="disabled" wire:target="administerDose({{ $med->id }})" class="btn btn-emerald text-[10px] py-1 px-2" title="Record Administration">
-                                Administer
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button wire:click="administerDose({{ $med->id }})" wire:loading.attr="disabled" wire:target="administerDose({{ $med->id }})" class="btn btn-emerald text-[10px] py-1 px-3 flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Give Dose
                             </button>
-                            <button wire:click="editMedication({{ $med->id }})" wire:loading.attr="disabled" wire:target="editMedication({{ $med->id }})" class="p-2 text-gray-400 hover:text-indigo-600">
+                            <button wire:click="completeMedication({{ $med->id }})" wire:loading.attr="disabled" wire:target="completeMedication({{ $med->id }})" class="btn btn-primary text-[10px] py-1 px-3 flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                Complete
+                            </button>
+                            <button wire:click="confirmStop({{ $med->id }})" wire:loading.attr="disabled" wire:target="confirmStop({{ $med->id }})" class="btn btn-rose text-[10px] py-1 px-3 flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                Stop
+                            </button>
+                            <button wire:click="editMedication({{ $med->id }})" wire:loading.attr="disabled" wire:target="editMedication({{ $med->id }})" class="p-2 text-gray-400 hover:text-indigo-600 transition-colors">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                            </button>
-                            <button wire:click="confirmStop({{ $med->id }})" wire:loading.attr="disabled" wire:target="confirmStop({{ $med->id }})" class="p-2 text-gray-400 hover:text-rose-600">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                             </button>
                         </div>
                     @endif

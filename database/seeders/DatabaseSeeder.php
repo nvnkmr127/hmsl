@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
             MasterDataSeeder::class,
             VaccinationSeeder::class,
             PatientSeeder::class,
-            ComprehensiveDataSeeder::class,
+            // ComprehensiveDataSeeder::class,
         ]);
     }
 }

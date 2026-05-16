@@ -23,7 +23,7 @@ class BillController extends Controller
      */
     public function print(Bill $bill)
     {
-        $bill->load(['patient', 'items', 'consultation.doctor.department', 'admission.bed.ward', 'admission.doctor', 'creator']);
+        $bill->load(['patient', 'items', 'consultation.doctor.department', 'admission.bed.ward', 'admission.doctor', 'admission.labOrders.labTest', 'creator']);
         
         $view = $bill->admission_id 
             ? 'pages.counter.bill-ipd-print' 

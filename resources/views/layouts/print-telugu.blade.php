@@ -20,11 +20,19 @@
         }
     </style>
 </head>
-<body onload="window.print()">
+<body>
     <div class="print-container">
         @yield('content')
         {{ $slot ?? '' }}
     </div>
+
+    <script>
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                window.print();
+            }, 500);
+        });
+    </script>
 </body>
 </html>
 

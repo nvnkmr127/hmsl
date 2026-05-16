@@ -4,13 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Sync\Traits\HasSyncMetadata;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Admission extends Model
 {
-    use HasFactory;
+    use HasFactory, HasSyncMetadata;
 
     protected $fillable = [
         'admission_number',

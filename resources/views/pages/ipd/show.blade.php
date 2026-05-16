@@ -139,23 +139,7 @@
             </div>
 
             <div id="lab" class="mt-8">
-                <x-card title="Lab Orders">
-                    @if($admission->labOrders->count() > 0)
-                        <div class="space-y-3">
-                            @foreach($admission->labOrders as $order)
-                                <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                                    <div>
-                                        <p class="font-semibold text-gray-900 dark:text-white">{{ $order->labTest?->name ?? 'Unknown Test' }}</p>
-                                        <p class="text-xs text-gray-500">{{ $order->created_at->format('d M Y, h:i A') }}</p>
-                                    </div>
-                                    <x-badge :type="$order->status === 'Completed' ? 'success' : 'warning'">{{ $order->status }}</x-badge>
-                                </div>
-                            @endforeach
-                        </div>
-                    @else
-                        <p class="text-gray-500 text-center py-8">No lab orders for this admission.</p>
-                    @endif
-                </x-card>
+                <livewire:ipd.ipd-lab-orders :admission="$admission" />
             </div>
 
             <div id="billing" class="mt-8">
@@ -184,6 +168,19 @@
                                     </p>
                                 @endif
                             </div>
+                            
+                            @if($admission->finalBill->items->count() > 0)
+                                <div class="mb-4 space-y-2 max-h-48 overflow-y-auto pr-2">
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Bill Breakdown</p>
+                                    @foreach($admission->finalBill->items as $item)
+                                        <div class="flex justify-between text-xs border-b border-indigo-100 dark:border-indigo-900/50 pb-1">
+                                            <span class="text-indigo-900 dark:text-indigo-200">{{ $item->item_name }}</span>
+                                            <span class="font-bold text-indigo-900 dark:text-indigo-200">₹{{ number_format($item->total_price, 2) }}</span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+
                             <a href="{{ route('billing.bills.print', $admission->finalBill->id) }}" target="_blank" class="btn btn-primary mt-4 text-xs">
                                 Print Bill
                             </a>
@@ -203,4 +200,8 @@
             </div>
         </div>
     </div>
+
+    @unless($admission->status === 'Discharged')
+        <livewire:doctor.lab-order-composer />
+    @endunless
 @endsection

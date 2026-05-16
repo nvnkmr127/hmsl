@@ -294,10 +294,12 @@ class BillingService
 
     public function recalculatePaymentStatus(Bill $bill): void
     {
+        $bill->refresh();
         $bill->load(['payments', 'discounts']);
 
         $totalDiscounts = (float) $bill->discounts()->where('status', 'approved')->sum('applied_amount');
-        $paid = (float) $bill->paid_amount;
+        $paid = (float) $bill->payments()->where('type', 'payment')->sum('amount') 
+                - (float) $bill->payments()->where('type', 'refund')->sum('amount');
         $subtotal = (float) $bill->subtotal;
         $tax = (float) $bill->tax_amount;
         

@@ -6,6 +6,14 @@ use App\Models\Bill;
 use App\Http\Controllers\DashboardController;
 
 Route::get('/', function () {
+    if (auth()->check()) {
+        return redirect()->route('dashboard');
+    }
+    
+    if (app()->environment('local')) {
+        return redirect()->route('login');
+    }
+
     return view('welcome');
 });
 

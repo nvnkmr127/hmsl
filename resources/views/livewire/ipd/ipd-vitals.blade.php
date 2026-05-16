@@ -16,34 +16,42 @@
                 <div>
                     <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">BP Systolic</label>
                     <input type="number" wire:model.live="bp_systolic" class="w-full rounded-lg border-gray-200 dark:border-gray-700 text-sm" placeholder="mmHg">
+                    @error('bp_systolic') <p class="text-[10px] font-bold text-rose-500 mt-0.5">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">BP Diastolic</label>
                     <input type="number" wire:model.live="bp_diastolic" class="w-full rounded-lg border-gray-200 dark:border-gray-700 text-sm" placeholder="mmHg">
+                    @error('bp_diastolic') <p class="text-[10px] font-bold text-rose-500 mt-0.5">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Pulse (bpm)</label>
                     <input type="number" wire:model.live="pulse" class="w-full rounded-lg border-gray-200 dark:border-gray-700 text-sm" placeholder="bpm">
+                    @error('pulse') <p class="text-[10px] font-bold text-rose-500 mt-0.5">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Temp (°F)</label>
                     <input type="number" step="0.1" wire:model.live="temperature" class="w-full rounded-lg border-gray-200 dark:border-gray-700 text-sm" placeholder="°F">
+                    @error('temperature') <p class="text-[10px] font-bold text-rose-500 mt-0.5">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">SpO2 (%)</label>
                     <input type="number" wire:model.live="spo2" class="w-full rounded-lg border-gray-200 dark:border-gray-700 text-sm" placeholder="%">
+                    @error('spo2') <p class="text-[10px] font-bold text-rose-500 mt-0.5">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Resp Rate</label>
                     <input type="number" wire:model.live="resp_rate" class="w-full rounded-lg border-gray-200 dark:border-gray-700 text-sm" placeholder="/min">
+                    @error('resp_rate') <p class="text-[10px] font-bold text-rose-500 mt-0.5">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Weight (kg)</label>
                     <input type="number" step="0.1" wire:model.live="weight" class="w-full rounded-lg border-gray-200 dark:border-gray-700 text-sm" placeholder="kg">
+                    @error('weight') <p class="text-[10px] font-bold text-rose-500 mt-0.5">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Height (cm)</label>
                     <input type="number" step="0.1" wire:model.live="height" class="w-full rounded-lg border-gray-200 dark:border-gray-700 text-sm" placeholder="cm">
+                    @error('height') <p class="text-[10px] font-bold text-rose-500 mt-0.5">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">BMI</label>
@@ -52,6 +60,7 @@
                 <div>
                     <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Pain Scale (0-10)</label>
                     <input type="number" wire:model.live="pain_scale" min="0" max="10" class="w-full rounded-lg border-gray-200 dark:border-gray-700 text-sm" placeholder="0-10">
+                    @error('pain_scale') <p class="text-[10px] font-bold text-rose-500 mt-0.5">{{ $message }}</p> @enderror
                 </div>
             </div>
             <div class="mt-3">

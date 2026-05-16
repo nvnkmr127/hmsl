@@ -1,5 +1,5 @@
 <div x-data="{}" @open-modal.window="if($event.detail.name === 'quick-op-modal') { setTimeout(() => { (document.getElementById('quick-appointment-weight') || document.getElementById('quick-appointment-search'))?.focus(); }, 200); }">
-    <x-modal name="quick-op-modal" title="Quick Appointment" width="3xl" persistent>
+    <x-modal name="quick-op-modal" :title="$isIpd ? 'Quick Admission' : 'Quick Appointment'" width="3xl" persistent>
         <div class="p-6">
             @if(!$selectedPatient)
                 <!-- Search Section -->
@@ -210,33 +210,79 @@
                                 Appointment Details
                             </h4>
                             
-                            @if(!$isReview)
-                            <div class="space-y-1.5">
-                                <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Consultation Service</label>
-                                <select wire:model.live="selectedService" class="w-full bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 font-bold text-gray-900 dark:text-white appearance-none transition-all outline-none">
-                                    <option value="">Select Service</option>
-                                    @forelse($services as $service)
-                                        <option value="{{ $service->id }}">{{ $service->name }} (₹{{ number_format($service->price ?? 0, 0) }})</option>
-                                    @empty
-                                        <option value="">No services available</option>
-                                    @endforelse
-                                </select>
-                                @error('selectedService') <p class="text-[10px] font-bold text-rose-500 mt-1 ml-1">{{ $message }}</p> @enderror
-                            </div>
-                            @else
-                            <div class="p-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800/50 rounded-2xl">
-                                <p class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Review Service</p>
-                                <p class="text-sm font-black text-gray-800 dark:text-gray-200 uppercase tracking-tight">
-                                    {{ $latestConsultation->service?->name ?? 'OPD Consultation' }}
-                                </p>
-                                <p class="text-[10px] font-bold text-indigo-500 mt-0.5 uppercase tracking-widest">AUTO-SELECTED FOR REVIEW</p>
-                            </div>
-                            @endif
+                            @if(!$isIpd)
+                                @if(!$isReview)
+                                <div class="space-y-1.5">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Consultation Service</label>
+                                    <select wire:model.live="selectedService" class="w-full bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 font-bold text-gray-900 dark:text-white appearance-none transition-all outline-none">
+                                        <option value="">Select Service</option>
+                                        @forelse($services as $service)
+                                            <option value="{{ $service->id }}">{{ $service->name }} (₹{{ number_format($service->price ?? 0, 0) }})</option>
+                                        @empty
+                                            <option value="">No services available</option>
+                                        @endforelse
+                                    </select>
+                                    @error('selectedService') <p class="text-[10px] font-bold text-rose-500 mt-1 ml-1">{{ $message }}</p> @enderror
+                                </div>
+                                @else
+                                <div class="p-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800/50 rounded-2xl">
+                                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Review Service</p>
+                                    <p class="text-sm font-black text-gray-800 dark:text-gray-200 uppercase tracking-tight">
+                                        {{ $latestConsultation->service?->name ?? 'OPD Consultation' }}
+                                    </p>
+                                    <p class="text-[10px] font-bold text-indigo-500 mt-0.5 uppercase tracking-widest">AUTO-SELECTED FOR REVIEW</p>
+                                </div>
+                                @endif
 
-                            <div class="p-4 bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100/50 dark:border-indigo-800/20 rounded-2xl">
-                                <p class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] mb-1">Assigned Doctor</p>
-                                <p class="text-sm font-black text-gray-800 dark:text-gray-200 uppercase tracking-tight">{{ $this->assignedDoctorName }}</p>
-                            </div>
+                                <div class="p-4 bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100/50 dark:border-indigo-800/20 rounded-2xl">
+                                    <p class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] mb-1">Assigned Doctor</p>
+                                    <p class="text-sm font-black text-gray-800 dark:text-gray-200 uppercase tracking-tight">{{ $this->assignedDoctorName }}</p>
+                                </div>
+                            @else
+                                <!-- IPD Admission Fields -->
+                                <div class="space-y-1.5">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Select Doctor</label>
+                                    <select wire:model="selectedDoctor" class="w-full bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 font-bold text-gray-900 dark:text-white appearance-none transition-all outline-none">
+                                        <option value="">Select Doctor...</option>
+                                        @foreach($doctors as $doctor)
+                                            <option value="{{ $doctor->id }}">{{ $doctor->full_name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('selectedDoctor') <p class="text-[10px] font-bold text-rose-500 mt-1 ml-1">{{ $message }}</p> @enderror
+                                </div>
+
+                                <div class="space-y-1.5">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Admission Date & Time</label>
+                                    <input type="datetime-local" wire:model="admissionDate" class="w-full bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 font-bold text-gray-900 dark:text-white transition-all outline-none" />
+                                    @error('admissionDate') <p class="text-[10px] font-bold text-rose-500 mt-1 ml-1">{{ $message }}</p> @enderror
+                                </div>
+
+                                <div class="space-y-1.5" x-data="{ open: false, search: @entangle('reason') }">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Reason for Admission</label>
+                                    <div class="relative">
+                                        <input 
+                                            type="text" 
+                                            wire:model.live="reason" 
+                                            @focus="open = true"
+                                            @click.away="open = false"
+                                            class="w-full bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 font-bold text-gray-900 dark:text-white outline-none transition-all" 
+                                            placeholder="TYPE OR SELECT REASON..."
+                                        />
+                                        <div x-show="open && search.length >= 0" class="absolute z-50 left-0 right-0 mt-2 p-2 bg-white dark:bg-gray-900 rounded-2xl shadow-3xl border border-gray-100 dark:border-gray-800 max-h-48 overflow-y-auto custom-scrollbar">
+                                            @foreach($reasons as $r)
+                                                <button 
+                                                    type="button"
+                                                    @click="search = '{{ $r->content }}'; open = false"
+                                                    class="w-full text-left px-4 py-3 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl text-xs font-black text-gray-700 dark:text-gray-300 uppercase tracking-wide transition-colors"
+                                                >
+                                                    {{ $r->content }}
+                                                </button>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                    @error('reason') <p class="text-[10px] font-bold text-rose-500 mt-1 ml-1">{{ $message }}</p> @enderror
+                                </div>
+                            @endif
 
                             <div class="grid grid-cols-3 gap-3">
                                 <div class="space-y-1.5">
@@ -357,57 +403,90 @@
                             @endif
                         </div>
 
-                        @if(!$isReview && !$isNewbornBenefit && !$isFollowUp)
-                        <div class="space-y-4">
-                            <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                Payment Details
-                            </h4>
-                            <div class="bg-violet p-5 rounded-3xl text-white shadow-2xl shadow-violet-500/20 relative overflow-hidden group">
-                                <div class="relative z-10">
-                                    <div class="flex items-center justify-between mb-4">
-                                        <span class="text-[10px] font-black uppercase opacity-60 tracking-widest">Amount</span>
-                                        <div class="px-2 py-0.5 bg-white/20 rounded-lg text-dense font-black">CALCULATED</div>
+                        @if(!$isIpd)
+                            @if(!$isReview && !$isNewbornBenefit && !$isFollowUp)
+                            <div class="space-y-4">
+                                <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                    Payment Details
+                                </h4>
+                                <div class="bg-violet p-5 rounded-3xl text-white shadow-2xl shadow-violet-500/20 relative overflow-hidden group">
+                                    <div class="relative z-10">
+                                        <div class="flex items-center justify-between mb-4">
+                                            <span class="text-[10px] font-black uppercase opacity-60 tracking-widest">Amount</span>
+                                            <div class="px-2 py-0.5 bg-white/20 rounded-lg text-dense font-black">CALCULATED</div>
+                                        </div>
+                                        <div class="flex items-end gap-1 mb-6">
+                                            <span class="text-2xl font-black mb-0.5">₹</span>
+                                            <input type="number" wire:model="fee" class="bg-transparent border-none p-0 text-4xl font-black focus:ring-0 text-white w-full outline-none" />
+                                        </div>
+                                        <div class="space-y-1.5">
+                                            <label class="text-[10px] font-black uppercase tracking-widest opacity-60 ml-1">Payment Method</label>
+                                            <select wire:model="paymentMode" class="w-full bg-white/10 border-none text-white focus:ring-1 focus:ring-white/30 rounded-xl px-4 py-3 font-bold transition-all outline-none">
+                                                <option class="text-gray-900" value="Cash">Settlement: Cash</option>
+                                                <option class="text-gray-900" value="UPI">Settlement: UPI</option>
+                                                <option class="text-gray-900" value="Card">Settlement: Card</option>
+                                            </select>
+                                            @error('fee') <p class="text-[10px] font-bold text-white/80 mt-1">{{ $message }}</p> @enderror
+                                            @error('paymentMode') <p class="text-[10px] font-bold text-white/80 mt-1">{{ $message }}</p> @enderror
+                                        </div>
                                     </div>
-                                    <div class="flex items-end gap-1 mb-6">
-                                        <span class="text-2xl font-black mb-0.5">₹</span>
-                                        <input type="number" wire:model="fee" class="bg-transparent border-none p-0 text-4xl font-black focus:ring-0 text-white w-full outline-none" />
-                                    </div>
-                                    <div class="space-y-1.5">
-                                        <label class="text-[10px] font-black uppercase tracking-widest opacity-60 ml-1">Payment Method</label>
-                                        <select wire:model="paymentMode" class="w-full bg-white/10 border-none text-white focus:ring-1 focus:ring-white/30 rounded-xl px-4 py-3 font-bold transition-all outline-none">
-                                            <option class="text-gray-900" value="Cash">Settlement: Cash</option>
-                                            <option class="text-gray-900" value="UPI">Settlement: UPI</option>
-                                            <option class="text-gray-900" value="Card">Settlement: Card</option>
-                                        </select>
-                                        @error('fee') <p class="text-[10px] font-bold text-white/80 mt-1">{{ $message }}</p> @enderror
-                                        @error('paymentMode') <p class="text-[10px] font-bold text-white/80 mt-1">{{ $message }}</p> @enderror
-                                    </div>
+                                    <svg class="absolute -right-8 -bottom-8 w-32 h-32 text-white/5 opacity-10 rotate-12" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L1 12l11 10 11-10L12 2zm0 18.5L2.5 12 12 3.5l9.5 8.5L12 20.5z"/></svg>
                                 </div>
-                                <svg class="absolute -right-8 -bottom-8 w-32 h-32 text-white/5 opacity-10 rotate-12" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L1 12l11 10 11-10L12 2zm0 18.5L2.5 12 12 3.5l9.5 8.5L12 20.5z"/></svg>
                             </div>
-                        </div>
+                            @else
+                            <div class="space-y-4">
+                                <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                    Payment Status
+                                </h4>
+                                <div class="bg-emerald-500 p-5 rounded-3xl text-white shadow-2xl shadow-emerald-500/20 relative overflow-hidden group">
+                                    <div class="relative z-10">
+                                        <p class="text-[10px] font-black uppercase opacity-60 tracking-widest mb-2">
+                                            {{ $isNewbornBenefit ? 'Newborn Benefit' : ($isReview ? 'Review Visit' : 'Follow-up Visit') }}
+                                        </p>
+                                        <p class="text-2xl font-black mb-4">No Charge</p>
+                                        <p class="text-[10px] font-bold opacity-80 leading-relaxed uppercase tracking-widest">
+                                            {{ $isNewbornBenefit 
+                                                ? 'Complimentary consultation for newborns born at our facility.' 
+                                                : 'This visit is within the validity period of a previous consultation.' }}
+                                        </p>
+                                    </div>
+                                    <svg class="absolute -right-4 -bottom-4 w-24 h-24 text-white/10 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                </div>
+                            </div>
+                            @endif
                         @else
-                        <div class="space-y-4">
-                            <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                Payment Status
-                            </h4>
-                            <div class="bg-emerald-500 p-5 rounded-3xl text-white shadow-2xl shadow-emerald-500/20 relative overflow-hidden group">
-                                <div class="relative z-10">
-                                    <p class="text-[10px] font-black uppercase opacity-60 tracking-widest mb-2">
-                                        {{ $isNewbornBenefit ? 'Newborn Benefit' : ($isReview ? 'Review Visit' : 'Follow-up Visit') }}
-                                    </p>
-                                    <p class="text-2xl font-black mb-4">No Charge</p>
-                                    <p class="text-[10px] font-bold opacity-80 leading-relaxed uppercase tracking-widest">
-                                        {{ $isNewbornBenefit 
-                                            ? 'Complimentary consultation for newborns born at our facility.' 
-                                            : 'This visit is within the validity period of a previous consultation.' }}
-                                    </p>
+                            <!-- IPD Ward & Bed Selection -->
+                            <div class="space-y-4">
+                                <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                    Accommodation Details
+                                </h4>
+                                <div class="space-y-4 bg-gray-50 dark:bg-gray-900/50 p-5 rounded-3xl border border-gray-100 dark:border-gray-800">
+                                    <div class="space-y-1.5">
+                                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Select Ward</label>
+                                        <select wire:model.live="wardId" class="w-full bg-white dark:bg-gray-950 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 font-bold text-gray-900 dark:text-white appearance-none transition-all outline-none">
+                                            <option value="">Select Ward...</option>
+                                            @foreach($wards as $ward)
+                                                <option value="{{ $ward->id }}">{{ $ward->name }} ({{ $ward->daily_charge ? '₹'.number_format($ward->daily_charge) : 'No Charge' }})</option>
+                                            @endforeach
+                                        </select>
+                                        @error('wardId') <p class="text-[10px] font-bold text-rose-500 mt-1 ml-1">{{ $message }}</p> @enderror
+                                    </div>
+
+                                    <div class="space-y-1.5">
+                                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Select Bed</label>
+                                        <select wire:model="bedId" class="w-full bg-white dark:bg-gray-950 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 font-bold text-gray-900 dark:text-white appearance-none transition-all outline-none" {{ !$wardId ? 'disabled' : '' }}>
+                                            <option value="">{{ !$wardId ? 'Select Ward First' : 'Select Bed...' }}</option>
+                                            @foreach($this->availableBeds as $bed)
+                                                <option value="{{ $bed->id }}">Bed #{{ $bed->bed_number }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('bedId') <p class="text-[10px] font-bold text-rose-500 mt-1 ml-1">{{ $message }}</p> @enderror
+                                    </div>
                                 </div>
-                                <svg class="absolute -right-4 -bottom-4 w-24 h-24 text-white/10 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             </div>
-                        </div>
                         @endif
                     </div>
 
@@ -427,7 +506,7 @@
                                 <button type="submit" 
                                         wire:loading.attr="disabled"
                                         class="btn btn-primary px-10 py-4 shadow-xl shadow-indigo-500/30 rounded-2xl group transition-all active:scale-95">
-                                    <span wire:loading.remove>Confirm & Print</span>
+                                    <span wire:loading.remove>{{ $isIpd ? 'Confirm Admission' : 'Confirm & Print' }}</span>
                                     <span wire:loading>Finalizing...</span>
                                 </button>
                             @else

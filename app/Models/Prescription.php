@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Sync\Traits\HasSyncMetadata;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Prescription extends Model
 {
-    use HasFactory;
+    use HasFactory, HasSyncMetadata;
 
     protected $dispatchesEvents = [
         'created' => \App\Events\Pharmacy\PrescriptionCreated::class,

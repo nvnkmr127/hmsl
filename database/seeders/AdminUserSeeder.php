@@ -20,7 +20,7 @@ class AdminUserSeeder extends Seeder
         $admin = User::updateOrCreate(
             ['email' => 'admin@hospital.com'],
             [
-                'name' => 'Avinash Lakkampally',
+                'name' => 'Dr. Avinash Lakkampally',
                 'password' => Hash::make('password'),
             ]
         );
@@ -48,7 +48,7 @@ class AdminUserSeeder extends Seeder
         // Create other staff roles for Quick Access
         $staff = [
             [
-                'name' => 'House',
+                'name' => 'Dr. House',
                 'email' => 'doctor@hospital.com',
                 'role' => 'doctor'
             ],

@@ -10,6 +10,9 @@ class IpdController extends Controller
 {
     public function show(Admission $admission)
     {
+        // Automatically sync bill estimate
+        app(\App\Services\IpdService::class)->ensureFinalBill($admission);
+
         $admission->load([
             'patient',
             'bed.ward',
@@ -18,6 +21,7 @@ class IpdController extends Controller
             'ipdVitals' => fn($q) => $q->latest()->limit(5),
             'ipdMedications' => fn($q) => $q->where('status', 'Active'),
             'labOrders.labTest',
+            'finalBill.items',
             'diagnoses',
         ]);
 

@@ -60,3 +60,9 @@ database/database.sqlite
 /storage/framework/views/
 /storage/logs/
 *.log
+
+# Desktop / Tauri builds
+/tauri
+/tauri_old
+/trash_bin
+/src-tauri/target

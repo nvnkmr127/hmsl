@@ -102,6 +102,32 @@
     </tbody>
 </table>
 
+@if($bill->admission && $bill->admission->labOrders->count() > 0)
+    <div style="margin-bottom: 20px;">
+        <h3 style="font-size: 8.5pt; font-weight: 900; margin: 0 0 5px 0; border-bottom: 1.5px solid #000; padding-bottom: 2px; text-transform: uppercase;">Laboratory Investigations Details</h3>
+        <table style="width: 100%; border-collapse: collapse; font-size: 7.5pt;">
+            <thead>
+                <tr style="border-bottom: 1px solid #ddd; background: #f9f9f9;">
+                    <th style="text-align: left; padding: 4px; font-weight: 700;">Order #</th>
+                    <th style="text-align: left; padding: 4px; font-weight: 700;">Investigation Name</th>
+                    <th style="text-align: left; padding: 4px; font-weight: 700;">Date</th>
+                    <th style="text-align: right; padding: 4px; font-weight: 700;">Charge (₹)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($bill->admission->labOrders as $order)
+                    <tr style="border-bottom: 1px solid #f1f1f1;">
+                        <td style="padding: 4px; font-family: monospace;">{{ $order->order_number }}</td>
+                        <td style="padding: 4px; font-weight: 500;">{{ strtoupper($order->labTest?->name) }}</td>
+                        <td style="padding: 4px;">{{ $order->created_at->format('d/m/Y') }}</td>
+                        <td style="padding: 4px; text-align: right; font-weight: 600;">{{ number_format($order->labTest?->price, 2) }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+@endif
+
 <div class="amount-in-words">RUPEES {{ strtoupper($bill->amount_in_words) }} ONLY</div>
 
 <div class="final-row">

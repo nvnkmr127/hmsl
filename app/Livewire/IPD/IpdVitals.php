@@ -60,9 +60,11 @@ class IpdVitals extends Component
 
     public function calculateBMI()
     {
-        if ($this->weight && $this->height) {
+        if (is_numeric($this->weight) && is_numeric($this->height) && $this->height > 0) {
             $heightInMeters = $this->height / 100;
             $this->bmi = round($this->weight / ($heightInMeters * $heightInMeters), 1);
+        } else {
+            $this->bmi = null;
         }
     }
 

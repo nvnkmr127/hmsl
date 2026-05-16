@@ -50,4 +50,13 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('medicines', MedicineApiController::class)->only(['index', 'show']);
         Route::apiResource('wards', WardApiController::class)->only(['index']);
     });
+
+    // Synchronization Endpoints (Used by local instances to sync with this server)
+    Route::group(['prefix' => 'sync', 'middleware' => 'auth:sanctum'], function () {
+        Route::post('/push', [\App\Sync\API\Controllers\SyncController::class, 'push']);
+        Route::get('/pull', [\App\Sync\API\Controllers\SyncController::class, 'pull']);
+    });
+    
+    // Device Registration (Public or restricted by other means)
+    Route::post('/sync/register', [\App\Sync\API\Controllers\SyncController::class, 'registerDevice']);
 });

@@ -100,6 +100,19 @@
         </div>
     </div>
 
+    <!-- Rapid Registration & Search Action -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 px-4">
+        <div class="flex items-center gap-3">
+            <div class="w-2 h-8 bg-indigo-500 rounded-full"></div>
+            <h3 class="text-xl font-black text-gray-900 dark:text-white tracking-tight uppercase">Search Patient</h3>
+        </div>
+        <button wire:click="$dispatch('create-patient', { phone: '{{ is_numeric($searchPatient) ? $searchPatient : '' }}', name: '{{ !is_numeric($searchPatient) ? $searchPatient : '' }}' })" 
+                class="w-full sm:w-auto px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[1.2rem] text-[11px] font-black uppercase tracking-[0.15em] shadow-xl shadow-indigo-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 group">
+            <svg class="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" /></svg>
+            Register New Patient
+        </button>
+    </div>
+
     <!-- Persistent Command Center: Search & Rapid Discovery -->
     <div class="mb-10 p-1 bg-white dark:bg-gray-900 rounded-[3rem] border border-gray-100 dark:border-gray-800 shadow-2xl shadow-indigo-500/5 transition-all focus-within:shadow-indigo-500/10 relative">
         <div class="flex flex-col lg:flex-row items-stretch gap-1">
@@ -143,7 +156,7 @@
                             </div>
                             <h4 class="text-xl font-black text-gray-900 dark:text-white mb-2">Patient Not Found</h4>
                             <p class="text-tiny font-black text-gray-400 uppercase tracking-widest mb-8">Search term: "{{ $searchPatient }}"</p>
-                            <button wire:click="$dispatch('open-modal', { name: 'patient-form' })" 
+                            <button wire:click="$dispatch('create-patient', { phone: '{{ is_numeric($searchPatient) ? $searchPatient : '' }}', name: '{{ !is_numeric($searchPatient) ? $searchPatient : '' }}' })" 
                                     class="px-10 py-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[1.5rem] text-sm font-black uppercase tracking-[0.2em] shadow-2xl shadow-indigo-500/40 transition-all active:scale-95">
                                 Register New Patient
                             </button>

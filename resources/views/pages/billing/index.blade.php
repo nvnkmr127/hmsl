@@ -23,7 +23,11 @@
             const billId = event?.billId ?? event?.[0]?.billId ?? event?.[0]?.bill_id ?? event?.[0];
             if (!billId) return;
             const url = "{{ route('billing.bills.print', ['bill' => ':id']) }}".replace(':id', billId);
-            window.open(url, '_blank');
+            if (typeof printUrl === 'function') {
+                printUrl(url);
+            } else {
+                window.open(url, '_blank');
+            }
         });
     });
 </script>

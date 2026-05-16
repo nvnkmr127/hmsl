@@ -16,8 +16,12 @@ class PatientService
             
             if (!$setting) {
                 // Initialize if it doesn't exist. 
-                // We jump to 1150 to move past the problematic 1122 entry reported by the user.
-                $currentMax = (int) Patient::withTrashed()->whereRaw('uhid REGEXP "^[0-9]+$"')->max('uhid');
+                $query = Patient::withTrashed();
+                if (DB::connection()->getDriverName() === 'sqlite') {
+                    $currentMax = (int) $query->max('uhid');
+                } else {
+                    $currentMax = (int) $query->whereRaw('uhid REGEXP "^[0-9]+$"')->max('uhid');
+                }
                 $startValue = max($currentMax, 1150);
                 
                 $setting = Setting::create([

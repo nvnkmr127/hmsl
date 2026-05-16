@@ -52,6 +52,14 @@ class MedicationChart extends Component
         $this->start_date = now()->format('Y-m-d');
     }
 
+    public function updatedSearchMedicine($value)
+    {
+        $this->medicine_name = $value;
+        if (!$value) {
+            $this->medicine_id = null;
+        }
+    }
+
     public function searchMedicines()
     {
         if (strlen($this->searchMedicine) < 2) {
@@ -69,7 +77,7 @@ class MedicationChart extends Component
         $medicine = Medicine::findOrFail($medicineId);
         $this->medicine_id = $medicine->id;
         $this->medicine_name = $medicine->name;
-        $this->searchMedicine = '';
+        $this->searchMedicine = $medicine->name;
         $this->showMedicineSearch = false;
     }
 
@@ -86,7 +94,6 @@ class MedicationChart extends Component
                 'medicine_id' => $this->medicine_id,
                 'dosage' => $this->dosage,
                 'frequency' => $this->frequency,
-                'duration' => $this->duration,
                 'route' => $this->route,
                 'start_date' => $this->start_date,
                 'end_date' => $this->end_date,
@@ -103,7 +110,6 @@ class MedicationChart extends Component
                 'medicine_name' => $this->medicine_name,
                 'dosage' => $this->dosage,
                 'frequency' => $this->frequency,
-                'duration' => $this->duration,
                 'route' => $this->route,
                 'start_date' => $this->start_date,
                 'end_date' => $this->end_date,
@@ -125,7 +131,6 @@ class MedicationChart extends Component
         $this->medicine_name = $med->medicine_name;
         $this->dosage = $med->dosage;
         $this->frequency = $med->frequency;
-        $this->duration = $med->duration;
         $this->route = $med->route;
         $this->start_date = $med->start_date->format('Y-m-d');
         $this->end_date = $med->end_date?->format('Y-m-d');
@@ -137,7 +142,7 @@ class MedicationChart extends Component
     {
         $this->stoppingId = $id;
         $this->stopReason = '';
-        $this->showStopModal = true;
+        $this->dispatch('open-modal', name: 'stop-medication-modal');
     }
 
     public function stopMedication()
@@ -150,11 +155,22 @@ class MedicationChart extends Component
         $med = IpdMedicationChart::findOrFail($this->stoppingId);
         $med->stop($this->stopReason, Auth::user());
 
-        $this->showStopModal = false;
+        $this->dispatch('close-modal', name: 'stop-medication-modal');
         $this->stoppingId = null;
         $this->stopReason = '';
 
         $this->dispatch('notify', ['type' => 'success', 'message' => 'Medication stopped']);
+    }
+
+    public function completeMedication($id)
+    {
+        $med = IpdMedicationChart::findOrFail($id);
+        $med->update([
+            'status' => 'Completed',
+            'end_date' => now(),
+        ]);
+
+        $this->dispatch('notify', ['type' => 'success', 'message' => 'Medication marked as completed']);
     }
 
     public function administerDose($id, $status = 'Given', $notes = null)

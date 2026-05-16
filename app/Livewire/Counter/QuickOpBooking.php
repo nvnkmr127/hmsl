@@ -20,6 +20,7 @@ class QuickOpBooking extends Component
     public $selectedPatient;
     public $selectedDoctor;
     public $consultation_date;
+    public $admissionDate;
     public $valid_upto;
     public $weight;
     public $height;
@@ -35,9 +36,13 @@ class QuickOpBooking extends Component
     public $isReview = false;
     public $growthStatus;
     public $growthForecast;
-    public $activeBookingFound = false;
     public $isEmergency = false;
     public $isNewbornBenefit = false;
+    public $isIpd = false;
+    public $wardId;
+    public $bedId;
+    public $reason;
+    public $activeBookingFound = false;
 
     #[On('patient-registered')]
     public function handlePatientRegistered($id = null)
@@ -60,7 +65,9 @@ class QuickOpBooking extends Component
 
     public function mount(OpdService $service)
     {
+        $this->isIpd = request()->routeIs('counter.ipd.*');
         $this->consultation_date = now()->toDateString();
+        $this->admissionDate = now()->format('Y-m-d\TH:i');
         $this->valid_upto = $service->getValidityDate($this->consultation_date);
         $this->autoSelectDoctor();
 
@@ -292,6 +299,19 @@ class QuickOpBooking extends Component
         $this->updateGrowthStatus();
     }
 
+    public function updatedWardId()
+    {
+        $this->bedId = null;
+    }
+
+    public function getAvailableBedsProperty()
+    {
+        if (!$this->wardId) return collect();
+        return \App\Models\Bed::where('ward_id', $this->wardId)
+            ->where('is_available', true)
+            ->get();
+    }
+
     protected function updateGrowthStatus()
     {
         if ($this->selectedPatient && ($this->weight || $this->height)) {
@@ -313,6 +333,10 @@ class QuickOpBooking extends Component
 
     public function book($shouldPrint = true)
     {
+        if ($this->isIpd) {
+            return $this->bookAdmission();
+        }
+
         \Illuminate\Support\Facades\Log::debug('QUICK_OP_BOOKING_START', [
             'shouldPrint' => $shouldPrint,
             'patient_id' => $this->selectedPatient?->id,
@@ -364,6 +388,8 @@ class QuickOpBooking extends Component
                     'valid_upto' => $this->valid_upto,
                     'payment_status' => 'Paid',
                     'payment_method' => $this->paymentMode,
+                    'bill_payment_status' => 'Paid',
+                    'paid_amount' => $this->fee,
                     'notes' => $this->notes,
                 ]);
                 $this->dispatch('notify', ['type' => 'success', 'message' => "Registration Success: #{$consultation->token_number}"]);
@@ -382,6 +408,44 @@ class QuickOpBooking extends Component
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
+            $this->dispatch('notify', ['type' => 'error', 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function bookAdmission()
+    {
+        $this->validate([
+            'selectedPatient' => 'required',
+            'selectedDoctor' => 'required|exists:doctors,id',
+            'wardId' => 'required|exists:wards,id',
+            'bedId' => 'required|exists:beds,id',
+            'admissionDate' => 'required',
+        ]);
+
+        $service = app(\App\Services\IpdService::class);
+        $data = [
+            'patient_id' => $this->selectedPatient->id,
+            'doctor_id' => $this->selectedDoctor,
+            'ward_id' => $this->wardId,
+            'bed_id' => $this->bedId,
+            'admission_date' => $this->admissionDate,
+            'reason_for_admission' => $this->reason,
+            'weight' => $this->weight,
+            'height' => $this->height,
+            'temperature' => $this->temperature,
+            'pulse' => $this->pulse,
+            'bp_systolic' => $this->bp_systolic,
+            'bp_diastolic' => $this->bp_diastolic,
+            'respiratory_rate' => $this->respiratory_rate,
+            'spo2' => $this->spo2,
+        ];
+
+        try {
+            $admission = $service->admitPatient($data);
+            $this->dispatch('notify', ['type' => 'success', 'message' => "Patient admitted successfully: {$admission->admission_number}"]);
+            $this->dispatch('close-modal', name: 'quick-op-modal');
+            return redirect()->route('counter.ipd.show', $admission->id);
+        } catch (\Exception $e) {
             $this->dispatch('notify', ['type' => 'error', 'message' => $e->getMessage()]);
         }
     }
@@ -415,6 +479,9 @@ class QuickOpBooking extends Component
         return view('livewire.counter.quick-op-booking', [
             'patients' => $patients,
             'services' => $services,
+            'doctors' => \App\Models\Doctor::where('is_active', true)->get(),
+            'wards' => \App\Models\Ward::all(),
+            'reasons' => \App\Models\ClinicalTemplate::where('type', 'reason')->get(),
         ]);
     }
 }

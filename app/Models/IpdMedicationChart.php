@@ -25,6 +25,7 @@ class IpdMedicationChart extends Model
         'route',
         'start_date',
         'end_date',
+        'duration',
         'instructions',
         'status',
         'stop_reason',
