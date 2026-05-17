@@ -87,7 +87,7 @@
     <x-toast />
 
     @livewireScripts
-    <script>
+    <script data-navigate-once>
         let lastPrintUrl = null;
         let lastPrintTime = 0;
 
