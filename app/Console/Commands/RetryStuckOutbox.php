@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Services\Webhooks\Factories\WebhookPayloadFactory;
 use Illuminate\Console\Command;
 
 class RetryStuckOutbox extends Command
@@ -31,7 +32,7 @@ class RetryStuckOutbox extends Command
             $q->where('status', 'pending')
               ->orWhere(function($sub) use ($minutes) {
                   $sub->where('status', 'processing')
-                      ->where('updated_at', '<', now()->subMinutes($minutes));
+                       ->where('updated_at', '<', now()->subMinutes($minutes));
               });
         })->get();
 
@@ -49,13 +50,10 @@ class RetryStuckOutbox extends Command
             // So we manually call the dispatch logic
             $endpoints = $service->getSubscribedEndpoints($entry->event_type);
             
-            // Use a deterministic ID for retries to support idempotency
-            // Here we use outbox_uuid or similar if it existed, but we can derive it from the outbox entry
-            // For now, let's assume we want to keep the same payload data
-            $payload = $service->buildPayload(
+            // Use standard envelope builder to recreate webhook payload
+            $payload = WebhookPayloadFactory::createEnvelope(
                 $entry->event_type, 
                 $entry->payload, 
-                null, // buildPayload will generate one if we don't have a stable one in DB yet
                 $entry->correlation_id
             );
 

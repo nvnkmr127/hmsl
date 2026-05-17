@@ -9,6 +9,7 @@ use App\Http\Requests\Api\V1\StoreWebhookEndpointRequest;
 use App\Http\Requests\Api\V1\UpdateWebhookEndpointRequest;
 use App\Models\WebhookEndpoint;
 use App\Models\WebhookLog;
+use App\Services\Webhooks\Factories\WebhookPayloadFactory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -113,12 +114,12 @@ class WebhookEndpointApiController extends Controller
     {
         $this->authorize('update', $webhook_endpoint);
 
-        $payload = $service->buildPayload('webhook.test', [
+        $payload = WebhookPayloadFactory::createEnvelope('webhook.test', [
             'message' => 'This is a test webhook from the HMS API.',
             'triggered_by_api' => true,
         ]);
 
-        \App\Jobs\SendWebhookJob::dispatch($webhook_endpoint, $payload);
+        \App\Jobs\SendWebhookJob::dispatch($webhook_endpoint, $payload, 1, $payload['correlation_id']);
 
         return response()->json(['message' => 'Test webhook queued.']);
     }
