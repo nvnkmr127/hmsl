@@ -25,13 +25,13 @@ class SyncOutboxObserver
 
     protected function record(Model $model, string $action): void
     {
-        // Only record if we are in local/offline mode
-        if (Config::get('app.mode') !== 'local') {
+        // Only record if we are a client (have a sync token configured)
+        if (!config('sync.token')) {
             return;
         }
 
         SyncOutbox::create([
-            'device_id' => Config::get('app.device_id'),
+            'device_id' => config('sync.device_id'),
             'table_name' => $model->getTable(),
             'record_uuid' => $model->sync_id,
             'action' => $action,

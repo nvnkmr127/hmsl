@@ -53,5 +53,28 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('viewLogViewer', function ($user) {
             return $user->can('manage settings');
         });
+
+        // Register Sync Observers for local clients
+        if (config('sync.token')) {
+            $syncModels = [
+                \App\Models\Patient::class,
+                \App\Models\Doctor::class,
+                \App\Models\Appointment::class,
+                \App\Models\Bill::class,
+                \App\Models\BillItem::class,
+                \App\Models\Medicine::class,
+                \App\Models\Prescription::class,
+                \App\Models\LabOrder::class,
+                \App\Models\Admission::class,
+                \App\Models\Bed::class,
+                \App\Models\Ward::class,
+            ];
+
+            foreach ($syncModels as $model) {
+                if (class_exists($model)) {
+                    $model::observe(\App\Sync\Observers\SyncOutboxObserver::class);
+                }
+            }
+        }
     }
 }

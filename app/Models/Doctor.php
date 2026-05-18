@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Sync\Traits\HasSyncMetadata;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Consultation;
 
 class Doctor extends Model
 {
-    use HasFactory;
+    use HasFactory, HasSyncMetadata;
 
     protected $fillable = [
         'doctor_code',

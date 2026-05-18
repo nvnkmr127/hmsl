@@ -6,25 +6,16 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    protected array $tables = [
-        'patients',
+    protected array $missingTables = [
         'doctors',
-        'appointments',
-        'bills',
         'bill_items',
         'bill_payments',
         'bill_discounts',
-        'medicines',
-        'prescriptions',
         'prescription_items',
-        'lab_orders',
         'lab_results',
-        'admissions',
-        'beds',
         'wards',
         'departments',
         'patient_vitals',
-        'inventory_items',
         'services',
         'diagnoses',
         'consultations',
@@ -32,7 +23,7 @@ return new class extends Migration
 
     public function up(): void
     {
-        foreach ($this->tables as $table) {
+        foreach ($this->missingTables as $table) {
             if (Schema::hasTable($table)) {
                 Schema::table($table, function (Blueprint $table) {
                     if (!Schema::hasColumn($table->getTable(), 'sync_id')) {
@@ -48,10 +39,12 @@ return new class extends Migration
 
     public function down(): void
     {
-        foreach ($this->tables as $table) {
+        foreach ($this->missingTables as $table) {
             if (Schema::hasTable($table)) {
                 Schema::table($table, function (Blueprint $table) {
-                    $table->dropColumn(['sync_id', 'sync_version', 'sync_status', 'synced_at']);
+                    if (Schema::hasColumn($table->getTable(), 'sync_id')) {
+                        $table->dropColumn(['sync_id', 'sync_version', 'sync_status', 'synced_at']);
+                    }
                 });
             }
         }

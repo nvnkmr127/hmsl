@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Sync\Traits\HasSyncMetadata;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LabResult extends Model
 {
-    use HasFactory;
+    use HasFactory, HasSyncMetadata;
 
     protected $fillable = [
         'lab_order_id',

@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Sync\Traits\HasSyncMetadata;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Service extends Model
 {
-    use HasFactory;
+    use HasFactory, HasSyncMetadata;
 
     protected $fillable = ['code', 'name', 'category', 'department_id', 'price', 'validity_days', 'description', 'is_active', 'sort_order'];
 
