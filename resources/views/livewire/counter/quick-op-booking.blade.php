@@ -299,6 +299,33 @@
                                 </div>
                             </div>
 
+                            @if($isIpd)
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div class="space-y-1.5">
+                                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Pulse (bpm)</label>
+                                        <input type="number" wire:model="pulse" placeholder="72" class="w-full bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-3 py-4 font-bold text-gray-900 dark:text-white outline-none transition-all text-sm" />
+                                    </div>
+                                    <div class="space-y-1.5">
+                                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">BP (Sys/Dia)</label>
+                                        <div class="flex gap-2">
+                                            <input type="text" wire:model="bp_systolic" placeholder="120" class="w-1/2 bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-2 py-4 font-bold text-gray-900 dark:text-white outline-none transition-all text-sm text-center" />
+                                            <span class="self-center text-gray-400 font-black">/</span>
+                                            <input type="text" wire:model="bp_diastolic" placeholder="80" class="w-1/2 bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-2 py-4 font-bold text-gray-900 dark:text-white outline-none transition-all text-sm text-center" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div class="space-y-1.5">
+                                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Resp. Rate</label>
+                                        <input type="number" wire:model="respiratory_rate" placeholder="18" class="w-full bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-3 py-4 font-bold text-gray-900 dark:text-white outline-none transition-all text-sm" />
+                                    </div>
+                                    <div class="space-y-1.5">
+                                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">SpO2 (%)</label>
+                                        <input type="number" wire:model="spo2" placeholder="98" class="w-full bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-3 py-4 font-bold text-gray-900 dark:text-white outline-none transition-all text-sm" />
+                                    </div>
+                                </div>
+                            @endif
+
                             @if($growthStatus)
                             <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800">
                                 <div class="flex items-center justify-between mb-3">

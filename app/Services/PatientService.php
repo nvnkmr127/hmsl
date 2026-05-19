@@ -16,23 +16,20 @@ class PatientService
             
             if (!$setting) {
                 // Initialize if it doesn't exist. 
-                $query = Patient::withTrashed();
-                if (DB::connection()->getDriverName() === 'sqlite') {
-                    $currentMax = (int) $query->max('uhid');
-                } else {
-                    $currentMax = (int) $query->whereRaw('uhid REGEXP "^[0-9]+$"')->max('uhid');
-                }
-                $startValue = max($currentMax, 1150);
+                $currentMax = $this->getMaxNumericUHID();
+                $nextId = max($currentMax + 1, 1150);
                 
                 $setting = Setting::create([
                     'key' => 'next_uhid',
-                    'value' => (string) ($startValue + 1),
+                    'value' => (string) ($nextId + 1),
                     'group' => 'system'
                 ]);
-                
-                $nextId = $startValue;
             } else {
+                $currentMax = $this->getMaxNumericUHID();
                 $nextId = (int) $setting->value;
+                if ($nextId <= $currentMax) {
+                    $nextId = $currentMax + 1;
+                }
                 $setting->update(['value' => (string) ($nextId + 1)]);
             }
 
@@ -42,6 +39,17 @@ class PatientService
             // 2. Return the numeric ID (prefix removed for consistency with existing records)
             return (string) $nextId;
         });
+    }
+
+    private function getMaxNumericUHID()
+    {
+        $query = Patient::withTrashed();
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            return (int) $query->whereRaw("uhid GLOB '[0-9]*' AND uhid NOT GLOB '*[^0-9]*'")
+                ->max(DB::raw('CAST(uhid AS INTEGER)'));
+        } else {
+            return (int) $query->whereRaw('uhid REGEXP "^[0-9]+$"')->max('uhid');
+        }
     }
 
     public function getAll(?string $search = null, array $filters = [], string $sortBy = 'latest')

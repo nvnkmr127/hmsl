@@ -71,7 +71,11 @@ class IpdService
 
             $admission = Admission::create($data);
 
-            if (isset($data['weight']) || isset($data['height']) || isset($data['temperature'])) {
+            $hasVitals = collect(['weight', 'height', 'temperature', 'pulse', 'bp_systolic', 'bp_diastolic', 'resp_rate', 'respiratory_rate', 'spo2'])
+                ->contains(fn($key) => !empty($data[$key]));
+
+            if ($hasVitals) {
+                $respRate = $data['resp_rate'] ?? $data['respiratory_rate'] ?? null;
                 $vitalData = [
                     'patient_id' => $admission->patient_id,
                     'admission_id' => $admission->id,
@@ -81,6 +85,8 @@ class IpdService
                     'pulse' => $data['pulse'] ?? null,
                     'bp_systolic' => $data['bp_systolic'] ?? null,
                     'bp_diastolic' => $data['bp_diastolic'] ?? null,
+                    'resp_rate' => $respRate,
+                    'spo2' => $data['spo2'] ?? null,
                     'recorded_by' => Auth::id(),
                 ];
 

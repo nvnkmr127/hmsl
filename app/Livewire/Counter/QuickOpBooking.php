@@ -44,6 +44,13 @@ class QuickOpBooking extends Component
     public $reason;
     public $activeBookingFound = false;
 
+    // IPD Vitals
+    public $pulse;
+    public $bp_systolic;
+    public $bp_diastolic;
+    public $respiratory_rate;
+    public $spo2;
+
     #[On('patient-registered')]
     public function handlePatientRegistered($id = null)
     {
@@ -142,7 +149,11 @@ class QuickOpBooking extends Component
         if ($edit_id) {
             $this->editBooking($edit_id);
         } else {
-            $this->reset(['searchPatient', 'selectedPatient', 'selectedService', 'weight', 'height', 'temperature', 'notes', 'isEditing', 'editingId', 'isReview', 'isFollowUp']);
+            $this->reset([
+                'searchPatient', 'selectedPatient', 'selectedService', 'weight', 'height', 'temperature',
+                'pulse', 'bp_systolic', 'bp_diastolic', 'respiratory_rate', 'spo2',
+                'notes', 'isEditing', 'editingId', 'isReview', 'isFollowUp'
+            ]);
             
             if ($patient_id) {
                 $this->selectPatient($patient_id);
@@ -199,6 +210,11 @@ class QuickOpBooking extends Component
             $this->weight = $latestVitals->weight;
             $this->height = $latestVitals->height;
             $this->temperature = $latestVitals->temperature;
+            $this->pulse = $latestVitals->pulse;
+            $this->bp_systolic = $latestVitals->bp_systolic;
+            $this->bp_diastolic = $latestVitals->bp_diastolic;
+            $this->respiratory_rate = $latestVitals->resp_rate;
+            $this->spo2 = $latestVitals->spo2;
         }
 
         $this->dispatch('open-modal', name: 'quick-op-modal');
