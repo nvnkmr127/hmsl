@@ -46,7 +46,9 @@ class SyncController extends Controller
             'changes.*.data' => 'required|array',
         ]);
 
-        $results = $this->syncService->processIncomingChanges($payload['changes']);
+        $deviceId = $request->user()?->device_uuid ?? '00000000-0000-0000-0000-000000000000';
+
+        $results = $this->syncService->processIncomingChanges($payload['changes'], $deviceId);
 
         return response()->json([
             'success' => true,

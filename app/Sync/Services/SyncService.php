@@ -11,11 +11,11 @@ class SyncService
     /**
      * Process incoming changes from a local device.
      */
-    public function processIncomingChanges(array $changes): array
+    public function processIncomingChanges(array $changes, string $deviceId = null): array
     {
         $results = ['processed' => [], 'conflicts' => []];
 
-        DB::transaction(function () use ($changes, &$results) {
+        DB::transaction(function () use ($changes, $deviceId, &$results) {
             foreach ($changes as $change) {
                 $table = $change['table_name'] ?? $change['table'] ?? null;
                 $action = $change['action'];
@@ -23,10 +23,20 @@ class SyncService
                 
                 if (!$table || !$data) continue;
 
+                $data = $this->sanitizeData($data);
+
                 $uuid = $data['sync_id'] ?? null;
                 if (!$uuid) continue;
 
                 $existing = DB::table($table)->where('sync_id', $uuid)->first();
+
+                if (!$existing && isset($data['id'])) {
+                    $existingById = DB::table($table)->where('id', $data['id'])->first();
+                    if ($existingById) {
+                        DB::table($table)->where('id', $data['id'])->update(['sync_id' => $uuid]);
+                        $existing = DB::table($table)->where('sync_id', $uuid)->first();
+                    }
+                }
 
                 if ($action === 'create' || $action === 'update') {
                     if ($existing) {
@@ -48,15 +58,41 @@ class SyncService
                 }
                 
                 SyncAuditLog::create([
-                    'table_name' => $table,
-                    'record_uuid' => $uuid,
-                    'action' => $action,
-                    'status' => in_array($uuid, $results['conflicts']) ? 'conflict' : 'success',
+                    'device_id' => $deviceId ?? '00000000-0000-0000-0000-000000000000',
+                    'action' => 'push_record',
+                    'details' => [
+                        'table' => $table,
+                        'record_uuid' => $uuid,
+                        'action' => $action,
+                        'status' => in_array($uuid, $results['conflicts']) ? 'conflict' : 'success',
+                    ],
+                    'ip_address' => request()->ip(),
                 ]);
             }
         });
 
         return $results;
+    }
+
+    /**
+     * Sanitize and convert ISO 8601 datetime strings to database format.
+     */
+    protected function sanitizeData(array $data): array
+    {
+        foreach ($data as $key => $value) {
+            if (is_string($value)) {
+                if (preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/', $value)) {
+                    try {
+                        $data[$key] = Carbon::parse($value)->format('Y-m-d H:i:s');
+                    } catch (\Exception $e) {
+                        // Keep original if parsing fails
+                    }
+                }
+            } elseif (is_array($value)) {
+                $data[$key] = $this->sanitizeData($value);
+            }
+        }
+        return $data;
     }
 
     /**

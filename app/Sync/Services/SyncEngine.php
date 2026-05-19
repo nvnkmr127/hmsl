@@ -38,10 +38,11 @@ class SyncEngine
 
         try {
             $mappedChanges = $pending->map(function ($item) {
+                $data = is_string($item->payload) ? json_decode($item->payload, true) : $item->payload;
                 return [
                     'table' => $item->table_name,
                     'action' => $item->action,
-                    'data' => is_string($item->payload) ? json_decode($item->payload, true) : $item->payload,
+                    'data' => $this->sanitizeData($data),
                     'sync_version' => $item->sync_version,
                 ];
             })->toArray();
@@ -114,15 +115,23 @@ class SyncEngine
     protected function applyDelta(array $delta): void
     {
         $table = $delta['table'];
-        $data = $delta['data'];
+        $data = $this->sanitizeData($delta['data']);
         $uuid = $data['sync_id'] ?? null;
 
         if (!$uuid) return;
 
-        // Remove the primary ID from incoming data to prevent collisions
-        unset($data['id']);
-
         $existing = DB::table($table)->where('sync_id', $uuid)->first();
+
+        if (!$existing && isset($data['id'])) {
+            $existingById = DB::table($table)->where('id', $data['id'])->first();
+            if ($existingById) {
+                DB::table($table)->where('id', $data['id'])->update(['sync_id' => $uuid]);
+                $existing = DB::table($table)->where('sync_id', $uuid)->first();
+            }
+        }
+
+        // Remove the primary ID from incoming data to prevent collisions
+        // unset($data['id']);
 
         if ($existing) {
             // Only update if the incoming version is higher
@@ -135,5 +144,26 @@ class SyncEngine
         } else {
             DB::table($table)->insert($data);
         }
+    }
+
+    /**
+     * Sanitize and convert ISO 8601 datetime strings to database format.
+     */
+    protected function sanitizeData(array $data): array
+    {
+        foreach ($data as $key => $value) {
+            if (is_string($value)) {
+                if (preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/', $value)) {
+                    try {
+                        $data[$key] = \Carbon\Carbon::parse($value)->format('Y-m-d H:i:s');
+                    } catch (\Exception $e) {
+                        // Keep original if parsing fails
+                    }
+                }
+            } elseif (is_array($value)) {
+                $data[$key] = $this->sanitizeData($value);
+            }
+        }
+        return $data;
     }
 }
