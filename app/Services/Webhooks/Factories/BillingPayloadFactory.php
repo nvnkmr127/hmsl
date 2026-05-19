@@ -18,7 +18,7 @@ class BillingPayloadFactory
             'balance_amount' => (float) $bill->balance_amount,
             'payment_status' => $bill->payment_status,
             'pdf_url' => URL::signedRoute('billing.bills.pdf', ['bill' => $bill->id]),
-            'items' => $bill->billItems->map(fn($item) => [
+            'items' => $bill->items->map(fn($item) => [
                 'name' => $item->item_name,
                 'quantity' => $item->quantity,
                 'unit_price' => (float) $item->unit_price,

@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('inbound_webhooks', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('source')->index(); // e.g. 'stripe', 'custom', 'external_lab'
             $table->json('payload');
             $table->json('headers')->nullable();
