@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('webhook_endpoints', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('name', 150);
             $table->string('url', 500);
             $table->string('secret', 255);

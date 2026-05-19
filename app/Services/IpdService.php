@@ -292,8 +292,10 @@ class IpdService
 
     public function getDischargeDetails(Admission $admission): Admission
     {
-        // Automatically sync bill items before showing details
-        $this->ensureFinalBill($admission);
+        // Automatically sync bill items before showing details if final bill already exists
+        if ($admission->finalBill()->exists()) {
+            $this->ensureFinalBill($admission);
+        }
 
         $relations = [
             'patient',

@@ -12,8 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('webhook_logs', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('webhook_endpoint_id')->constrained()->onDelete('cascade');
+            $table->uuid('id')->primary();
+            $table->uuid('webhook_endpoint_id');
+            $table->foreign('webhook_endpoint_id')->references('id')->on('webhook_endpoints')->onDelete('cascade');
             $table->string('event_name', 100);
             $table->json('payload');
             $table->smallInteger('response_status')->nullable();
