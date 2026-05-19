@@ -158,6 +158,11 @@
             });
 
             // Background Sync Logic
+            if (navigator.onLine) {
+                console.log('App initialized and online. Triggering initial sync...');
+                Livewire.dispatch('trigger-background-sync');
+            }
+
             window.addEventListener('online', () => {
                 console.log('System is online. Triggering sync...');
                 Livewire.dispatch('trigger-background-sync');
