@@ -43,6 +43,7 @@ class IpdAdmissionForm extends Component
     public $isEmergency = false;
 
     public $searchPatient = '';
+    public $searchType = 'all';
     public $stats = [];
 
     public function mount($patientId = null)
@@ -132,13 +133,29 @@ class IpdAdmissionForm extends Component
     {
         $patients = [];
         if (strlen($this->searchPatient) >= 2) {
-            $patients = Patient::query()
-                ->where('first_name', 'like', "%{$this->searchPatient}%")
-                ->orWhere('last_name', 'like', "%{$this->searchPatient}%")
-                ->orWhere('uhid', 'like', "%{$this->searchPatient}%")
-                ->orWhere('phone', 'like', "%{$this->searchPatient}%")
-                ->limit(6)
-                ->get();
+            $patients = Patient::query();
+            
+            if ($this->searchType === 'uhid') {
+                $patients->where('uhid', 'like', "%{$this->searchPatient}%");
+            } elseif ($this->searchType === 'phone') {
+                $patients->where('phone', 'like', "%{$this->searchPatient}%");
+            } elseif ($this->searchType === 'mother_name') {
+                $patients->where('mother_name', 'like', "%{$this->searchPatient}%");
+            } elseif ($this->searchType === 'name') {
+                $patients->where(function($q) {
+                    $q->where('first_name', 'like', "%{$this->searchPatient}%")
+                      ->orWhere('last_name', 'like', "%{$this->searchPatient}%");
+                });
+            } else {
+                $patients->where(function($q) {
+                    $q->where('first_name', 'like', "%{$this->searchPatient}%")
+                      ->orWhere('last_name', 'like', "%{$this->searchPatient}%")
+                      ->orWhere('uhid', 'like', "%{$this->searchPatient}%")
+                      ->orWhere('phone', 'like', "%{$this->searchPatient}%");
+                });
+            }
+
+            $patients = $patients->limit(6)->get();
         }
 
         return view('livewire.counter.ipd-admission-form', [

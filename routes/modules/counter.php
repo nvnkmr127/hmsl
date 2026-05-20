@@ -35,6 +35,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/ipd/{admission}', [IpdController::class, 'show'])->name('ipd.show');
             Route::get('/ipd/{admission}/discharge', [IpdController::class, 'dischargeSummary'])->name('ipd.discharge');
             Route::get('/ipd/{admission}/discharge/print', [IpdController::class, 'printSummary'])->name('discharge.summary.print');
+            Route::get('/ipd/{admission}/print-case-sheet', [IpdController::class, 'printCaseSheet'])->name('ipd.print-case-sheet');
         });
 
         // Billing

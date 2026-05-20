@@ -502,16 +502,31 @@
                                         @error('wardId') <p class="text-[10px] font-bold text-rose-500 mt-1 ml-1">{{ $message }}</p> @enderror
                                     </div>
 
-                                    <div class="space-y-1.5">
-                                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Select Bed</label>
-                                        <select wire:model="bedId" class="w-full bg-white dark:bg-gray-950 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 font-bold text-gray-900 dark:text-white appearance-none transition-all outline-none" {{ !$wardId ? 'disabled' : '' }}>
-                                            <option value="">{{ !$wardId ? 'Select Ward First' : 'Select Bed...' }}</option>
-                                            @foreach($this->availableBeds as $bed)
-                                                <option value="{{ $bed->id }}">Bed #{{ $bed->bed_number }}</option>
-                                            @endforeach
-                                        </select>
-                                        @error('bedId') <p class="text-[10px] font-bold text-rose-500 mt-1 ml-1">{{ $message }}</p> @enderror
-                                    </div>
+                                    <div class="space-y-3">
+                                         <label class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1 block">Choose a Bed</label>
+                                         <div class="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                                             @forelse($this->availableBeds as $bed)
+                                                 <button 
+                                                     type="button"
+                                                     wire:click="$set('bedId', {{ $bed->id }})"
+                                                     class="group relative flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all {{ $bedId == $bed->id ? 'bg-indigo-600 border-indigo-600 text-white shadow-xl shadow-indigo-500/30' : 'bg-white dark:bg-gray-950 border-gray-100 dark:border-gray-800 hover:border-indigo-300' }}"
+                                                 >
+                                                     <svg class="w-6 h-6 mb-1 opacity-60 group-hover:opacity-100 transition-opacity {{ $bedId == $bed->id ? 'text-white' : 'text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                                                     <span class="text-[11px] font-black text-center leading-tight {{ $bedId == $bed->id ? 'text-white' : 'text-gray-700 dark:text-gray-300' }}">{{ $bed->bed_number }}</span>
+                                                     @if($bedId == $bed->id)
+                                                         <div class="absolute -top-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow">
+                                                             <svg class="w-3 h-3 text-indigo-600" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" /></svg>
+                                                         </div>
+                                                     @endif
+                                                 </button>
+                                             @empty
+                                                 <div class="col-span-full py-6 bg-gray-50 dark:bg-gray-950 rounded-2xl border-2 border-dashed border-gray-100 dark:border-gray-800 text-center">
+                                                     <p class="text-xs text-gray-400 font-black uppercase tracking-widest">{{ !$wardId ? 'Select ward first' : 'No beds available' }}</p>
+                                                 </div>
+                                             @endforelse
+                                         </div>
+                                         @error('bedId') <p class="text-[10px] font-bold text-rose-500 mt-1 ml-1">{{ $message }}</p> @enderror
+                                     </div>
                                 </div>
                             </div>
                         @endif
@@ -533,7 +548,7 @@
                                 <button type="submit" 
                                         wire:loading.attr="disabled"
                                         class="btn btn-primary px-10 py-4 shadow-xl shadow-indigo-500/30 rounded-2xl group transition-all active:scale-95">
-                                    <span wire:loading.remove>{{ $isIpd ? 'Confirm Admission' : 'Confirm & Print' }}</span>
+                                    <span wire:loading.remove>{{ $isIpd ? 'Confirm Admission & Print' : 'Confirm & Print' }}</span>
                                     <span wire:loading>Finalizing...</span>
                                 </button>
                             @else

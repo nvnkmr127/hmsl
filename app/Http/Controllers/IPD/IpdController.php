@@ -62,4 +62,16 @@ class IpdController extends Controller
 
         return view('pages.discharge.summary-print', compact('admission'));
     }
+
+    public function printCaseSheet(Admission $admission)
+    {
+        $admission->load([
+            'patient',
+            'bed.ward',
+            'doctor.user',
+            'ipdVitals' => fn($q) => $q->oldest()->limit(1),
+        ]);
+
+        return view('pages.ipd.case-sheet-print', compact('admission'));
+    }
 }

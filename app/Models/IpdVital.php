@@ -65,7 +65,7 @@ class IpdVital extends Model
         if ($this->bp_systolic && $this->bp_diastolic) {
             return $this->bp_systolic . '/' . $this->bp_diastolic;
         }
-        return $this->bp;
+        return $this->attributes['bp'] ?? null;
     }
 
     public function isAbnormalBp(): bool

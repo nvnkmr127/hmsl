@@ -113,6 +113,31 @@
         </button>
     </div>
 
+    <!-- Search Filters -->
+    <div class="mb-4 px-4">
+        <div class="flex items-center justify-between mb-3">
+            <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-0">Search By</label>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+            @foreach([
+                'all' => 'General',
+                'uhid' => 'UHID',
+                'phone' => 'Mobile',
+                'name' => 'Name',
+                'mother_name' => 'Mother'
+            ] as $value => $label)
+                <button 
+                    type="button"
+                    wire:click="$set('searchType', '{{ $value }}')"
+                    @click="setTimeout(() => { $refs.searchInput?.focus(); }, 50)"
+                    class="px-3 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border-2 {{ $searchType === $value ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-gray-50 dark:bg-gray-900 border-transparent text-gray-500 hover:border-gray-200 dark:hover:border-gray-700' }}"
+                >
+                    {{ $label }}
+                </button>
+            @endforeach
+        </div>
+    </div>
+
     <!-- Persistent Command Center: Search & Rapid Discovery -->
     <div class="mb-10 p-1 bg-white dark:bg-gray-900 rounded-[3rem] border border-gray-100 dark:border-gray-800 shadow-2xl shadow-indigo-500/5 transition-all focus-within:shadow-indigo-500/10 relative">
         <div class="flex flex-col lg:flex-row items-stretch gap-1">
@@ -123,7 +148,13 @@
                 </div>
                 <input 
                     type="text"
-                    placeholder="SEARCH FOR PATIENT: NAME, PATIENT ID OR MOBILE..."
+                    placeholder="SEARCH FOR PATIENT: {{ strtoupper([
+                        'all' => 'name, patient ID or mobile',
+                        'uhid' => 'UHID',
+                        'phone' => 'mobile number',
+                        'name' => 'patient name',
+                        'mother_name' => 'mother\'s name'
+                    ][$searchType] ?? $searchType) }}..."
                     wire:model.live.debounce.300ms="searchPatient"
                     x-ref="searchInput"
                     class="w-full bg-gray-50 dark:bg-gray-950 border-none rounded-[2.5rem] pl-20 pr-10 py-7 text-lg font-black tracking-widest text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-700 focus:ring-4 focus:ring-indigo-500/10 transition-all uppercase"
@@ -135,7 +166,7 @@
                     @if(count($patients))
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             @foreach($patients as $p)
-                                <div wire:click="selectPatient({{ $p->id }})" class="group cursor-pointer p-5 rounded-2xl bg-gray-50/50 dark:bg-gray-800/30 border border-transparent hover:border-indigo-500 hover:bg-white dark:hover:bg-gray-950 transition-all flex items-center justify-between shadow-sm hover:shadow-xl">
+                                <div wire:click="$dispatch('quick-op-booking', { patient_id: {{ $p->id }} })" class="group cursor-pointer p-5 rounded-2xl bg-gray-50/50 dark:bg-gray-800/30 border border-transparent hover:border-indigo-500 hover:bg-white dark:hover:bg-gray-950 transition-all flex items-center justify-between shadow-sm hover:shadow-xl">
                                     <div class="flex items-center gap-4">
                                         <div class="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center font-black text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all uppercase">
                                             {{ substr($p->first_name, 0, 1) }}
@@ -145,7 +176,7 @@
                                             <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">ID: {{ $p->uhid }} · {{ $p->phone }}</p>
                                         </div>
                                     </div>
-                                    <div class="px-3 py-1 bg-indigo-500 text-white rounded-lg text-[9px] font-black opacity-0 group-hover:opacity-100 transition-opacity">SELECT</div>
+                                    <div class="px-3 py-1 bg-indigo-500 text-white rounded-lg text-[9px] font-black opacity-0 group-hover:opacity-100 transition-opacity">ADMIT</div>
                                 </div>
                             @endforeach
                         </div>

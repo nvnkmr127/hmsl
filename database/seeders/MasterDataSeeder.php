@@ -97,20 +97,48 @@ class MasterDataSeeder extends Seeder
             }
         }
 
+        // Safe migration logic for General Ward
+        $oldGeneralWard = \App\Models\Ward::where('name', 'General Ward')
+            ->orWhere('name', 'General Ward A')
+            ->first();
+        if ($oldGeneralWard) {
+            $oldGeneralWard->name = 'GENERAL WARD';
+            $oldGeneralWard->daily_charge = 2700;
+            $oldGeneralWard->capacity = 10;
+            $oldGeneralWard->save();
+            foreach ($oldGeneralWard->beds as $bed) {
+                if (str_contains($bed->bed_number, 'General Ward')) {
+                    $bed->bed_number = str_replace('General Ward', 'GENERAL WARD', $bed->bed_number);
+                    $bed->save();
+                }
+            }
+        }
+
         $wards = [
-            ['name' => 'General Ward A', 'type' => 'General', 'daily_charge' => 1500, 'capacity' => 10],
-            ['name' => 'Cardiac ICU', 'type' => 'ICU', 'daily_charge' => 8000, 'capacity' => 5],
-            ['name' => 'Private Deluxe 101', 'type' => 'Private', 'daily_charge' => 4500, 'capacity' => 1],
-            ['name' => 'Private Deluxe 102', 'type' => 'Private', 'daily_charge' => 4500, 'capacity' => 1],
-            ['name' => 'Emergency Room', 'type' => 'ER', 'daily_charge' => 2000, 'capacity' => 8],
+            ['name' => 'SPECIAL (SINGLE) ROOM', 'type' => 'Private', 'daily_charge' => 4000, 'capacity' => 5],
+            ['name' => 'SPECIAL ROOM WITH AC', 'type' => 'Private', 'daily_charge' => 5000, 'capacity' => 5],
+            ['name' => 'SHARING ROOM', 'type' => 'Semi-Private', 'daily_charge' => 3000, 'capacity' => 8],
+            ['name' => 'GENERAL WARD', 'type' => 'General', 'daily_charge' => 2700, 'capacity' => 10],
+            ['name' => 'PICU', 'type' => 'ICU', 'daily_charge' => 5000, 'capacity' => 5],
+            ['name' => 'NICU', 'type' => 'ICU', 'daily_charge' => 5000, 'capacity' => 5],
         ];
+
+        // Delete other wards that are NOT in the new list of names
+        $newWardNames = array_column($wards, 'name');
+        $wardsToDelete = \App\Models\Ward::whereNotIn('name', $newWardNames)->get();
+        foreach ($wardsToDelete as $wDelete) {
+            // Only delete if no beds are occupied
+            $occupiedBedsCount = $wDelete->beds()->where('is_available', false)->count();
+            if ($occupiedBedsCount == 0) {
+                $wDelete->beds()->delete();
+                $wDelete->delete();
+            }
+        }
 
         $wardManager = new \App\Services\WardService();
         foreach ($wards as $w) {
             $ward = \App\Models\Ward::updateOrCreate(['name' => $w['name']], $w);
-            if ($ward->wasRecentlyCreated || $ward->beds()->count() == 0) {
-                $wardManager->generateBeds($ward);
-            }
+            $wardManager->syncBeds($ward);
         }
     }
 }

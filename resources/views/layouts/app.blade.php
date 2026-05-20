@@ -157,6 +157,14 @@
                 }
             });
 
+            // Auto-Print IPD Case Sheet
+            @if(session('print_ipd_case_sheet'))
+                setTimeout(() => {
+                    const url = "{{ route('counter.ipd.print-case-sheet', ['admission' => session('print_ipd_case_sheet')]) }}";
+                    printUrl(url);
+                }, 10);
+            @endif
+
             // Background Sync Logic
             if (navigator.onLine) {
                 console.log('App initialized and online. Triggering initial sync...');

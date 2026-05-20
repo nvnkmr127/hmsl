@@ -460,6 +460,7 @@ class QuickOpBooking extends Component
             $admission = $service->admitPatient($data);
             $this->dispatch('notify', ['type' => 'success', 'message' => "Patient admitted successfully: {$admission->admission_number}"]);
             $this->dispatch('close-modal', name: 'quick-op-modal');
+            session()->flash('print_ipd_case_sheet', $admission->id);
             return redirect()->route('counter.ipd.show', $admission->id);
         } catch (\Exception $e) {
             $this->dispatch('notify', ['type' => 'error', 'message' => $e->getMessage()]);
