@@ -197,7 +197,11 @@
             @endif
         </div>
     </div>
+    
+    <!-- Spacer to ensure scrollability for absolute positioned search results -->
+    <div class="min-h-[40vh]"></div>
 
+    {{-- 
     <form wire:submit.prevent="save" class="space-y-10">
         @if($patientId)
             <div class="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -381,6 +385,7 @@
             </div>
         </div>
     </form>
+    --}}
 
     <style>
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }

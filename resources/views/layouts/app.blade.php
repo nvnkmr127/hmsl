@@ -157,6 +157,20 @@
                 }
             });
 
+            Livewire.on('print-ipd-case-sheet', (event) => {
+                const id = event.id ?? event[0].id ?? event[0];
+                if (!id) return;
+                
+                const url = "{{ route('counter.ipd.print-case-sheet', ['admission' => ':id']) }}".replace(':id', id);
+                printUrl(url);
+                
+                // Redirect after starting the print
+                const redirectUrl = "{{ route('counter.ipd.show', ['admission' => ':id']) }}".replace(':id', id);
+                setTimeout(() => {
+                    window.location.href = redirectUrl;
+                }, 1500);
+            });
+
             // Auto-Print IPD Case Sheet
             @if(session('print_ipd_case_sheet'))
                 setTimeout(() => {
