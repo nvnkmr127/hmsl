@@ -39,5 +39,18 @@
         {{ $slot ?? '' }}
     </div>
 
+    <script>
+        // Trigger the print dialog instantly as soon as the HTML is parsed.
+        // BUT only if this page is opened directly in a tab (not in an iframe).
+        // If it's in an iframe, the parent app shell (layouts.app) will handle the print trigger.
+        if (window === window.top) {
+            setTimeout(function() {
+                window.print();
+            }, 100);
+        }
+        
+        // Optional: Close the tab after printing if desired
+        // window.onafterprint = function() { window.close(); };
+    </script>
 </body>
 </html>

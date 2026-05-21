@@ -10,8 +10,10 @@ class IpdController extends Controller
 {
     public function show(Admission $admission)
     {
-        // Automatically sync bill estimate
-        app(\App\Services\IpdService::class)->ensureFinalBill($admission);
+        // Automatically sync bill estimate only if it doesn't have a generated bill or if we haven't started discharge
+        if (!$admission->finalBill) {
+            app(\App\Services\IpdService::class)->ensureFinalBill($admission);
+        }
 
         $admission->load([
             'patient',

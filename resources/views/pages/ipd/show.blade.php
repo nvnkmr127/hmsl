@@ -89,9 +89,7 @@
             @if($admission->status === 'Admitted')
                 <x-card title="Quick Actions" class="mt-4">
                     <div class="space-y-2">
-                        <a href="{{ route('counter.ipd.discharge', $admission->id) }}" class="btn btn-primary w-full text-xs">
-                            Start Discharge Process
-                        </a>
+                        <livewire:ipd.discharge-process :admission="$admission" />
                         <div class="flex gap-2">
                             <livewire:ipd.transfer-bed :admission="$admission" />
                             @if($admission->finalBill)

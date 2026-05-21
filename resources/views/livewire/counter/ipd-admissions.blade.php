@@ -103,6 +103,9 @@
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                         </a>
                                         @if($adm->status === 'Admitted')
+                                            <button wire:click="initiateTransfer({{ $adm->id }})" class="p-3 bg-blue-50 dark:bg-blue-950/30 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm hover:shadow-lg hover:shadow-blue-500/20" title="Transfer Bed">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+                                            </button>
                                             <button wire:click="orderLabs({{ $adm->id }})" class="p-3 bg-sky-50 dark:bg-sky-950/30 text-sky-600 rounded-xl hover:bg-sky-600 hover:text-white transition-all shadow-sm hover:shadow-lg hover:shadow-sky-500/20" title="Order Labs">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9.75 3v6.75M14.25 3v6.75M21 21H3l5.625-11.25H15.375L21 21z" /></svg>
                                             </button>
@@ -217,6 +220,38 @@
                 <button type="button" @click="$dispatch('close-modal', { name: 'ipd-lab-order-modal' })" class="px-8 py-4 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-colors">Cancel</button>
                 <button type="button" wire:click="confirmLabOrder" class="px-10 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-indigo-500/20 transition-all active:scale-95">
                     Create Order
+                </button>
+            </div>
+        </div>
+    </x-modal>
+
+    <x-modal name="ipd-transfer-modal" title="Transfer Patient Bed" width="md">
+        <div class="p-6 space-y-4">
+            <div>
+                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Select New Ward & Bed</label>
+                <select wire:model="selectedTransferBedId" class="w-full mt-1 bg-gray-50 dark:bg-gray-950 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-4 py-3 outline-none transition-all font-bold text-gray-900 dark:text-white text-sm shadow-sm">
+                    <option value="">-- Select Available Bed --</option>
+                    @foreach($wards as $ward)
+                        @if($ward->beds->isNotEmpty())
+                            <optgroup label="{{ $ward->name }}">
+                                @foreach($ward->beds as $bed)
+                                    <option value="{{ $bed->id }}">Bed {{ $bed->bed_number }} (₹{{ $bed->per_day_charge ?? $ward->daily_charge ?? 0 }}/day)</option>
+                                @endforeach
+                            </optgroup>
+                        @endif
+                    @endforeach
+                </select>
+            </div>
+            
+            <div>
+                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Transfer Notes (Optional)</label>
+                <textarea wire:model.live="transferNotes" rows="2" class="w-full mt-1 bg-gray-50 dark:bg-gray-950 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-4 py-3 outline-none transition-all font-bold text-gray-900 dark:text-white text-sm shadow-sm"></textarea>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-2">
+                <button type="button" @click="$dispatch('close-modal', { name: 'ipd-transfer-modal' })" class="px-6 py-3 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-colors">Cancel</button>
+                <button type="button" wire:click="confirmTransfer" class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 transition-all active:scale-95">
+                    Transfer Now
                 </button>
             </div>
         </div>

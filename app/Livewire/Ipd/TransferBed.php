@@ -24,7 +24,14 @@ class TransferBed extends Component
         $this->newWardId = $admission->bed?->ward_id;
     }
 
-    public function transfer()
+    public function cancelTransfer()
+    {
+        $this->reset(['newBedId', 'reason']);
+        $this->newWardId = $this->admission->bed?->ward_id;
+        $this->dispatch('close-modal', name: 'transfer-bed-modal');
+    }
+
+    public function transfer(\App\Services\IpdService $manager)
     {
         $this->validate([
             'newWardId' => 'required|exists:wards,id',
@@ -32,47 +39,29 @@ class TransferBed extends Component
         ]);
 
         try {
-            DB::transaction(function () {
-                // Check if patient is still admitted
-                if ($this->admission->status !== 'Admitted') {
-                    throw new \RuntimeException('Only admitted patients can be transferred.');
-                }
+            $oldBedNumber = $this->admission->bed->bed_number ?? 'Unknown';
+            $manager->transferPatient($this->admission, $this->newBedId, $this->reason ?: null);
 
-                $oldBed = $this->admission->bed;
-                $newBed = Bed::query()->lockForUpdate()->findOrFail($this->newBedId);
-                
-                if (!$newBed->is_available) {
-                    throw new \RuntimeException('Selected bed is no longer available.');
-                }
-
-                if ($oldBed) {
-                    $oldBed->update(['is_available' => true]);
-                }
-
-                $newBed->update(['is_available' => false]);
-
-                $this->admission->update([
-                    'bed_id' => $this->newBedId,
-                ]);
-
-                // Log the transfer in clinical notes
-                \App\Models\IpdNote::create([
-                    'admission_id' => $this->admission->id,
-                    'patient_id' => $this->admission->patient_id,
-                    'note_type' => 'Progress',
-                    'note_date' => now(),
-                    'content' => "BED TRANSFER: Transferred from " . ($oldBed->bed_number ?? 'Unknown') . " to " . $newBed->bed_number . ". Reason: " . ($this->reason ?: 'Medical/Administrative'),
-                    'created_by' => auth()->id(),
-                ]);
-            });
+            $newBed = Bed::find($this->newBedId);
+            
+            // Log the transfer in clinical notes
+            \App\Models\IpdNote::create([
+                'admission_id' => $this->admission->id,
+                'patient_id' => $this->admission->patient_id,
+                'note_type' => 'Progress',
+                'note_date' => now(),
+                'content' => "BED TRANSFER: Transferred from " . $oldBedNumber . " to " . ($newBed->bed_number ?? 'Unknown') . ". Reason: " . ($this->reason ?: 'Medical/Administrative'),
+                'created_by' => auth()->id(),
+            ]);
 
             $this->dispatch('notify', [
                 'type' => 'success',
                 'message' => 'Patient transferred to ' . Bed::find($this->newBedId)->bed_number
             ]);
 
-            $this->showModal = false;
-            $this->reason = '';
+            $this->dispatch('close-modal', name: 'transfer-bed-modal');
+            $this->reset(['newBedId', 'reason']);
+            $this->newWardId = $newBed->ward_id;
         } catch (\RuntimeException $e) {
             $this->dispatch('notify', ['type' => 'error', 'message' => $e->getMessage()]);
         } catch (\Exception $e) {

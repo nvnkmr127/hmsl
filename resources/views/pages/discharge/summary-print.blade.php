@@ -3,150 +3,192 @@
 @section('title', 'Discharge Summary — ' . $admission->admission_number)
 
 @section('content')
-<div class="header">
-    <div class="hospital-info">
-        <h1>{{ \App\Models\Setting::get('hospital_name', 'City Care Hospital') }}</h1>
-        <p>{{ \App\Models\Setting::get('hospital_tagline', '') }}</p>
-        <p>{{ \App\Models\Setting::get('hospital_address', '') }}, {{ \App\Models\Setting::get('hospital_city', '') }}</p>
-        <p>📞 {{ \App\Models\Setting::get('hospital_phone', '') }} &nbsp;|&nbsp; ✉ {{ \App\Models\Setting::get('hospital_email', '') }}</p>
-    </div>
-    <div style="text-align:right">
-        <p style="font-size:18pt; font-weight:700; color:#4F46E5; margin:0">DISCHARGE SUMMARY</p>
-        <p style="margin:4px 0"><strong>{{ $admission->admission_number }}</strong></p>
-        <p style="color:#888; margin:2px 0">Printed: {{ now()->format('d/m/Y H:i') }}</p>
-    </div>
+<div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px;">
+    <img src="{{ asset('images/DW_header.png') }}" alt="Hospital Header" style="max-width: 100%; height: auto; max-height: 140px; object-fit: contain;">
 </div>
 
-<div class="content">
-    <div style="display:flex; gap:40px; margin-bottom:24px;">
-        <div style="flex:1; background:#f8f9ff; border-radius:8px; padding:16px;">
-            <p style="font-size:8pt; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:0.1em; margin:0 0 8px">Patient</p>
-            <p style="font-weight:700; font-size:13pt; margin:0 0 4px;">{{ $admission->patient->full_name }}</p>
-            <p style="color:#555; margin:2px 0">UHID: <strong>{{ $admission->patient->uhid }}</strong></p>
-            <p style="color:#555; margin:2px 0">Phone: {{ $admission->patient->phone }}</p>
-        </div>
-        <div style="flex:1; background:#f8f9ff; border-radius:8px; padding:16px;">
-            <p style="font-size:8pt; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:0.1em; margin:0 0 8px">Admission</p>
-            <p style="margin:2px 0">Ward: <strong>{{ $admission->bed?->ward?->name ?? '—' }}</strong></p>
-            <p style="margin:2px 0">Bed: <strong>{{ $admission->bed?->bed_number ?? '—' }}</strong></p>
-            <p style="margin:2px 0">Doctor: <strong>{{ $admission->doctor?->full_name ?? '—' }}</strong></p>
-            <p style="margin:2px 0">Admitted: {{ $admission->admission_date?->format('d/m/Y H:i') ?? '—' }}</p>
-            <p style="margin:2px 0">Discharged: {{ $admission->discharge_date?->format('d/m/Y H:i') ?? '—' }}</p>
-        </div>
-    </div>
+<div style="text-align: center; margin-bottom: 20px;">
+    <h2 style="margin: 0; font-size: 16pt; font-weight: bold; text-decoration: underline; font-family: Arial, sans-serif;">DISCHARGE SUMMARY & FINAL BILL</h2>
+</div>
 
-    <div style="margin-top:18px;">
-        <p style="font-size:8pt; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:0.1em; margin:0 0 8px">Reason for Admission</p>
-        <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:12px;">
-            <p style="margin:0; color:#111;">{{ $admission->reason_for_admission ?: '—' }}</p>
-        </div>
-    </div>
+<div class="content" style="font-family: Arial, sans-serif; font-size: 11pt; color: #000;">
+    <!-- PATIENT INFO -->
+    <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; margin-bottom: 15px;">
+        <tr>
+            <td style="padding: 8px; border: 1px solid #000; width: 15%;"><strong>Patient Name</strong></td>
+            <td style="padding: 8px; border: 1px solid #000; width: 35%;">{{ $admission->patient->full_name }}</td>
+            <td style="padding: 8px; border: 1px solid #000; width: 15%;"><strong>UHID / IP No</strong></td>
+            <td style="padding: 8px; border: 1px solid #000; width: 35%;">{{ $admission->patient->uhid }} / {{ $admission->admission_number }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px; border: 1px solid #000;"><strong>Age / Sex</strong></td>
+            <td style="padding: 8px; border: 1px solid #000;">{{ $admission->patient->age }} / {{ $admission->patient->gender }}</td>
+            <td style="padding: 8px; border: 1px solid #000;"><strong>Ward / Bed</strong></td>
+            <td style="padding: 8px; border: 1px solid #000;">{{ $admission->bed?->ward?->name ?? '—' }} - {{ $admission->bed?->bed_number ?? '—' }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px; border: 1px solid #000;"><strong>Admitted On</strong></td>
+            <td style="padding: 8px; border: 1px solid #000;">{{ $admission->admission_date?->format('d-m-Y h:i A') ?? '—' }}</td>
+            <td style="padding: 8px; border: 1px solid #000;"><strong>Discharged On</strong></td>
+            <td style="padding: 8px; border: 1px solid #000;">{{ $admission->discharge_date?->format('d-m-Y h:i A') ?? '—' }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px; border: 1px solid #000;"><strong>Consultant</strong></td>
+            <td style="padding: 8px; border: 1px solid #000;" colspan="3">{{ $admission->doctor?->full_name ?? '—' }}</td>
+        </tr>
+    </table>
 
-    <div style="margin-top:18px;">
-        <p style="font-size:8pt; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:0.1em; margin:0 0 8px">Discharge Notes</p>
-        <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:12px;">
-            <p style="margin:0; color:#111; white-space:pre-line;">{{ $admission->notes ?: '—' }}</p>
-        </div>
-    </div>
+    <!-- CLINICAL DETAILS -->
+    <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; margin-bottom: 15px;">
+        <tr>
+            <td style="padding: 8px; border: 1px solid #000; width: 20%;"><strong>Reason for Admission</strong></td>
+            <td style="padding: 8px; border: 1px solid #000;">{{ $admission->reason_for_admission ?: '—' }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px; border: 1px solid #000;"><strong>Discharge Notes</strong></td>
+            <td style="padding: 8px; border: 1px solid #000; white-space: pre-line;">{{ $admission->notes ?: '—' }}</td>
+        </tr>
+    </table>
 
-    <div style="margin-top:18px; display:flex; gap:16px;">
-        <div style="flex:1;">
-            <p style="font-size:8pt; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:0.1em; margin:0 0 8px">Vitals</p>
-            @php $latestVital = $admission->ipdVitals?->sortByDesc('recorded_at')->first(); @endphp
-            <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:12px;">
-                @if($latestVital)
-                    <p style="margin:0; color:#111;">Date: <strong>{{ $latestVital->recorded_at?->format('d/m/Y H:i') }}</strong></p>
-                    <p style="margin:4px 0 0; color:#555;">Temp: {{ $latestVital->temperature ?? '—' }}</p>
-                    <p style="margin:2px 0 0; color:#555;">Weight: {{ $latestVital->weight ?? '—' }}</p>
-                    <p style="margin:2px 0 0; color:#555;">BP: {{ $latestVital->bp_systolic ?? '—' }}{{ $latestVital->bp_diastolic ? '/' . $latestVital->bp_diastolic : '' }}</p>
-                    <p style="margin:2px 0 0; color:#555;">SpO2: {{ $latestVital->spo2 ?? '—' }}</p>
-                @else
-                    <p style="margin:0; color:#555;">No vitals recorded.</p>
-                @endif
-            </div>
-        </div>
-        <div style="flex:2;">
-            <p style="font-size:8pt; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:0.1em; margin:0 0 8px">Lab Orders</p>
-            <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:12px;">
-                @if($admission->labOrders?->count())
-                    <table style="width:100%; border-collapse:collapse; font-size:9pt;">
-                        <thead>
-                            <tr style="text-align:left; color:#6b7280;">
-                                <th style="padding:6px 4px;">Test</th>
-                                <th style="padding:6px 4px;">Status</th>
-                                <th style="padding:6px 4px;">Completed</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($admission->labOrders as $o)
-                                <tr>
-                                    <td style="padding:6px 4px; border-top:1px solid #f0f0f0;">{{ $o->labTest?->name ?? '—' }}</td>
-                                    <td style="padding:6px 4px; border-top:1px solid #f0f0f0;">{{ $o->status }}</td>
-                                    <td style="padding:6px 4px; border-top:1px solid #f0f0f0;">{{ $o->completed_at ? \Illuminate\Support\Carbon::parse($o->completed_at)->format('d/m/Y H:i') : '—' }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                @else
-                    <p style="margin:0; color:#555;">No lab orders.</p>
-                @endif
-            </div>
-        </div>
+    <!-- VITALS & MEDS -->
+    @php $latestVital = $admission->ipdVitals?->sortByDesc('recorded_at')->first(); @endphp
+    @if($latestVital)
+    <div style="margin-bottom: 15px;">
+        <strong>Vitals at Discharge:</strong> 
+        Temp: {{ $latestVital->temperature ?? '—' }} | 
+        BP: {{ $latestVital->bp_systolic ?? '—' }}{{ $latestVital->bp_diastolic ? '/' . $latestVital->bp_diastolic : '' }} | 
+        SpO2: {{ $latestVital->spo2 ?? '—' }}
     </div>
+    @endif
 
-    <div style="margin-top:18px;">
-        <p style="font-size:8pt; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:0.1em; margin:0 0 8px">Medications</p>
-        <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:12px;">
-            @php $dispensed = $admission->ipdMedications?->filter(fn ($m) => (bool) $m->is_dispensed) ?? collect(); @endphp
-            @if($dispensed->count())
-                <table style="width:100%; border-collapse:collapse; font-size:9pt;">
-                    <thead>
-                        <tr style="text-align:left; color:#6b7280;">
-                            <th style="padding:6px 4px;">Medicine</th>
-                            <th style="padding:6px 4px;">Dosage</th>
-                            <th style="padding:6px 4px;">Frequency</th>
-                            <th style="padding:6px 4px;">Duration</th>
-                            <th style="padding:6px 4px;">Route</th>
+    <div style="margin-bottom: 20px;">
+        <h3 style="margin: 0 0 5px; font-size: 12pt; text-decoration: underline;">Discharge Medications</h3>
+        @php $meds = $admission->dischargeSummary ? $admission->dischargeSummary->medications : collect(); @endphp
+        @if($meds->count())
+            <table style="width:100%; border: 1px solid #000; border-collapse: collapse; font-size: 10pt;">
+                <thead>
+                    <tr>
+                        <th style="padding: 6px; border: 1px solid #000; text-align: left;">Medicine</th>
+                        <th style="padding: 6px; border: 1px solid #000; text-align: left;">Dosage</th>
+                        <th style="padding: 6px; border: 1px solid #000; text-align: left;">Frequency</th>
+                        <th style="padding: 6px; border: 1px solid #000; text-align: left;">Duration</th>
+                        <th style="padding: 6px; border: 1px solid #000; text-align: left;">Instructions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($meds as $rx)
+                        <tr>
+                            <td style="padding: 6px; border: 1px solid #000;">{{ $rx->medicine_name }}</td>
+                            <td style="padding: 6px; border: 1px solid #000;">{{ $rx->dosage ?? '—' }}</td>
+                            <td style="padding: 6px; border: 1px solid #000;">{{ $rx->frequency ?? '—' }}</td>
+                            <td style="padding: 6px; border: 1px solid #000;">{{ $rx->duration ?? '—' }}</td>
+                            <td style="padding: 6px; border: 1px solid #000;">{{ $rx->instructions ?? '—' }}</td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($dispensed as $rx)
-                            <tr>
-                                <td style="padding:6px 4px; border-top:1px solid #f0f0f0;"><strong>{{ $rx->medicine_name ?? 'Medicine' }}</strong></td>
-                                <td style="padding:6px 4px; border-top:1px solid #f0f0f0;">{{ $rx->dosage ?? '—' }}</td>
-                                <td style="padding:6px 4px; border-top:1px solid #f0f0f0;">{{ $rx->frequency ?? '—' }}</td>
-                                <td style="padding:6px 4px; border-top:1px solid #f0f0f0;">{{ $rx->duration ?? '—' }}</td>
-                                <td style="padding:6px 4px; border-top:1px solid #f0f0f0;">{{ $rx->route ?? '—' }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            @else
-                <p style="margin:0; color:#555;">No dispensed medications.</p>
-            @endif
-        </div>
+                    @endforeach
+                </tbody>
+            </table>
+        @else
+            <p style="margin: 0;">No medications prescribed.</p>
+        @endif
     </div>
 
+    <!-- FINAL BILL -->
     @if(\Illuminate\Support\Facades\Schema::hasColumn('bills', 'admission_id') && $admission->finalBill)
-    <div style="margin-top:18px;">
-        <p style="font-size:8pt; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:0.1em; margin:0 0 8px">Final Bill</p>
-        <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:12px; display:flex; justify-content:space-between; gap: 20px;">
-            <div>
-                <p style="margin:0; color:#111;">Bill No: <strong>{{ $admission->finalBill->bill_number }}</strong></p>
-                <p style="margin:4px 0 0; color:#555;">Status: {{ strtoupper($admission->finalBill->payment_status) }}</p>
-                <p style="margin:4px 0 0; color:#555;">Paid: ₹{{ number_format((float) $admission->finalBill->paid_amount, 2) }} &nbsp;|&nbsp; Due: ₹{{ number_format(max(0, (float) $admission->finalBill->balance_amount), 2) }}</p>
-            </div>
-            <div style="text-align:right;">
-                <p style="margin:0; color:#555;">Total</p>
-                <p style="margin:2px 0 0; font-size:14pt; font-weight:800; color:#111;">₹{{ number_format($admission->finalBill->total_amount, 2) }}</p>
-            </div>
-        </div>
+    <div style="page-break-before: auto;">
+        <h3 style="margin: 0 0 5px; font-size: 12pt; text-decoration: underline;">Final Bill (Invoice No: {{ $admission->finalBill->bill_number }})</h3>
+        <table style="width:100%; border: 1px solid #000; border-collapse: collapse; font-size: 10pt; margin-bottom: 15px;">
+            <thead>
+                <tr>
+                    <th style="padding: 6px; border: 1px solid #000; text-align: center; width: 5%;">S.No</th>
+                    <th style="padding: 6px; border: 1px solid #000; text-align: left; width: 15%;">Date</th>
+                    <th style="padding: 6px; border: 1px solid #000; text-align: left; width: 50%;">Particulars</th>
+                    <th style="padding: 6px; border: 1px solid #000; text-align: right; width: 10%;">Qty</th>
+                    <th style="padding: 6px; border: 1px solid #000; text-align: right; width: 10%;">Rate (₹)</th>
+                    <th style="padding: 6px; border: 1px solid #000; text-align: right; width: 10%;">Amount (₹)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($admission->finalBill->items as $index => $item)
+                    @php
+                        $rawName = $item->item_name ?? $item->name;
+                        $dateStr = $item->created_at?->format('d-m-Y') ?? '—';
+                        if (preg_match('/\[(.*?)\]/', $rawName, $matches)) {
+                            $dateStr = trim($matches[1]);
+                            $rawName = trim(str_replace($matches[0], '', $rawName));
+                        }
+                    @endphp
+                    <tr>
+                        <td style="padding: 6px; border: 1px solid #000; text-align: center;">{{ $index + 1 }}</td>
+                        <td style="padding: 6px; border: 1px solid #000;">{{ str_replace('/', '-', $dateStr) }}</td>
+                        <td style="padding: 6px; border: 1px solid #000;">{{ $rawName }}</td>
+                        <td style="padding: 6px; border: 1px solid #000; text-align: right;">{{ $item->quantity }}</td>
+                        <td style="padding: 6px; border: 1px solid #000; text-align: right;">{{ number_format($item->unit_price, 2) }}</td>
+                        <td style="padding: 6px; border: 1px solid #000; text-align: right;">{{ number_format($item->total_price ?? ($item->quantity * $item->unit_price), 2) }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+
+        <!-- TOTALS & PAYMENTS -->
+        <table style="width:100%; border: none; border-collapse: collapse; font-size: 10pt; margin-bottom: 20px;">
+            <tr>
+                <td style="width: 50%; vertical-align: top;">
+                    @if($admission->finalBill->payments->count() > 0)
+                        <strong>Payment Details:</strong>
+                        <table style="width: 90%; border: 1px solid #000; border-collapse: collapse; margin-top: 5px;">
+                            <tr>
+                                <th style="border: 1px solid #000; padding: 4px;">Date</th>
+                                <th style="border: 1px solid #000; padding: 4px;">Method</th>
+                                <th style="border: 1px solid #000; padding: 4px;">Amount</th>
+                            </tr>
+                            @foreach($admission->finalBill->payments as $payment)
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 4px;">{{ $payment->received_at ? $payment->received_at->format('d-m-Y') : $payment->created_at->format('d-m-Y') }}</td>
+                                <td style="border: 1px solid #000; padding: 4px;">{{ $payment->method ?? 'Cash' }}</td>
+                                <td style="border: 1px solid #000; padding: 4px; text-align: right;">{{ number_format($payment->amount, 2) }}</td>
+                            </tr>
+                            @endforeach
+                        </table>
+                    @endif
+                </td>
+                <td style="width: 50%; vertical-align: top;">
+                    <table style="width: 100%; border: 1px solid #000; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 6px; border: 1px solid #000; font-weight: bold;">Subtotal</td>
+                            <td style="padding: 6px; border: 1px solid #000; text-align: right;">₹{{ number_format($admission->finalBill->subtotal, 2) }}</td>
+                        </tr>
+                        @if($admission->finalBill->discount_amount > 0)
+                        <tr>
+                            <td style="padding: 6px; border: 1px solid #000; font-weight: bold;">Discount</td>
+                            <td style="padding: 6px; border: 1px solid #000; text-align: right;">-₹{{ number_format($admission->finalBill->discount_amount, 2) }}</td>
+                        </tr>
+                        @endif
+                        <tr>
+                            <td style="padding: 8px; border: 1px solid #000; font-weight: bold; font-size: 12pt;">Grand Total</td>
+                            <td style="padding: 8px; border: 1px solid #000; text-align: right; font-weight: bold; font-size: 12pt;">₹{{ number_format($admission->finalBill->total_amount, 2) }}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 6px; border: 1px solid #000; font-weight: bold;">Total Paid</td>
+                            <td style="padding: 6px; border: 1px solid #000; text-align: right;">₹{{ number_format((float) $admission->finalBill->paid_amount, 2) }}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; border: 1px solid #000; font-weight: bold; font-size: 12pt;">Balance Due</td>
+                            <td style="padding: 8px; border: 1px solid #000; text-align: right; font-weight: bold; font-size: 12pt;">₹{{ number_format(max(0, (float) $admission->finalBill->balance_amount), 2) }}</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
     </div>
     @endif
 </div>
 
-<div class="footer">
-    <p>{{ \App\Models\Setting::get('invoice_footer', 'Thank you for choosing our hospital. Get well soon!') }}</p>
-    <p style="margin:4px 0;">Admission: {{ $admission->admission_number }} &nbsp;|&nbsp; Patient: {{ $admission->patient->uhid }}</p>
+<div style="margin-top: 40px; display: flex; justify-content: space-between;">
+    <div style="text-align: center;">
+        <p style="margin: 0; padding-top: 40px; border-top: 1px solid #000; display: inline-block; width: 200px;">Prepared By</p>
+    </div>
+    <div style="text-align: center;">
+        <p style="margin: 0; padding-top: 40px; border-top: 1px solid #000; display: inline-block; width: 200px;">Authorized Signatory</p>
+    </div>
 </div>
 @endsection

@@ -5,6 +5,7 @@
             ['route' => 'master.doctors.index', 'label' => 'Doctors'],
             ['route' => 'master.users.index', 'label' => 'Users'],
             ['route' => 'master.services.index', 'label' => 'Services'],
+            ['route' => 'master.ip-services.index', 'label' => 'IP Services'],
             ['route' => 'master.medicines.index', 'label' => 'Meds'],
             ['route' => 'master.labs.index', 'label' => 'Labs'],
             ['route' => 'master.wards.index', 'label' => 'Wards'],

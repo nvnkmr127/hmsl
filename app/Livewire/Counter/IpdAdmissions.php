@@ -20,12 +20,24 @@ class IpdAdmissions extends Component
     public ?int $selectedLabAdmissionId = null;
     public array $selectedLabTests = [];
     public ?string $labNotes = null;
+    
+    public ?int $selectedTransferAdmissionId = null;
+    public ?int $selectedTransferBedId = null;
+    public string $transferNotes = '';
 
     public function dischargePatient($id)
     {
         $this->selectedAdmissionId = (int) $id;
         $this->dischargeNotes = '';
         $this->dispatch('open-modal', name: 'ipd-discharge-modal');
+    }
+
+    public function initiateTransfer($id)
+    {
+        $this->selectedTransferAdmissionId = (int) $id;
+        $this->selectedTransferBedId = null;
+        $this->transferNotes = '';
+        $this->dispatch('open-modal', name: 'ipd-transfer-modal');
     }
 
     public function orderLabs($id): void
@@ -82,10 +94,31 @@ class IpdAdmissions extends Component
         $this->reset(['selectedAdmissionId', 'dischargeNotes']);
     }
 
+    public function confirmTransfer(IpdService $manager)
+    {
+        $this->validate([
+            'selectedTransferAdmissionId' => 'required|integer|exists:admissions,id',
+            'selectedTransferBedId' => 'required|integer|exists:beds,id',
+            'transferNotes' => 'nullable|string|max:1000',
+        ]);
+
+        $admission = Admission::findOrFail($this->selectedTransferAdmissionId);
+        
+        try {
+            $manager->transferPatient($admission, $this->selectedTransferBedId, $this->transferNotes ?: null);
+            
+            $this->dispatch('close-modal', name: 'ipd-transfer-modal');
+            $this->dispatch('notify', ['type' => 'success', 'message' => 'Patient transferred successfully!']);
+            $this->reset(['selectedTransferAdmissionId', 'selectedTransferBedId', 'transferNotes']);
+        } catch (\Exception $e) {
+            $this->dispatch('notify', ['type' => 'error', 'message' => $e->getMessage()]);
+        }
+    }
+
     public function render()
     {
         $admissions = Admission::with(['patient', 'bed', 'bed.ward', 'doctor.user'])
-            ->when(!$this->showDischarged, fn ($q) => $q->where('status', 'Admitted'))
+            ->where('status', $this->showDischarged ? 'Discharged' : 'Admitted')
             ->when($this->search, function ($query) {
                 $term = "%{$this->search}%";
                 $query->where(function ($q) use ($term) {
@@ -104,6 +137,9 @@ class IpdAdmissions extends Component
             'admissions' => $admissions,
             'dischargeTemplates' => \App\Models\ClinicalTemplate::where('type', 'discharge')->get(),
             'labTests' => LabTest::where('is_active', true)->orderBy('name')->get(['id', 'name', 'price']),
+            'wards' => \App\Models\Ward::with(['beds' => function($q) {
+                $q->where('is_available', true)->orderBy('bed_number');
+            }])->where('is_active', true)->orderBy('name')->get(),
         ]);
     }
 }

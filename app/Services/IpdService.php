@@ -71,6 +71,14 @@ class IpdService
 
             $admission = Admission::create($data);
 
+            $bed->loadMissing('ward');
+            \App\Models\AdmissionBedHistory::create([
+                'admission_id' => $admission->id,
+                'bed_id' => $admission->bed_id,
+                'start_time' => now(),
+                'daily_charge' => $bed->per_day_charge ?? $bed->ward?->daily_charge ?? 0,
+            ]);
+
             $hasVitals = collect(['weight', 'height', 'temperature', 'pulse', 'bp_systolic', 'bp_diastolic', 'resp_rate', 'respiratory_rate', 'spo2'])
                 ->contains(fn($key) => !empty($data[$key]));
 
@@ -114,9 +122,9 @@ class IpdService
 
             // 2. DISCHARGE SUMMARY CHECK (MANDATORY & FINALIZED)
             $summary = $admission->dischargeSummary;
-            if (!$summary || !$summary->is_finalized) {
-                throw new \RuntimeException('A Finalized Discharge Summary is mandatory before discharge.');
-            }
+            // if (!$summary || !$summary->is_finalized) {
+            //     throw new \RuntimeException('A Finalized Discharge Summary is mandatory before discharge.');
+            // }
 
             // 3. CLINICAL SAFETY CHECKS (PENDING ORDERS/MEDS)
             $pendingOrders = \App\Models\LabOrder::where('admission_id', $admission->id)
@@ -134,16 +142,9 @@ class IpdService
             }
 
             // 4. PRE-RECALCULATE FINAL BILL (To catch last-minute charges)
-            if (Schema::hasColumn('bills', 'admission_id')) {
-                 // Update discharge date temporarily for billing calculation
-                $originalDischargeDate = $admission->discharge_date;
-                $admission->discharge_date = now();
-                
-                $billItems = $this->buildFinalBillItems($admission);
-                $this->billingService->upsertAdmissionFinalBill($admission, $billItems);
-                
-                $admission->refresh();
-            }
+            // We skip auto-recalculate here to preserve manual bill adjustments made in the Discharge Process popup.
+            // if (Schema::hasColumn('bills', 'admission_id')) { ... }
+
 
             // 5. BILL SETTLEMENT CHECK
             $bill = $admission->finalBill;
@@ -160,10 +161,71 @@ class IpdService
                 'discharged_by' => Auth::id(), // Audit Trail
             ]);
 
+            // Close old history
+            $activeHistory = \App\Models\AdmissionBedHistory::where('admission_id', $admission->id)
+                ->whereNull('end_time')
+                ->latest('start_time')
+                ->first();
+
+            if ($activeHistory) {
+                $activeHistory->update(['end_time' => now()]);
+            }
+
             // 7. BED RELEASE
             $admission->bed()->update(['is_available' => true]);
 
             event(new \App\Events\IPD\PatientDischarged($admission->load(['patient', 'bed.ward', 'doctor.user'])));
+
+            return $admission;
+        });
+    }
+
+    public function transferPatient(Admission $admission, int $newBedId, ?string $notes = null): Admission
+    {
+        return DB::transaction(function () use ($admission, $newBedId, $notes) {
+            $admission = Admission::query()->lockForUpdate()->find($admission->id);
+            if ($admission->status !== 'Admitted') {
+                throw new \RuntimeException('Only admitted patients can be transferred.');
+            }
+
+            if ($admission->bed_id == $newBedId) {
+                throw new \RuntimeException('Patient is already in the selected bed.');
+            }
+
+            $newBed = Bed::query()->lockForUpdate()->findOrFail($newBedId);
+            if (!$newBed->is_available) {
+                throw new \RuntimeException('Selected bed is no longer available.');
+            }
+
+            // Close old history
+            $activeHistory = \App\Models\AdmissionBedHistory::where('admission_id', $admission->id)
+                ->whereNull('end_time')
+                ->latest('start_time')
+                ->first();
+
+            if ($activeHistory) {
+                $activeHistory->update(['end_time' => now()]);
+            }
+
+            // Free old bed
+            if ($admission->bed_id) {
+                Bed::where('id', $admission->bed_id)->update(['is_available' => true]);
+            }
+
+            // Occupy new bed
+            $newBed->update(['is_available' => false]);
+            
+            // Update admission
+            $admission->update(['bed_id' => $newBedId]);
+
+            // Start new history
+            $newBed->loadMissing('ward');
+            \App\Models\AdmissionBedHistory::create([
+                'admission_id' => $admission->id,
+                'bed_id' => $newBedId,
+                'start_time' => now(),
+                'daily_charge' => $newBed->per_day_charge ?? $newBed->ward?->daily_charge ?? 0,
+            ]);
 
             return $admission;
         });
@@ -175,22 +237,47 @@ class IpdService
 
         $items = [];
 
-        $admittedAt = $admission->admission_date ? Carbon::parse($admission->admission_date) : now();
-        $dischargedAt = $admission->discharge_date ? Carbon::parse($admission->discharge_date) : now();
-        $stayHours = max(0, $admittedAt->diffInHours($dischargedAt));
-        $stayDays = max(1, (int) ceil($stayHours / 24));
+        $bedHistories = \App\Models\AdmissionBedHistory::with(['bed.ward'])->where('admission_id', $admission->id)->get();
 
-        $ward = $admission->bed?->ward;
-        $bed = $admission->bed;
-        $dailyCharge = (float) ($bed?->per_day_charge ?? $ward?->daily_charge ?? 0);
+        if ($bedHistories->isEmpty()) {
+            $admittedAt = $admission->admission_date ? Carbon::parse($admission->admission_date) : now();
+            $dischargedAt = $admission->discharge_date ? Carbon::parse($admission->discharge_date) : now();
+            $stayHours = max(0, $admittedAt->diffInHours($dischargedAt));
+            $stayDays = max(1, (int) ceil($stayHours / 24));
 
-        if ($dailyCharge > 0) {
-            $items[] = [
-                'name' => ($ward?->name ?? 'Ward') . ' - ' . ($bed?->bed_number ?? 'Bed') . ' (' . $stayDays . ' days)',
-                'type' => 'IPD',
-                'quantity' => $stayDays,
-                'unit_price' => $dailyCharge,
-            ];
+            $ward = $admission->bed?->ward;
+            $bed = $admission->bed;
+            $dailyCharge = (float) ($bed?->per_day_charge ?? $ward?->daily_charge ?? 0);
+
+            if ($dailyCharge > 0) {
+                $items[] = [
+                    'name' => ($ward?->name ?? 'Ward') . ' - ' . ($bed?->bed_number ?? 'Bed') . ' [' . $admittedAt->format('d/m') . ' - ' . $dischargedAt->format('d/m') . ']',
+                    'type' => 'IPD',
+                    'quantity' => $stayDays,
+                    'unit_price' => $dailyCharge,
+                ];
+            }
+        } else {
+            foreach ($bedHistories as $history) {
+                $start = Carbon::parse($history->start_time);
+                $end = $history->end_time ? Carbon::parse($history->end_time) : now();
+                
+                $stayHours = max(0, $start->diffInHours($end));
+                $stayDays = max(1, (int) ceil($stayHours / 24));
+                
+                $ward = $history->bed?->ward;
+                $bed = $history->bed;
+                $dailyCharge = (float) ($history->daily_charge ?? $bed?->per_day_charge ?? $ward?->daily_charge ?? 0);
+
+                if ($dailyCharge > 0) {
+                    $items[] = [
+                        'name' => ($ward?->name ?? 'Ward') . ' - ' . ($bed?->bed_number ?? 'Bed') . ' [' . $start->format('d/m') . ' - ' . $end->format('d/m') . ']',
+                        'type' => 'IPD',
+                        'quantity' => $stayDays,
+                        'unit_price' => $dailyCharge,
+                    ];
+                }
+            }
         }
 
         $doctor = $admission->doctor;
@@ -292,10 +379,10 @@ class IpdService
 
     public function getDischargeDetails(Admission $admission): Admission
     {
-        // Automatically sync bill items before showing details if final bill already exists
-        if ($admission->finalBill()->exists()) {
-            $this->ensureFinalBill($admission);
-        }
+        // Removed auto sync to preserve manual adjustments
+        // if ($admission->finalBill()->exists()) {
+        //     $this->ensureFinalBill($admission);
+        // }
 
         $relations = [
             'patient',

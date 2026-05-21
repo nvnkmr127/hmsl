@@ -13,6 +13,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/departments', [DepartmentController::class, 'index'])->name('departments.index');
         Route::get('/doctors', [DoctorController::class, 'index'])->name('doctors.index');
         Route::get('/services', [ServiceController::class, 'index'])->name('services.index');
+        Route::get('/ip-services', [\App\Http\Controllers\Master\IpServiceController::class, 'index'])->name('ip-services.index');
         Route::get('/medicines', [MedicineController::class, 'index'])->name('medicines.index');
         Route::get('/labs', [LabController::class, 'index'])->name('labs.index');
         Route::get('/wards', [WardController::class, 'index'])->name('wards.index');
