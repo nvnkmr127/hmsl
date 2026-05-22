@@ -44,16 +44,13 @@
     .print-meta { font-size: 6.5pt; color: #666; }
 </style>
 
-<div class="header-layout">
-    <div class="hospital-info">
-        <h1>{{ \App\Models\Setting::get('hospital_name', 'DWARAKAMAI HOSPITAL') }}</h1>
-        <p>{{ \App\Models\Setting::get('hospital_address') }}, {{ \App\Models\Setting::get('hospital_city') }}</p>
-        <p>Ph: {{ \App\Models\Setting::get('hospital_phone') }} | Email: {{ \App\Models\Setting::get('hospital_email') }}</p>
-    </div>
-    <div class="bill-title-meta">
-        <h2>FINAL BILL</h2>
-        <div class="invoice-no">#{{ $bill->bill_number }}</div>
-    </div>
+<div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 10px;">
+    <img src="{{ asset('images/DW_header.png') }}" alt="Hospital Header" style="max-width: 100%; height: auto; max-height: 90px; object-fit: contain;">
+</div>
+
+<div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px;">
+    <h2 style="margin: 0; font-size: 14pt; font-weight: 900; text-decoration: underline; color: #000;">FINAL BILL</h2>
+    <div class="invoice-no" style="font-weight: 800; font-size: 9pt; color: #000;">Invoice No: #{{ $bill->bill_number }}</div>
 </div>
 
 <div class="patient-section">
