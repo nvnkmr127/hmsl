@@ -60,7 +60,7 @@
                     <span class="label">Consultation Fee</span><br>
                     <span class="value" style="font-size: 13pt;">
                         @if($consultation->visit_type === 'Review' || $consultation->fee <= 0)
-                            REVIEW VISIT
+                            Review visit
                         @else
                             ₹{{ number_format($consultation->fee, 0) }}
                         @endif

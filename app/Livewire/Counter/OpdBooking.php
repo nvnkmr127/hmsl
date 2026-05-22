@@ -189,8 +189,12 @@ class OpdBooking extends Component
 
     public function refreshValidity()
     {
-        $opdService = app(OpdService::class);
-        $this->valid_upto = $opdService->getValidityDate($this->consultation_date, $this->selectedService ?: null);
+        if ($this->selectedPatient) {
+            $this->recalculateDetails();
+        } else {
+            $opdService = app(OpdService::class);
+            $this->valid_upto = $opdService->getValidityDate($this->consultation_date, $this->selectedService ?: null);
+        }
     }
 
     public function updatedSelectedService($id)

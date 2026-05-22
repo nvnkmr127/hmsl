@@ -14,7 +14,7 @@ class OpdService
 {
     protected $billingService;
     const EMERGENCY_FEE = 500;
-    const NEWBORN_FREE_DAYS = 7;
+    const NEWBORN_FREE_DAYS = 9;
 
     public function __construct(\App\Services\BillingService $billingService)
     {
@@ -110,6 +110,20 @@ class OpdService
         $isEmergency = $this->isEmergencyPricing();
         $isNewbornBenefit = $this->isEligibleNewborn($patient, $dateStr);
 
+        $activeValidConsultation = Consultation::where('patient_id', $patient->id)
+            ->where('status', '!=', 'Cancelled')
+            ->where('valid_upto', '>=', $dateStr)
+            ->orderBy('valid_upto', 'desc')
+            ->first();
+
+        if ($activeValidConsultation) {
+            $calculatedValidUpto = Carbon::parse($activeValidConsultation->valid_upto)->toDateString();
+        } else if ($isNewbornBenefit) {
+            $calculatedValidUpto = $date->copy()->addDays(9)->toDateString();
+        } else {
+            $calculatedValidUpto = $this->getValidityDate($dateStr, $serviceId ?: ($latestConsultation?->service_id));
+        }
+
         if ($isNewbornBenefit) {
             return [
                 'is_review' => false,
@@ -117,7 +131,7 @@ class OpdService
                 'suggested_fee' => 0.0,
                 'is_emergency' => false,
                 'is_newborn_benefit' => true,
-                'valid_upto' => $this->getValidityDate($dateStr, $serviceId ?: ($latestConsultation?->service_id)),
+                'valid_upto' => $calculatedValidUpto,
                 'latest_consultation' => $latestConsultation,
             ];
         }
@@ -129,7 +143,7 @@ class OpdService
                 'suggested_fee' => (float) self::EMERGENCY_FEE,
                 'is_emergency' => true,
                 'is_newborn_benefit' => false,
-                'valid_upto' => $this->getValidityDate($dateStr, $serviceId ?: ($latestConsultation?->service_id)),
+                'valid_upto' => $calculatedValidUpto,
                 'latest_consultation' => $latestConsultation,
             ];
         }
@@ -161,15 +175,13 @@ class OpdService
             }
         }
 
-        $validUpto = $this->getValidityDate($dateStr, $serviceId ?: ($latestConsultation?->service_id));
-
         return [
             'is_review' => $isReview,
             'is_follow_up' => $isFollowUp,
             'suggested_fee' => (float)$suggestedFee,
             'is_emergency' => false,
             'is_newborn_benefit' => false,
-            'valid_upto' => $validUpto,
+            'valid_upto' => $calculatedValidUpto,
             'latest_consultation' => $latestConsultation,
         ];
     }
@@ -241,13 +253,29 @@ class OpdService
                 ? $service->validity_days 
                 : \App\Models\Setting::get('opd_validity_days', 7);
 
-            $data['valid_upto'] = $data['valid_upto'] ?? $consultationDate->copy()->addDays((int)$validityDays)->toDateString();
-
             $patient = \App\Models\Patient::find($data['patient_id']);
             $isNewbornBenefit = $patient ? $this->isEligibleNewborn($patient, $data['consultation_date']) : false;
             $isEmergency = $this->isEmergencyPricing();
             
             $isFollowUp = $this->hasActiveValidity($data['patient_id'], $data['service_id'] ?? null, $data['consultation_date']);
+
+            if (!isset($data['valid_upto'])) {
+                $activeValidConsultation = Consultation::where('patient_id', $data['patient_id'])
+                    ->where('status', '!=', 'Cancelled')
+                    ->where('valid_upto', '>=', $data['consultation_date'])
+                    ->orderBy('valid_upto', 'desc')
+                    ->first();
+                
+                if ($activeValidConsultation) {
+                    $data['valid_upto'] = Carbon::parse($activeValidConsultation->valid_upto)->toDateString();
+                } else {
+                    if ($isNewbornBenefit) {
+                        $data['valid_upto'] = $consultationDate->copy()->addDays(9)->toDateString();
+                    } else {
+                        $data['valid_upto'] = $consultationDate->copy()->addDays((int)$validityDays)->toDateString();
+                    }
+                }
+            }
 
             // Priority logic for fee assignment
             if ($isNewbornBenefit) {
