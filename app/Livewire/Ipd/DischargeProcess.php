@@ -111,15 +111,10 @@ class DischargeProcess extends Component
                 $charge = &$this->bedCharges[$index];
 
                 if ($field === 'ward_id' && !empty($charge['ward_id'])) {
-                    if ($charge['ward_id'] === 'manual') {
-                        $charge['name'] = '';
-                        $charge['price'] = 0;
-                    } else {
-                        $ward = Ward::find($charge['ward_id']);
-                        if ($ward) {
-                            $charge['name'] = $ward->name;
-                            $charge['price'] = (float) $ward->daily_charge;
-                        }
+                    $ward = Ward::find($charge['ward_id']);
+                    if ($ward) {
+                        $charge['name'] = $ward->name;
+                        $charge['price'] = (float) $ward->daily_charge;
                     }
                 }
 
@@ -170,15 +165,10 @@ class DischargeProcess extends Component
                 $charge = &$this->ipServiceCharges[$index];
 
                 if ($field === 'service_id' && !empty($charge['service_id'])) {
-                    if ($charge['service_id'] === 'manual') {
-                        $charge['name'] = '';
-                        $charge['price'] = 0;
-                    } else {
-                        $service = \App\Models\IpService::find($charge['service_id']);
-                        if ($service) {
-                            $charge['name'] = $service->name;
-                            $charge['price'] = (float) $service->price;
-                        }
+                    $service = \App\Models\IpService::find($charge['service_id']);
+                    if ($service) {
+                        $charge['name'] = $service->name;
+                        $charge['price'] = (float) $service->price;
                     }
                 }
 
@@ -217,6 +207,11 @@ class DischargeProcess extends Component
 
     public function generateBill()
     {
+        $this->validate([
+            'bedCharges.*.ward_id' => 'required|exists:wards,id',
+            'ipServiceCharges.*.service_id' => 'required|exists:ip_services,id',
+        ]);
+
         $billingService = app(BillingService::class);
         
         $finalItems = [];
@@ -270,9 +265,7 @@ class DischargeProcess extends Component
 
         // Upsert final bill
         $billingService->upsertAdmissionFinalBill($this->admission, $finalItems);
-        
-        // Update discharge status so IpdService won't overwrite it later
-        $this->admission->update(['discharge_date' => now()]);
+
 
         $this->dispatch('close-modal', name: 'discharge-process-modal');
         $this->dispatch('refresh');

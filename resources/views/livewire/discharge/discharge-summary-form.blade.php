@@ -75,6 +75,11 @@
                         @elseif($summary->status === 'Review')
                             <button wire:click="returnToDraft" class="btn btn-secondary w-full mb-2">Return to Draft</button>
                             <button wire:click="finalize" class="btn btn-primary w-full">Finalize</button>
+                        @elseif($summary->is_finalized && $admission->status === 'Admitted')
+                            <button wire:click="dischargePatient" class="w-full px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl transition-all shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Discharge Patient
+                            </button>
                         @endif
                     </div>
                 </x-card>

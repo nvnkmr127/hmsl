@@ -39,10 +39,12 @@ class BillGenerate extends Component
         $doctorName = $consultation->doctor ? ' - ' . $consultation->doctor->full_name : '';
         $this->items = [
             [
+                'service_key' => 'Service:' . $consultation->service_id,
                 'name' => ($consultation->service?->name ?? 'Consultation Fee') . $doctorName,
                 'type' => 'Consultation',
                 'quantity' => 1,
-                'unit_price' => $consultation->fee
+                'unit_price' => $consultation->fee,
+                'is_preset' => true
             ]
         ];
 
@@ -73,7 +75,14 @@ class BillGenerate extends Component
         $this->patientName = $patient->full_name;
 
         $this->items = [
-            ['name' => 'Service', 'type' => 'Other', 'quantity' => 1, 'unit_price' => 0],
+            [
+                'service_key' => '',
+                'name' => '',
+                'type' => '',
+                'quantity' => 1,
+                'unit_price' => 0,
+                'is_preset' => false
+            ],
         ];
         $this->discount = 0;
         $this->discountType = 'flat';
@@ -87,9 +96,95 @@ class BillGenerate extends Component
         $this->dispatch('open-modal', name: 'billing-modal');
     }
 
+    public function getMasterServicesProperty()
+    {
+        $services = \App\Models\Service::where('is_active', true)->get()->map(function($s) {
+            return [
+                'key' => 'Service:' . $s->id,
+                'name' => $s->name,
+                'price' => (float)$s->price,
+                'type' => 'Service',
+                'label' => $s->name . ' (OPD - ₹' . number_format($s->price) . ')'
+            ];
+        });
+
+        $ipServices = \App\Models\IpService::where('is_active', true)->get()->map(function($s) {
+            return [
+                'key' => 'IpService:' . $s->id,
+                'name' => $s->name,
+                'price' => (float)$s->price,
+                'type' => 'IP Service',
+                'label' => $s->name . ' (IPD - ₹' . number_format($s->price) . ')'
+            ];
+        });
+
+        $labTests = \App\Models\LabTest::where('is_active', true)->get()->map(function($s) {
+            return [
+                'key' => 'LabTest:' . $s->id,
+                'name' => $s->name,
+                'price' => (float)$s->price,
+                'type' => 'Lab',
+                'label' => $s->name . ' (Lab - ₹' . number_format($s->price) . ')'
+            ];
+        });
+
+        return $services->concat($ipServices)->concat($labTests)->toArray();
+    }
+
+    public function updatedItems($value, $key)
+    {
+        $parts = explode('.', $key);
+        if (count($parts) >= 2) {
+            $index = $parts[0];
+            $field = $parts[1];
+
+            if ($field === 'service_key' && !empty($value)) {
+                list($type, $id) = explode(':', $value);
+                
+                $name = '';
+                $price = 0;
+                $itemType = 'Other';
+
+                if ($type === 'Service') {
+                    $model = \App\Models\Service::find($id);
+                    if ($model) {
+                        $name = $model->name;
+                        $price = $model->price;
+                        $itemType = 'Service';
+                    }
+                } elseif ($type === 'IpService') {
+                    $model = \App\Models\IpService::find($id);
+                    if ($model) {
+                        $name = $model->name;
+                        $price = $model->price;
+                        $itemType = 'IP Service';
+                    }
+                } elseif ($type === 'LabTest') {
+                    $model = \App\Models\LabTest::find($id);
+                    if ($model) {
+                        $name = $model->name;
+                        $price = $model->price;
+                        $itemType = 'Lab';
+                    }
+                }
+
+                $this->items[$index]['name'] = $name;
+                $this->items[$index]['type'] = $itemType;
+                $this->items[$index]['unit_price'] = (float) $price;
+            }
+        }
+    }
+
     public function addItem()
     {
-        $this->items[] = ['name' => '', 'type' => 'Misc', 'quantity' => 1, 'unit_price' => 0];
+        $this->items[] = [
+            'service_key' => '',
+            'name' => '',
+            'type' => '',
+            'quantity' => 1,
+            'unit_price' => 0,
+            'is_preset' => false
+        ];
     }
 
     public function removeItem($index)
@@ -122,7 +217,53 @@ class BillGenerate extends Component
             'paymentMethod' => 'nullable|string|max:50',
             'discount' => 'numeric|min:0',
             'discountReason' => 'nullable|required_if:discount,>0|string|max:255',
+            'items.*.service_key' => 'required_without:items.*.is_preset',
+            'items.*.quantity' => 'required|integer|min:1',
         ]);
+
+        foreach ($this->items as $item) {
+            if (!empty($item['is_preset'])) {
+                continue;
+            }
+            if (empty($item['service_key'])) {
+                $this->dispatch('notify', ['type' => 'error', 'message' => 'Please select a service for all items.']);
+                return;
+            }
+            list($type, $id) = explode(':', $item['service_key']);
+            
+            $dbPrice = null;
+            $dbName = '';
+
+            if ($type === 'Service') {
+                $model = \App\Models\Service::find($id);
+                if ($model) {
+                    $dbPrice = (float) $model->price;
+                    $dbName = $model->name;
+                }
+            } elseif ($type === 'IpService') {
+                $model = \App\Models\IpService::find($id);
+                if ($model) {
+                    $dbPrice = (float) $model->price;
+                    $dbName = $model->name;
+                }
+            } elseif ($type === 'LabTest') {
+                $model = \App\Models\LabTest::find($id);
+                if ($model) {
+                    $dbPrice = (float) $model->price;
+                    $dbName = $model->name;
+                }
+            }
+
+            if ($dbPrice === null) {
+                $this->dispatch('notify', ['type' => 'error', 'message' => 'Invalid service selected.']);
+                return;
+            }
+
+            if ((float)$item['unit_price'] !== $dbPrice || $item['name'] !== $dbName) {
+                $this->dispatch('notify', ['type' => 'error', 'message' => 'Service pricing discrepancy detected. Please try again.']);
+                return;
+            }
+        }
 
         try {
             $bill = $service->createBill([

@@ -17,13 +17,22 @@
                         @foreach($items as $index => $item)
                             <tr>
                                 <td>
-                                    <x-form.input wire:model="items.{{ $index }}.name" placeholder="Service / Item Name" />
+                                    @if(!empty($item['is_preset']))
+                                        <x-form.input wire:model="items.{{ $index }}.name" placeholder="Service / Item Name" readonly />
+                                    @else
+                                        <select wire:model.live="items.{{ $index }}.service_key" class="block w-full rounded-2xl border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 px-4 py-3 text-sm font-bold shadow-sm">
+                                            <option value="">Select Service / Item...</option>
+                                            @foreach($this->masterServices as $srv)
+                                                <option value="{{ $srv['key'] }}">{{ $srv['label'] }}</option>
+                                            @endforeach
+                                        </select>
+                                    @endif
                                 </td>
                                 <td class="w-24">
                                     <x-form.input type="number" wire:model.live="items.{{ $index }}.quantity" class="text-center" />
                                 </td>
                                 <td class="w-32">
-                                    <x-form.input type="number" step="1" wire:model.live="items.{{ $index }}.unit_price" class="text-right" />
+                                    <x-form.input type="number" step="1" wire:model.live="items.{{ $index }}.unit_price" class="text-right" readonly />
                                 </td>
                                 <td class="text-right font-bold text-gray-900 dark:text-white px-4">
                                     ₹{{ number_format($item['quantity'] * $item['unit_price'], 2) }}

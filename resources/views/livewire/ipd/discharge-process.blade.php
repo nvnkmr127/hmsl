@@ -26,14 +26,10 @@
                                     <label class="text-[10px] uppercase font-bold text-gray-500">Ward / Room Type</label>
                                     <select wire:model.live="bedCharges.{{ $index }}.ward_id" class="w-full text-sm rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-900 mt-1">
                                         <option value="">Select Ward</option>
-                                        <option value="manual">Manual Entry</option>
                                         @foreach($wards as $ward)
                                             <option value="{{ $ward->id }}">{{ $ward->name }}</option>
                                         @endforeach
                                     </select>
-                                    @if(($charge['ward_id'] ?? '') === 'manual')
-                                        <input type="text" wire:model.live="bedCharges.{{ $index }}.name" placeholder="Enter Ward/Room Name" class="w-full text-sm rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-900 mt-2">
-                                    @endif
                                 </div>
                                 
                                 <div class="col-span-6 md:col-span-3">
@@ -60,7 +56,7 @@
                                 </div>
                                 <div>
                                     <label class="text-[10px] uppercase font-bold text-gray-500 block">Price / Day (₹)</label>
-                                    <input type="number" wire:model.live="bedCharges.{{ $index }}.price" min="0" step="0.01" class="w-full text-sm rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-900 py-1">
+                                    <input type="number" wire:model.live="bedCharges.{{ $index }}.price" min="0" step="0.01" class="w-full text-sm rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-900 py-1 bg-gray-50 dark:bg-gray-800" readonly>
                                 </div>
                                 <div class="text-right">
                                     <label class="text-[10px] uppercase font-bold text-gray-500 block">Total (₹)</label>
@@ -75,7 +71,6 @@
                     <svg wire:loading wire:target="addBedCharge" class="animate-spin w-4 h-4 text-indigo-600 dark:text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                     Add Ward/Bed Charge
                 </button>
-            </div>
 
             <!-- IP Services Charges -->
             <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700/50">
@@ -93,14 +88,10 @@
                                     <label class="text-[10px] uppercase font-bold text-gray-500">Service Name</label>
                                     <select wire:model.live="ipServiceCharges.{{ $index }}.service_id" class="w-full text-sm rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-900 mt-1">
                                         <option value="">Select Service</option>
-                                        <option value="manual">Manual Entry</option>
                                         @foreach($ipServicesList as $service)
                                             <option value="{{ $service->id }}">{{ $service->name }} (₹{{ $service->price }})</option>
                                         @endforeach
                                     </select>
-                                    @if(($charge['service_id'] ?? '') === 'manual')
-                                        <input type="text" wire:model.live="ipServiceCharges.{{ $index }}.name" placeholder="Enter Service Name" class="w-full text-sm rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-900 mt-2">
-                                    @endif
                                 </div>
                                 
                                 <div class="col-span-4 md:col-span-2">
@@ -110,7 +101,7 @@
                                 
                                 <div class="col-span-4 md:col-span-2">
                                     <label class="text-[10px] uppercase font-bold text-gray-500">Price (₹)</label>
-                                    <input type="number" wire:model.live="ipServiceCharges.{{ $index }}.price" min="0" step="0.01" class="w-full text-sm rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-900 mt-1">
+                                    <input type="number" wire:model.live="ipServiceCharges.{{ $index }}.price" min="0" step="0.01" class="w-full text-sm rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-900 mt-1 bg-gray-50 dark:bg-gray-800" readonly>
                                 </div>
                                 
                                 <div class="col-span-4 md:col-span-2 text-right md:pt-6">

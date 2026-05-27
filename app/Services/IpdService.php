@@ -122,9 +122,9 @@ class IpdService
 
             // 2. DISCHARGE SUMMARY CHECK (MANDATORY & FINALIZED)
             $summary = $admission->dischargeSummary;
-            // if (!$summary || !$summary->is_finalized) {
-            //     throw new \RuntimeException('A Finalized Discharge Summary is mandatory before discharge.');
-            // }
+            if (!$summary || !$summary->is_finalized) {
+                throw new \RuntimeException('A Finalized Discharge Summary is mandatory before discharge.');
+            }
 
             // 3. CLINICAL SAFETY CHECKS (PENDING ORDERS/MEDS)
             $pendingOrders = \App\Models\LabOrder::where('admission_id', $admission->id)

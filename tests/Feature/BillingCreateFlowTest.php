@@ -30,13 +30,19 @@ class BillingCreateFlowTest extends TestCase
             'is_active' => true,
         ]);
 
+        $labTest = \App\Models\LabTest::create([
+            'code' => 'LT-001',
+            'name' => 'X-Ray',
+            'category' => 'Radiology',
+            'price' => 500.00,
+            'is_active' => true
+        ]);
+
         Livewire::actingAs($user)
             ->test('counter.bill-generate')
             ->call('openBillingModalForPatient', $patient->id)
-            ->set('items.0.name', 'X-Ray')
-            ->set('items.0.type', 'Lab')
+            ->set('items.0.service_key', 'LabTest:' . $labTest->id)
             ->set('items.0.quantity', 1)
-            ->set('items.0.unit_price', 500)
             ->call('save');
 
         $this->assertDatabaseHas('bills', [

@@ -150,7 +150,9 @@ class DischargeSummaryService
             throw new \RuntimeException('Patient is already discharged.');
         }
 
-        $this->finalize($summary, $user);
+        if (!$summary->is_finalized) {
+            $this->finalize($summary, $user);
+        }
 
         return $this->ipdService->dischargePatient($admission, 'Discharged via summary finalized');
     }

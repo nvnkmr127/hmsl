@@ -269,4 +269,30 @@ class ClinicalFlowsTest extends TestCase
             ->assertOk()
             ->assertSee($admission->admission_number);
     }
+
+    public function test_opd_booking_component_allows_custom_edited_pricing(): void
+    {
+        $receptionist = $this->makeUserWithRole('receptionist');
+        $doctor = $this->makeDoctor();
+        $service = $this->makeOpdService();
+        $patient = $this->makePatient('UHID-OPD-0099');
+
+        // Test OpdBooking Livewire component with edited custom price
+        \Livewire\Livewire::actingAs($receptionist)
+            ->test('counter.opd-booking')
+            ->call('selectPatient', $patient->id)
+            ->set('selectedService', $service->id)
+            ->set('selectedDoctor', $doctor->id)
+            ->set('fee', 400.00) // Custom edited price
+            ->call('book')
+            ->assertDispatched('notify', function ($name, $data) {
+                $payload = $data[0] ?? [];
+                return ($payload['type'] ?? '') === 'success';
+            });
+
+        $this->assertDatabaseHas('consultations', [
+            'patient_id' => $patient->id,
+            'fee' => 400.00,
+        ]);
+    }
 }

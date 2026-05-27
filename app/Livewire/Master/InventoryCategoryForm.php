@@ -42,7 +42,10 @@ class InventoryCategoryForm extends Component
     public function save()
     {
         if ($this->isEditing) {
-            $this->validate(['name' => 'required|string|max:255|unique:inventory_categories,name,' . $this->categoryId]);
+            $this->validate([
+                'name' => 'required|string|max:255|unique:inventory_categories,name,' . $this->categoryId,
+                'description' => 'nullable|string|max:1000',
+            ]);
         } else {
             $this->validate();
         }

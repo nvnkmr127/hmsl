@@ -44,7 +44,7 @@ class IpdController extends Controller
             'diagnoses',
         ]);
 
-        return view('pages.discharge.summary', compact('admission'));
+        return view('pages.discharge.form', compact('admission'));
     }
 
     public function printSummary(Admission $admission)
