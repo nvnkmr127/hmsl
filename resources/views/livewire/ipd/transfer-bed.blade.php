@@ -27,14 +27,19 @@
                 </select>
             </div>
 
-            @if($newWardId)
+            @php
+                $selectedWardObj = collect($wards)->first(function($w) use ($newWardId) { return $w->id == $newWardId; });
+                $isIcu = $selectedWardObj && in_array(trim(strtoupper($selectedWardObj->name)), ['NICU', 'PICU']);
+            @endphp
+
+            @if($newWardId && !$isIcu)
                 <div>
                     <label class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 block">Select Bed</label>
                     <select wire:model.live="newBedId" class="w-full rounded-xl border-gray-200 dark:border-gray-700">
                         <option value="">Select Bed</option>
                         @foreach($this->availableBeds as $bed)
                             <option value="{{ $bed->id }}">
-                                {{ $bed->bed_number }}
+                                {{ strtoupper($bed->bed_number) }}
                                 @if(!$bed->is_available && $bed->id === $admission->bed_id)
                                     (Current)
                                 @elseif(!$bed->is_available)
@@ -44,6 +49,10 @@
                         @endforeach
                     </select>
                     @error('newBedId') <span class="text-xs text-rose-500">{{ $message }}</span> @enderror
+                </div>
+            @elseif($newWardId && $isIcu)
+                <div class="py-4 bg-emerald-50 dark:bg-emerald-950 rounded-xl border border-emerald-100 dark:border-emerald-800 text-center">
+                    <p class="text-xs text-emerald-600 dark:text-emerald-400 font-bold">Internal bed will be auto-assigned for {{ $selectedWardObj->name }}</p>
                 </div>
             @endif
 
@@ -57,7 +66,7 @@
             <div class="flex justify-end gap-2 pt-4 border-t border-gray-100 dark:border-gray-700">
                 <button wire:click="cancelTransfer" class="btn btn-secondary">Cancel</button>
                 <button wire:click="transfer" class="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-                    @unless($newBedId) disabled @endunless>Transfer</button>
+                    @unless($newBedId || $isIcu) disabled @endunless>Transfer</button>
             </div>
         </div>
     </x-modal>

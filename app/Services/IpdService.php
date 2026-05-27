@@ -67,7 +67,10 @@ class IpdService
             if (!$bed->is_available) {
                 throw new \RuntimeException('Selected bed is no longer available.');
             }
+
+            // Sync duplicate beds (if same bed exists in another ward, e.g., AC vs Non-AC)
             $bed->update(['is_available' => false]);
+            Bed::where('bed_number', $bed->bed_number)->where('id', '!=', $bed->id)->update(['is_available' => false]);
 
             $admission = Admission::create($data);
 
@@ -76,7 +79,7 @@ class IpdService
                 'admission_id' => $admission->id,
                 'bed_id' => $admission->bed_id,
                 'start_time' => now(),
-                'daily_charge' => $bed->per_day_charge ?? $bed->ward?->daily_charge ?? 0,
+                'daily_charge' => $data['daily_charge_override'] ?? $bed->per_day_charge ?? $bed->ward?->daily_charge ?? 0,
             ]);
 
             $hasVitals = collect(['weight', 'height', 'temperature', 'pulse', 'bp_systolic', 'bp_diastolic', 'resp_rate', 'respiratory_rate', 'spo2'])
@@ -172,7 +175,11 @@ class IpdService
             }
 
             // 7. BED RELEASE
-            $admission->bed()->update(['is_available' => true]);
+            $admission->loadMissing('bed');
+            if ($admission->bed) {
+                $admission->bed->update(['is_available' => true]);
+                Bed::where('bed_number', $admission->bed->bed_number)->where('id', '!=', $admission->bed->id)->update(['is_available' => true]);
+            }
 
             event(new \App\Events\IPD\PatientDischarged($admission->load(['patient', 'bed.ward', 'doctor.user'])));
 
@@ -180,9 +187,9 @@ class IpdService
         });
     }
 
-    public function transferPatient(Admission $admission, int $newBedId, ?string $notes = null): Admission
+    public function transferPatient(Admission $admission, int $newBedId, ?string $notes = null, ?float $dailyChargeOverride = null): Admission
     {
-        return DB::transaction(function () use ($admission, $newBedId, $notes) {
+        return DB::transaction(function () use ($admission, $newBedId, $notes, $dailyChargeOverride) {
             $admission = Admission::query()->lockForUpdate()->find($admission->id);
             if ($admission->status !== 'Admitted') {
                 throw new \RuntimeException('Only admitted patients can be transferred.');
@@ -207,13 +214,16 @@ class IpdService
                 $activeHistory->update(['end_time' => now()]);
             }
 
-            // Free old bed
-            if ($admission->bed_id) {
-                Bed::where('id', $admission->bed_id)->update(['is_available' => true]);
+            // End current bed history and free bed(s)
+            $admission->loadMissing('bed');
+            if ($admission->bed) {
+                $admission->bed->update(['is_available' => true]);
+                Bed::where('bed_number', $admission->bed->bed_number)->where('id', '!=', $admission->bed->id)->update(['is_available' => true]);
             }
 
             // Occupy new bed
             $newBed->update(['is_available' => false]);
+            Bed::where('bed_number', $newBed->bed_number)->where('id', '!=', $newBed->id)->update(['is_available' => false]);
             
             // Update admission
             $admission->update(['bed_id' => $newBedId]);
@@ -224,7 +234,7 @@ class IpdService
                 'admission_id' => $admission->id,
                 'bed_id' => $newBedId,
                 'start_time' => now(),
-                'daily_charge' => $newBed->per_day_charge ?? $newBed->ward?->daily_charge ?? 0,
+                'daily_charge' => $dailyChargeOverride ?? $newBed->per_day_charge ?? $newBed->ward?->daily_charge ?? 0,
             ]);
 
             return $admission;

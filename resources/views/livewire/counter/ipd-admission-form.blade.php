@@ -201,7 +201,6 @@
     <!-- Spacer to ensure scrollability for absolute positioned search results -->
     <div class="min-h-[40vh]"></div>
 
-    {{-- 
     <form wire:submit.prevent="save" class="space-y-10">
         @if($patientId)
             <div class="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -335,7 +334,13 @@
                         @error('wardId') <span class="text-[10px] font-bold text-rose-500 ml-1">{{ $message }}</span> @enderror
                     </div>
 
-                    <div class="space-y-4">
+                    @php
+                        $selectedWardObj = collect($wards)->first(function($w) use ($wardId) { return $w->id == $wardId; });
+                        $isIcu = $selectedWardObj && in_array(trim(strtoupper($selectedWardObj->name)), ['NICU', 'PICU']);
+                    @endphp
+
+                    @if(!$isIcu)
+                    <div class="space-y-4 mt-6">
                         <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 block mb-4">Choose a Bed</label>
                         <div class="grid grid-cols-4 sm:grid-cols-5 gap-3">
                             @forelse($this->availableBeds as $bed)
@@ -345,7 +350,7 @@
                                     class="group relative flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all {{ $bedId == $bed->id ? 'bg-emerald-600 border-emerald-600 text-white shadow-xl shadow-emerald-500/30' : 'bg-gray-50 dark:bg-gray-950 border-transparent hover:border-emerald-300' }}"
                                 >
                                     <svg class="w-6 h-6 mb-1 opacity-60 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
-                                    <span class="text-xs font-black">{{ $bed->bed_number }}</span>
+                                    <span class="text-xs font-black whitespace-nowrap uppercase">{{ $bed->bed_number }}</span>
                                     @if($bedId == $bed->id)
                                         <div class="absolute -top-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center">
                                             <svg class="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" /></svg>
@@ -360,6 +365,11 @@
                         </div>
                         @error('bedId') <p class="text-[10px] font-black text-rose-500 mt-2 uppercase tracking-tight">{{ $message }}</p> @enderror
                     </div>
+                    @else
+                        <div class="mt-6 py-6 bg-emerald-50 dark:bg-emerald-950 rounded-2xl border border-emerald-100 dark:border-emerald-800 text-center">
+                            <p class="text-emerald-600 dark:text-emerald-400 font-bold">Internal bed will be auto-assigned for {{ $selectedWardObj->name }}</p>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -385,7 +395,6 @@
             </div>
         </div>
     </form>
-    --}}
 
     <style>
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }

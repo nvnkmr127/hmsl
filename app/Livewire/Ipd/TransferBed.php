@@ -35,14 +35,32 @@ class TransferBed extends Component
     {
         $this->validate([
             'newWardId' => 'required|exists:wards,id',
-            'newBedId' => 'required|exists:beds,id',
+            'newBedId' => 'nullable|exists:beds,id',
         ]);
+
+        $selectedWard = Ward::find($this->newWardId);
+        $isIcu = $selectedWard && in_array(strtoupper($selectedWard->name), ['NICU', 'PICU']);
+
+        if (!$isIcu && !$this->newBedId) {
+            $this->addError('newBedId', 'Please choose a bed.');
+            return;
+        }
+
+        $finalBedId = $this->newBedId;
+        if ($isIcu && !$finalBedId) {
+            $firstAvailable = Bed::where('ward_id', $this->newWardId)->where('is_available', true)->first();
+            if (!$firstAvailable) {
+                $this->addError('newWardId', 'No beds available in ' . $selectedWard->name);
+                return;
+            }
+            $finalBedId = $firstAvailable->id;
+        }
 
         try {
             $oldBedNumber = $this->admission->bed->bed_number ?? 'Unknown';
-            $manager->transferPatient($this->admission, $this->newBedId, $this->reason ?: null);
+            $manager->transferPatient($this->admission, $finalBedId, $this->reason ?: null);
 
-            $newBed = Bed::find($this->newBedId);
+            $newBed = Bed::find($finalBedId);
             
             // Log the transfer in clinical notes
             \App\Models\IpdNote::create([
@@ -56,7 +74,7 @@ class TransferBed extends Component
 
             $this->dispatch('notify', [
                 'type' => 'success',
-                'message' => 'Patient transferred to ' . Bed::find($this->newBedId)->bed_number
+                'message' => 'Patient transferred to ' . $newBed->bed_number
             ]);
 
             $this->dispatch('close-modal', name: 'transfer-bed-modal');

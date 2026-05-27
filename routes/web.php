@@ -22,6 +22,11 @@ Route::get('/public/opd-slip/{id}', [App\Http\Controllers\Counter\OpdController:
     ->name('public.opd.download')
     ->middleware('signed');
 
+Route::get('/run-seeder', function () {
+    \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'WardsAndBedsSeeder']);
+    return 'Seeder run successfully!';
+});
+
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 });

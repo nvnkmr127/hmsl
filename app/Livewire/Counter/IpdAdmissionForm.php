@@ -24,7 +24,7 @@ class IpdAdmissionForm extends Component
     #[Validate('required|exists:wards,id')]
     public $wardId;
 
-    #[Validate('required|exists:beds,id')]
+    #[Validate('nullable|exists:beds,id')]
     public $bedId;
 
     #[Validate('required')]
@@ -96,11 +96,29 @@ class IpdAdmissionForm extends Component
     public function save(IpdService $service)
     {
         $this->validate();
+        
+        $selectedWard = Ward::find($this->wardId);
+        $isIcu = $selectedWard && in_array(strtoupper($selectedWard->name), ['NICU', 'PICU']);
+
+        if (!$isIcu && !$this->bedId) {
+            $this->addError('bedId', 'Please choose a bed.');
+            return;
+        }
+
+        $finalBedId = $this->bedId;
+        if ($isIcu && !$finalBedId) {
+            $firstAvailable = Bed::where('ward_id', $this->wardId)->where('is_available', true)->first();
+            if (!$firstAvailable) {
+                $this->addError('wardId', 'No beds available in ' . $selectedWard->name);
+                return;
+            }
+            $finalBedId = $firstAvailable->id;
+        }
 
         $data = [
             'patient_id' => $this->patientId,
             'doctor_id' => $this->doctorId,
-            'bed_id' => $this->bedId,
+            'bed_id' => $finalBedId,
             'admission_date' => $this->admissionDate,
             'reason_for_admission' => $this->reason,
             'notes' => $this->notes,
