@@ -28,7 +28,7 @@
             </div>
 
             @php
-                $selectedWardObj = collect($wards)->first(function($w) use ($newWardId) { return $w->id == $newWardId; });
+                $selectedWardObj = collect($wards)->first(function($w) { return $w->id == $this->newWardId; });
                 $isIcu = $selectedWardObj && in_array(trim(strtoupper($selectedWardObj->name)), ['NICU', 'PICU']);
             @endphp
 

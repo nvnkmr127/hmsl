@@ -199,14 +199,15 @@
     </div>
     
     <!-- Spacer to ensure scrollability for absolute positioned search results -->
-    <div class="min-h-[40vh]"></div>
+    @if(!$patientId)
+        <div class="min-h-[40vh]"></div>
+    @endif
 
+    @if($patientId)
     <form wire:submit.prevent="save" class="space-y-10">
-        @if($patientId)
-            <div class="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <x-clinical.patient-strip :patient="$patient" size="lg" :active="true" />
-            </div>
-        @endif
+        <div class="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <x-clinical.patient-strip :patient="$patient" size="lg" :active="true" />
+        </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
             <!-- Admission Parameters -->
@@ -335,7 +336,7 @@
                     </div>
 
                     @php
-                        $selectedWardObj = collect($wards)->first(function($w) use ($wardId) { return $w->id == $wardId; });
+                        $selectedWardObj = collect($wards)->first(function($w) { return $w->id == $this->wardId; });
                         $isIcu = $selectedWardObj && in_array(trim(strtoupper($selectedWardObj->name)), ['NICU', 'PICU']);
                     @endphp
 
@@ -395,6 +396,7 @@
             </div>
         </div>
     </form>
+    @endif
 
     <style>
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
