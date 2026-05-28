@@ -324,7 +324,8 @@ class QuickOpBooking extends Component
         $this->bedId = null;
     }
 
-    public function getAvailableBedsProperty()
+    #[Computed]
+    public function availableBeds()
     {
         if (!$this->wardId) return collect();
         return \App\Models\Bed::where('ward_id', $this->wardId)

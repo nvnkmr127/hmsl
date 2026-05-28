@@ -10,6 +10,7 @@ use App\Models\Admission;
 use App\Services\IpdService;
 use App\Models\ClinicalTemplate;
 use Livewire\Component;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Validate;
 
 class IpdAdmissionForm extends Component
@@ -85,7 +86,8 @@ class IpdAdmissionForm extends Component
         $this->bedId = null;
     }
 
-    public function getAvailableBedsProperty()
+    #[Computed]
+    public function availableBeds()
     {
         if (!$this->wardId) return collect();
         return Bed::where('ward_id', $this->wardId)

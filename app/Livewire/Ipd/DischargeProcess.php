@@ -55,7 +55,20 @@ class DischargeProcess extends Component
                 $end = $history->end_time ? Carbon::parse($history->end_time) : now();
                 
                 $stayHours = max(0, $start->diffInHours($end));
-                $stayDays = max(1, (int) ceil($stayHours / 24));
+                $fullDays = floor($stayHours / 24);
+                $remainderHours = $stayHours % 24;
+                
+                if ($stayHours == 0) {
+                    $stayDays = 0.5;
+                } else {
+                    if ($remainderHours > 0 && $remainderHours <= 12) {
+                        $stayDays = $fullDays + 0.5;
+                    } elseif ($remainderHours > 12) {
+                        $stayDays = $fullDays + 1;
+                    } else {
+                        $stayDays = $fullDays;
+                    }
+                }
                 
                 $ward = $history->bed?->ward;
                 $bed = $history->bed;
@@ -123,13 +136,25 @@ class DischargeProcess extends Component
                         $start = Carbon::parse($charge['start_date']);
                         $end = Carbon::parse($charge['end_date']);
                         $stayHours = max(0, $start->diffInHours($end));
-                        $charge['days'] = max(1, (int) ceil($stayHours / 24));
+                        $fullDays = floor($stayHours / 24);
+                        $remainderHours = $stayHours % 24;
+                        
+                        if ($stayHours == 0) {
+                            $calculatedDays = 0.5;
+                        } else {
+                            if ($remainderHours > 0 && $remainderHours <= 12) {
+                                $calculatedDays = $fullDays + 0.5;
+                            } elseif ($remainderHours > 12) {
+                                $calculatedDays = $fullDays + 1;
+                            } else {
+                                $calculatedDays = $fullDays;
+                            }
+                        }
+                        $charge['days'] = $calculatedDays;
                     }
                 }
 
-                $charge['days'] = (int) ($charge['days'] ?? 0);
-                $charge['price'] = (float) ($charge['price'] ?? 0);
-                $charge['total'] = $charge['days'] * $charge['price'];
+                // Let calculateTotal handle the math without overwriting the raw string input
             }
         }
         
@@ -165,16 +190,19 @@ class DischargeProcess extends Component
                 $charge = &$this->ipServiceCharges[$index];
 
                 if ($field === 'service_id' && !empty($charge['service_id'])) {
-                    $service = \App\Models\IpService::find($charge['service_id']);
-                    if ($service) {
-                        $charge['name'] = $service->name;
-                        $charge['price'] = (float) $service->price;
+                    if ($charge['service_id'] === 'manual') {
+                        $charge['name'] = '';
+                        $charge['price'] = 0;
+                    } else {
+                        $service = \App\Models\IpService::find($charge['service_id']);
+                        if ($service) {
+                            $charge['name'] = $service->name;
+                            $charge['price'] = (float) $service->price;
+                        }
                     }
                 }
 
-                $charge['quantity'] = (int) ($charge['quantity'] ?? 0);
-                $charge['price'] = (float) ($charge['price'] ?? 0);
-                $charge['total'] = $charge['quantity'] * $charge['price'];
+                // Let calculateTotal handle the math without overwriting the raw string input
             }
         }
         
@@ -186,14 +214,28 @@ class DischargeProcess extends Component
         $this->calculateTotal();
     }
 
+    public function updated($property, $value)
+    {
+        $this->calculateTotal();
+    }
+
     public function calculateTotal()
     {
         $total = 0;
-        foreach ($this->bedCharges as $charge) {
-            $total += (float) ($charge['total'] ?? 0);
+        foreach ($this->bedCharges as $index => $charge) {
+            $days = (float) ($charge['days'] ?? 0);
+            $price = (float) ($charge['price'] ?? 0);
+            $t = $days * $price;
+            $this->bedCharges[$index]['total'] = $t;
+            $total += $t;
         }
-        foreach ($this->ipServiceCharges as $charge) {
-            $total += (float) ($charge['total'] ?? 0);
+
+        foreach ($this->ipServiceCharges as $index => $charge) {
+            $qty = (int) ($charge['quantity'] ?? 0);
+            $price = (float) ($charge['price'] ?? 0);
+            $t = $qty * $price;
+            $this->ipServiceCharges[$index]['total'] = $t;
+            $total += $t;
         }
 
         foreach ($this->existingCharges as $charge) {
@@ -209,8 +251,18 @@ class DischargeProcess extends Component
     {
         $this->validate([
             'bedCharges.*.ward_id' => 'required|exists:wards,id',
-            'ipServiceCharges.*.service_id' => 'required|exists:ip_services,id',
         ]);
+
+        foreach ($this->ipServiceCharges as $index => $charge) {
+            if (empty($charge['service_id'])) {
+                $this->addError("ipServiceCharges.{$index}.service_id", 'Service is required.');
+                return;
+            }
+            if ($charge['service_id'] === 'manual' && empty($charge['name'])) {
+                $this->addError("ipServiceCharges.{$index}.name", 'Service name is required.');
+                return;
+            }
+        }
 
         $billingService = app(BillingService::class);
         

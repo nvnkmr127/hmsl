@@ -85,29 +85,35 @@
                     @foreach($ipServiceCharges as $index => $charge)
                         <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700">
                             <div class="grid grid-cols-12 gap-3 items-center">
-                                <div class="col-span-12 md:col-span-5">
+                                <div class="col-span-12 md:col-span-4">
                                     <label class="text-[10px] uppercase font-bold text-gray-500">Service Name</label>
                                     <select wire:model.live="ipServiceCharges.{{ $index }}.service_id" class="w-full text-sm rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-900 mt-1">
                                         <option value="">Select Service</option>
+                                        <option value="manual">Manual Entry</option>
                                         @foreach($ipServicesList as $service)
                                             <option value="{{ $service->id }}">{{ $service->name }} (₹{{ $service->price }})</option>
                                         @endforeach
                                     </select>
+                                    @if(($charge['service_id'] ?? '') === 'manual')
+                                        <input type="text" wire:model.live="ipServiceCharges.{{ $index }}.name" placeholder="Enter service description" class="w-full text-sm rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-900 mt-2">
+                                    @endif
+                                    @error("ipServiceCharges.{$index}.service_id") <span class="text-[10px] text-red-500 block mt-1">{{ $message }}</span> @enderror
+                                    @error("ipServiceCharges.{$index}.name") <span class="text-[10px] text-red-500 block mt-1">{{ $message }}</span> @enderror
                                 </div>
                                 
                                 <div class="col-span-4 md:col-span-2">
                                     <label class="text-[10px] uppercase font-bold text-gray-500">Qty</label>
-                                    <input type="number" wire:model.live="ipServiceCharges.{{ $index }}.quantity" min="1" class="w-full text-sm rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-900 mt-1">
+                                    <input type="number" wire:model.live.debounce.500ms="ipServiceCharges.{{ $index }}.quantity" min="1" class="w-full text-sm rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-900 mt-1">
                                 </div>
                                 
                                 <div class="col-span-4 md:col-span-2">
                                     <label class="text-[10px] uppercase font-bold text-gray-500">Price (₹)</label>
-                                    <input type="number" wire:model.live="ipServiceCharges.{{ $index }}.price" min="0" step="0.01" class="w-full text-sm rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-900 mt-1 bg-gray-50 dark:bg-gray-800" readonly>
+                                    <input type="number" wire:model.live.debounce.500ms="ipServiceCharges.{{ $index }}.price" min="0" step="0.01" class="w-full text-sm rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-900 mt-1 {{ ($charge['service_id'] ?? '') === 'manual' ? '' : 'bg-gray-50 dark:bg-gray-800' }}" {{ ($charge['service_id'] ?? '') === 'manual' ? '' : 'readonly' }}>
                                 </div>
                                 
-                                <div class="col-span-4 md:col-span-2 text-right md:pt-6">
+                                <div class="col-span-4 md:col-span-3 text-right md:pt-6 pr-2">
                                     <label class="text-[10px] uppercase font-bold text-gray-500 block md:hidden">Total (₹)</label>
-                                    <span class="text-lg font-bold text-gray-900 dark:text-white">₹{{ number_format($charge['total'] ?? 0, 2) }}</span>
+                                    <span class="text-base lg:text-lg font-bold text-gray-900 dark:text-white">₹{{ number_format($charge['total'] ?? 0, 2) }}</span>
                                 </div>
 
                                 <div class="col-span-12 md:col-span-1 flex justify-end md:pt-6">
@@ -170,13 +176,13 @@
             <!-- Sticky Footer for Summary & Actions -->
             <div class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-6 py-4 rounded-b-3xl">
                 <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div class="bg-blue-50 dark:bg-blue-900/20 px-6 py-3 rounded-xl flex items-center gap-6 border border-blue-100 dark:border-blue-800/30">
-                        <div>
-                            <h4 class="text-[10px] font-black text-blue-800 dark:text-blue-300 uppercase tracking-widest">Estimated Final Bill</h4>
-                            <p class="text-xs text-blue-600 dark:text-blue-400 font-medium">Review selected charges before generating</p>
-                        </div>
-                        <div class="text-3xl font-black text-blue-900 dark:text-white drop-shadow-sm">
-                            ₹{{ number_format($totalAmount, 2) }}
+                    <div class="bg-blue-50 dark:bg-blue-900/20 px-6 py-3 rounded-xl flex items-center justify-between gap-8 border border-blue-100 dark:border-blue-800/30">
+                        <h4 class="text-xs font-black text-blue-800 dark:text-blue-300 uppercase tracking-widest">Estimated Final Bill</h4>
+                        <div class="flex flex-col items-end">
+                            <div class="text-3xl font-black text-blue-900 dark:text-white drop-shadow-sm leading-none">
+                                ₹{{ number_format($totalAmount, 2) }}
+                            </div>
+                            <p class="text-[10px] text-blue-600 dark:text-blue-400 font-bold tracking-wide mt-1">Review selected charges before generating</p>
                         </div>
                     </div>
                     

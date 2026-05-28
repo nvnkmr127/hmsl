@@ -8,7 +8,7 @@
 </div>
 
 <div style="text-align: center; margin-bottom: 20px;">
-    <h2 style="margin: 0; font-size: 16pt; font-weight: bold; text-decoration: underline; font-family: Arial, sans-serif;">DISCHARGE SUMMARY & FINAL BILL</h2>
+    <h2 style="margin: 0; font-size: 16pt; font-weight: bold; text-decoration: underline; font-family: Arial, sans-serif;">DISCHARGE SUMMARY</h2>
 </div>
 
 <div class="content" style="font-family: Arial, sans-serif; font-size: 11pt; color: #000;">
@@ -94,8 +94,22 @@
 
     <!-- FINAL BILL -->
     @if(\Illuminate\Support\Facades\Schema::hasColumn('bills', 'admission_id') && $admission->finalBill)
-    <div style="page-break-before: auto;">
-        <h3 style="margin: 0 0 5px; font-size: 12pt; text-decoration: underline;">Final Bill (Invoice No: {{ $admission->finalBill->bill_number }})</h3>
+    <div style="page-break-before: always;">
+        <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px;">
+            <img src="{{ asset('images/DW_header.png') }}" alt="Hospital Header" style="max-width: 100%; height: auto; max-height: 140px; object-fit: contain;">
+        </div>
+        <div style="text-align: center; margin-bottom: 20px;">
+            <h2 style="margin: 0; font-size: 16pt; font-weight: bold; text-decoration: underline; font-family: Arial, sans-serif;">FINAL BILL</h2>
+        </div>
+        <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; margin-bottom: 15px;">
+            <tr>
+                <td style="padding: 8px; border: 1px solid #000; width: 15%;"><strong>Patient Name</strong></td>
+                <td style="padding: 8px; border: 1px solid #000; width: 35%;">{{ $admission->patient->full_name }}</td>
+                <td style="padding: 8px; border: 1px solid #000; width: 15%;"><strong>UHID / IP No</strong></td>
+                <td style="padding: 8px; border: 1px solid #000; width: 35%;">{{ $admission->patient->uhid }} / {{ $admission->admission_number }}</td>
+            </tr>
+        </table>
+        <h3 style="margin: 0 0 5px; font-size: 12pt; text-decoration: underline;">Invoice No: {{ $admission->finalBill->bill_number }}</h3>
         <table style="width:100%; border: 1px solid #000; border-collapse: collapse; font-size: 10pt; margin-bottom: 15px;">
             <thead>
                 <tr>
