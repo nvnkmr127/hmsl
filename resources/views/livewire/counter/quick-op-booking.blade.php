@@ -544,7 +544,7 @@
                                     class="px-6 py-3 text-tiny font-black uppercase tracking-[0.2em] text-gray-400 hover:text-gray-900 transition-all">
                                 Cancel
                             </button>
-                            @if(!$activeBookingFound)
+                            @if(!$activeBookingFound || $isIpd)
                                 <button type="submit" 
                                         wire:loading.attr="disabled"
                                         class="btn btn-primary px-10 py-4 shadow-xl shadow-indigo-500/30 rounded-2xl group transition-all active:scale-95">
