@@ -44,6 +44,14 @@
 <body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 antialiased">
 
     <!-- ════════════════════════════
+         OFFLINE BANNER
+    ════════════════════════════ -->
+    <div id="offline-banner"
+         class="hidden fixed top-0 inset-x-0 z-[9999] bg-amber-500 text-white text-center text-xs font-bold py-1.5 tracking-wide shadow-md">
+        ⚡ Offline Mode — Changes will sync automatically when connection is restored
+    </div>
+
+    <!-- ════════════════════════════
          MOBILE SIDEBAR OVERLAY
     ════════════════════════════ -->
     <div x-show="sidebarOpen"
@@ -125,6 +133,11 @@
             };
         }
 
+        // Show offline banner immediately if already offline
+        if (!navigator.onLine) {
+            document.getElementById('offline-banner')?.classList.remove('hidden');
+        }
+
         document.addEventListener('livewire:initialized', () => {
             Livewire.on('print-op-slip', (event) => {
                 const id = event.id ?? event[0].id ?? event[0];
@@ -187,7 +200,14 @@
 
             window.addEventListener('online', () => {
                 console.log('System is online. Triggering sync...');
+                document.getElementById('offline-banner')?.classList.add('hidden');
                 Livewire.dispatch('trigger-background-sync');
+                Livewire.dispatch('trigger-update-check');
+            });
+
+            window.addEventListener('offline', () => {
+                console.log('System is offline.');
+                document.getElementById('offline-banner')?.classList.remove('hidden');
             });
 
             // Heartbeat sync every 5 minutes if online
