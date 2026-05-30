@@ -5,6 +5,9 @@ use App\Models\Admission;
 use App\Models\Bill;
 use App\Http\Controllers\DashboardController;
 
+// First-run setup wizard (shown when SYNC_SERVER_URL is not yet configured)
+Route::get('/setup', \App\Livewire\Setup\SetupWizard::class)->name('setup');
+
 Route::get('/', function () {
     if (auth()->check()) {
         return redirect()->route('dashboard');

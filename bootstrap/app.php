@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'hospital_owner' => \App\Http\Middleware\EnsureHospitalOwner::class,
         ]);
 
+        $middleware->appendToGroup('web', \App\Http\Middleware\RequireSetup::class);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
