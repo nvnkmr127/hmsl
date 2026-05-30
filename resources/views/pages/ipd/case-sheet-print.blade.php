@@ -254,7 +254,7 @@
         <div class="print-field" id="f-uhid">UHID : {{ $admission->patient->uhid }}</div>
         <div class="print-field" id="f-room-no">{{ $wardShort }}</div>
         <div class="print-field" id="f-bed-no">{{ $bedShort }}</div>
-        <div class="print-field" id="f-ref-dr">{{ $admission->doctor->full_name ?? '' }}</div>
+        <div class="print-field" id="f-ref-dr"></div>
 
         <!-- Patient Information fields -->
         <div class="print-field" id="f-patient-name">{{ $admission->patient->full_name }}</div>
