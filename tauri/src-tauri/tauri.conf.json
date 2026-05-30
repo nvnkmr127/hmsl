@@ -1,0 +1,73 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/schema.json",
+  "build": {
+    "beforeDevCommand": "",
+    "beforeBuildCommand": "",
+    "devPath": "http://localhost:8000",
+    "distDir": "http://localhost:8000",
+    "withGlobalTauri": false
+  },
+  "package": {
+    "productName": "HMS Desktop",
+    "version": "1.0.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": false,
+      "shell": {
+        "all": false,
+        "open": true,
+        "execute": true,
+        "sidecar": true,
+        "scope": [
+          { "name": "php-x86_64-pc-windows-msvc", "sidecar": true }
+        ]
+      },
+      "window": {
+        "all": true
+      }
+    },
+    "bundle": {
+      "active": true,
+      "targets": "all",
+      "identifier": "com.hmsl.desktop",
+      "icon": [],
+      "externalBin": [
+        "bin/php"
+      ],
+      "resources": [
+        "../app/**",
+        "../bootstrap/**",
+        "../config/**",
+        "../database/**",
+        "../resources/**",
+        "../routes/**",
+        "../storage/**",
+        "../public/**",
+        "../vendor/**",
+        "../artisan",
+        "../.env.offline"
+      ]
+    },
+    "security": {
+      "csp": null
+    },
+    "updater": {
+      "active": false
+    },
+    "windows": [
+      {
+        "title": "HMS Desktop",
+        "width": 1400,
+        "height": 900,
+        "minWidth": 1024,
+        "minHeight": 700,
+        "resizable": true,
+        "fullscreen": false,
+        "visible": false,
+        "url": "http://localhost:8000",
+        "decorations": true
+      }
+    ]
+  }
+}

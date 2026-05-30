@@ -9,6 +9,7 @@
 .env
 .env.*
 !.env.example
+!.env.offline
 .phpactor.json
 .phpunit.result.cache
 Homestead.json
@@ -62,7 +63,8 @@ database/database.sqlite
 *.log
 
 # Desktop / Tauri builds
-/tauri
+/tauri/node_modules
+/tauri/src-tauri/target
 /tauri_old
 /trash_bin
 /src-tauri/target
