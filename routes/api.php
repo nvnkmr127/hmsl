@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\V1\WebhookEndpointApiController;
 use App\Http\Controllers\Api\V1\VitalApiController;
 use App\Http\Controllers\Api\V1\MedicineApiController;
 use App\Http\Controllers\Api\V1\WardApiController;
+use App\Http\Controllers\Api\V1\UpdateApiController;
 
 Route::prefix('v1')->group(function () {
     
@@ -49,6 +50,11 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('vitals', VitalApiController::class)->only(['index', 'show']);
         Route::apiResource('medicines', MedicineApiController::class)->only(['index', 'show']);
         Route::apiResource('wards', WardApiController::class)->only(['index']);
+
+        // Code/UI Update Endpoints (used by offline desktop clients)
+        Route::get('update/check', [UpdateApiController::class, 'check']);
+        Route::get('update/manifest', [UpdateApiController::class, 'manifest']);
+        Route::get('update/download', [UpdateApiController::class, 'download']);
     });
 
     // Synchronization Endpoints (Used by local instances to sync with this server)
