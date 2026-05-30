@@ -4,6 +4,7 @@ namespace App\Livewire\Sync;
 
 use Livewire\Component;
 use App\Sync\Services\SyncEngine;
+use App\Sync\Services\UpdateService;
 
 class SyncStatus extends Component
 {
@@ -18,10 +19,21 @@ class SyncStatus extends Component
     }
 
     #[\Livewire\Attributes\On('trigger-background-sync')]
+    #[\Livewire\Attributes\On('trigger-update-check')]
+    public function checkForUpdates(UpdateService $updateService)
+    {
+        $result = $updateService->checkForUpdates();
+        if ($result['has_update'] ?? false) {
+            // Reload the page so updated views/assets are served
+            $this->dispatch('notify', ['message' => 'App updated to v' . ($result['server_version'] ?? '?') . '. Reloading...']);
+            $this->js('setTimeout(() => window.location.reload(), 1500)');
+        }
+    }
+
     public function triggerSync(SyncEngine $engine)
     {
         $this->isSyncing = true;
-        
+
         try {
             $results = $engine->performSync();
             $this->lastSyncAt = now()->toDateTimeString();
