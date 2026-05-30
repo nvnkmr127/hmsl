@@ -6,10 +6,10 @@
 
     <style>
         /* =========================================================================
-                                                                                                                                                                                                                                                                                                                                   ALIGNMENT CONTROLS FOR PRE-PRINTED PAPER
-                                                                                                                                                                                                                                                                                                                                   Adjust these CSS variables to move the text up/down/left/right 
-                                                                                                                                                                                                                                                                                                                                   (Values are in millimeters or pixels. 'px' is recommended for fine tuning)
-                                                                                                                                                                                                                                                                                                                                   ========================================================================= */
+                                                                                                                                                                                                                                                                                                                                                                                                               ALIGNMENT CONTROLS FOR PRE-PRINTED PAPER
+                                                                                                                                                                                                                                                                                                                                                                                                               Adjust these CSS variables to move the text up/down/left/right 
+                                                                                                                                                                                                                                                                                                                                                                                                               (Values are in millimeters or pixels. 'px' is recommended for fine tuning)
+                                                                                                                                                                                                                                                                                                                                                                                                               ========================================================================= */
         :root {
             /* TOP OFFSETS (Vertical alignment) */
             --top-ip-no: 226px;
@@ -53,6 +53,21 @@
             /* FONT SIZES */
             --font-size-general: 11pt;
             --font-size-ip: 12pt;
+        }
+
+        /* NICU SPECIFIC OFFSETS */
+        .is-nicu {
+            --top-patient-name: 459px;
+            --top-mother-name: 459px;
+            --top-father-name: 502px;
+            --top-age: 502px;
+            --top-sex: 502px;
+            --top-weight: 502px;
+            --top-address: 541px;
+            --top-mobile: 579px;
+
+            --top-date-admission: 684px;
+            --top-ward-room: 785px;
         }
 
         @page {
@@ -218,33 +233,34 @@
         }
     </style>
 
-    <div class="page-wrapper">
-        @php
-            $months = 999;
-            if ($admission->patient->date_of_birth) {
-                $months = \Carbon\Carbon::parse($admission->patient->date_of_birth)->diffInMonths(\Carbon\Carbon::now());
-            }
-            $bgImage = $months <= 3 ? 'NICU_casesheet.png' : 'case_sheet.png';
+    @php
+        $months = 999;
+        if ($admission->patient->date_of_birth) {
+            $months = \Carbon\Carbon::parse($admission->patient->date_of_birth)->diffInMonths(\Carbon\Carbon::now());
+        }
+        $bgImage = $months <= 3 ? 'NICU_casesheet.png' : 'case_sheet.png';
 
-            $wardName = $admission->bed->ward->name ?? '';
-            $bedNo = $admission->bed->bed_number ?? '';
+        $wardName = $admission->bed->ward->name ?? '';
+        $bedNo = $admission->bed->bed_number ?? '';
 
-            $replacements = [
-                'general ward' => 'GW',
-                'special (single) room' => 'SR',
-                'special room with ac' => 'SRAC',
-                'sharing room' => 'SHR'
-            ];
+        $replacements = [
+            'general ward' => 'GW',
+            'special (single) room' => 'SR',
+            'special room with ac' => 'SRAC',
+            'sharing room' => 'SHR'
+        ];
 
-            $wardShort = $wardName;
-            $bedShort = $bedNo;
+        $wardShort = $wardName;
+        $bedShort = $bedNo;
 
-            foreach ($replacements as $search => $replace) {
-                // Replace case-insensitively
-                $wardShort = str_ireplace($search, $replace, $wardShort);
-                $bedShort = str_ireplace($search, $replace, $bedShort);
-            }
-        @endphp
+        foreach ($replacements as $search => $replace) {
+            // Replace case-insensitively
+            $wardShort = str_ireplace($search, $replace, $wardShort);
+            $bedShort = str_ireplace($search, $replace, $bedShort);
+        }
+    @endphp
+
+    <div class="page-wrapper {{ $months <= 3 ? 'is-nicu' : '' }}">
 
         <!-- Printed Form Background -->
         <img id="bg-form-image" src="{{ asset('images/' . $bgImage) }}" alt="Case Sheet Form"
