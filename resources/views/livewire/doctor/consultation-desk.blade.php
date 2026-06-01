@@ -302,7 +302,7 @@
                 <x-form.input type="number" step="1" label="Discount Amount (₹)" wire:model.live="discount" class="text-right font-black text-xl" />
             </div>
             
-            <x-form.input type="text" label="Mandatory Reason" wire:model="discountReason" placeholder="e.g. Professional Courtesy, Staff Family..." />
+            <x-form.input type="text" label="Reason (Optional)" wire:model="discountReason" placeholder="e.g. Professional Courtesy, Staff Family..." />
 
             <div class="flex justify-end gap-3 pt-4">
                 <button type="button" @click="$dispatch('close-modal', { name: 'doctor-discount-modal' })" class="btn btn-ghost px-6 font-bold uppercase tracking-widest text-xs">Cancel</button>

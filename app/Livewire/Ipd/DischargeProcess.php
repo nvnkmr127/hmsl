@@ -21,6 +21,13 @@ class DischargeProcess extends Component
     public $selectedExistingCharges = [];
     public $totalAmount = 0;
 
+    // Discount Properties
+    public $discountType = 'flat';
+    public $discountValue = 0;
+    public $discountReason = '';
+    public $isAuthorizedByDoctor = false;
+    public $authorizedLimit = 0;
+
     public function mount(Admission $admission)
     {
         $this->admission = $admission;
@@ -32,6 +39,19 @@ class DischargeProcess extends Component
         $this->bedCharges = [];
         $this->existingCharges = [];
         $this->selectedExistingCharges = [];
+
+        $this->isAuthorizedByDoctor = (bool) ($this->admission->is_discount_authorized ?? false);
+        $this->authorizedLimit = (float) ($this->admission->authorized_discount_limit ?? 0);
+
+        $bill = $this->admission->finalBill ?? \App\Models\Bill::where('admission_id', $this->admission->id)->first();
+        if ($bill) {
+            $existingDiscount = $bill->discounts()->where('status', 'approved')->first();
+            if ($existingDiscount) {
+                $this->discountType = $existingDiscount->discount_type;
+                $this->discountValue = (float) $existingDiscount->discount_value;
+                $this->discountReason = $existingDiscount->reason;
+            }
+        }
 
         $ipdService = app(IpdService::class);
         $rawItems = $ipdService->buildFinalBillItems($this->admission);
@@ -47,42 +67,43 @@ class DischargeProcess extends Component
                 $this->selectedExistingCharges[] = $item['id'];
             }
         }
-
-        $bedHistories = \App\Models\AdmissionBedHistory::with(['bed.ward'])->where('admission_id', $this->admission->id)->get();
-        if ($bedHistories->isNotEmpty()) {
-            foreach ($bedHistories as $history) {
-                $start = Carbon::parse($history->start_time);
-                $end = $history->end_time ? Carbon::parse($history->end_time) : now();
-                
-                $stayHours = max(0, $start->diffInHours($end));
-                $fullDays = floor($stayHours / 24);
-                $remainderHours = $stayHours % 24;
-                
-                if ($stayHours == 0) {
-                    $stayDays = 0.5;
-                } else {
-                    if ($remainderHours > 0 && $remainderHours <= 12) {
-                        $stayDays = $fullDays + 0.5;
-                    } elseif ($remainderHours > 12) {
-                        $stayDays = $fullDays + 1;
+        
+        if ($bedHistories = \App\Models\AdmissionBedHistory::with(['bed.ward'])->where('admission_id', $this->admission->id)->get()) {
+            if ($bedHistories->isNotEmpty()) {
+                foreach ($bedHistories as $history) {
+                    $start = Carbon::parse($history->start_time);
+                    $end = $history->end_time ? Carbon::parse($history->end_time) : now();
+                    
+                    $stayHours = max(0, $start->diffInHours($end));
+                    $fullDays = floor($stayHours / 24);
+                    $remainderHours = $stayHours % 24;
+                    
+                    if ($stayHours == 0) {
+                        $stayDays = 0.5;
                     } else {
-                        $stayDays = $fullDays;
+                        if ($remainderHours > 0 && $remainderHours <= 12) {
+                            $stayDays = $fullDays + 0.5;
+                        } elseif ($remainderHours > 12) {
+                            $stayDays = $fullDays + 1;
+                        } else {
+                            $stayDays = $fullDays;
+                        }
                     }
-                }
-                
-                $ward = $history->bed?->ward;
-                $bed = $history->bed;
-                $dailyCharge = (float) ($history->daily_charge ?? $bed?->per_day_charge ?? $ward?->daily_charge ?? 0);
+                    
+                    $ward = $history->bed?->ward;
+                    $bed = $history->bed;
+                    $dailyCharge = (float) ($history->daily_charge ?? $bed?->per_day_charge ?? $ward?->daily_charge ?? 0);
 
-                $this->bedCharges[] = [
-                    'ward_id' => $ward?->id ?? '',
-                    'name' => ($ward?->name ?? 'Ward') . ($bed ? ' - ' . $bed->bed_number : ''),
-                    'start_date' => $start->format('Y-m-d\TH:i'),
-                    'end_date' => $end->format('Y-m-d\TH:i'),
-                    'days' => $stayDays,
-                    'price' => $dailyCharge,
-                    'total' => $stayDays * $dailyCharge
-                ];
+                    $this->bedCharges[] = [
+                        'ward_id' => $ward?->id ?? '',
+                        'name' => ($ward?->name ?? 'Ward') . ($bed ? ' - ' . $bed->bed_number : ''),
+                        'start_date' => $start->format('Y-m-d\TH:i'),
+                        'end_date' => $end->format('Y-m-d\TH:i'),
+                        'days' => $stayDays,
+                        'price' => $dailyCharge,
+                        'total' => $stayDays * $dailyCharge
+                    ];
+                }
             }
         }
         
@@ -153,8 +174,6 @@ class DischargeProcess extends Component
                         $charge['days'] = $calculatedDays;
                     }
                 }
-
-                // Let calculateTotal handle the math without overwriting the raw string input
             }
         }
         
@@ -201,8 +220,6 @@ class DischargeProcess extends Component
                         }
                     }
                 }
-
-                // Let calculateTotal handle the math without overwriting the raw string input
             }
         }
         
@@ -244,13 +261,23 @@ class DischargeProcess extends Component
             }
         }
 
-        $this->totalAmount = $total;
+        $taxRate = (float) \App\Models\Setting::get('tax_rate', 0);
+        $taxAmount = $taxRate > 0 ? ($total * ($taxRate / 100)) : 0;
+
+        $discountAmount = (float) $this->discountValue;
+        if ($this->discountType === 'percentage') {
+            $discountAmount = ($total * $discountAmount) / 100;
+        }
+
+        $this->totalAmount = max(0, $total - $discountAmount + $taxAmount);
     }
 
     public function generateBill()
     {
         $this->validate([
             'bedCharges.*.ward_id' => 'required|exists:wards,id',
+            'discountValue' => 'required|numeric|min:0',
+            'discountReason' => 'nullable|string|max:255',
         ]);
 
         foreach ($this->ipServiceCharges as $index => $charge) {
@@ -270,7 +297,6 @@ class DischargeProcess extends Component
         
         foreach ($this->bedCharges as $charge) {
             if ($charge['days'] > 0 && $charge['price'] >= 0) {
-                // If it already contains dates (e.g. from previous edit), don't append again
                 $name = $charge['name'] ?: 'Ward/Bed Charge';
                 
                 if (!str_contains($name, '[')) {
@@ -315,9 +341,28 @@ class DischargeProcess extends Component
             }
         }
 
-        // Upsert final bill
-        $billingService->upsertAdmissionFinalBill($this->admission, $finalItems);
+        try {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($billingService, $finalItems) {
+                // Upsert final bill
+                $bill = $billingService->upsertAdmissionFinalBill($this->admission, $finalItems);
+                
+                // Clear any existing discounts before applying the updated one
+                $bill->discounts()->delete();
 
+                if ($this->discountValue > 0) {
+                    $billingService->applyDiscount($bill, [
+                        'type' => $this->discountType,
+                        'value' => $this->discountValue,
+                        'reason' => $this->discountReason,
+                    ]);
+                } else {
+                    $billingService->recalculatePaymentStatus($bill);
+                }
+            });
+        } catch (\Exception $e) {
+            $this->addError('discountValue', $e->getMessage());
+            return;
+        }
 
         $this->dispatch('close-modal', name: 'discharge-process-modal');
         $this->dispatch('refresh');

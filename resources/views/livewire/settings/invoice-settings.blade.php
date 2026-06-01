@@ -18,7 +18,10 @@
                         <option value="A5">A5 Small</option>
                         <option value="LETTER">Letter</option>
                     </x-form.select>
-                    <x-form.checkbox label="Require Doctor Approval for Staff Discounts" wire:model="require_doctor_approval_for_discounts" name="require_doctor_approval_for_discounts" />
+                    <div class="space-y-4">
+                        <x-form.checkbox label="Require Doctor Approval for Staff Discounts" wire:model="require_doctor_approval_for_discounts" name="require_doctor_approval_for_discounts" />
+                        <x-form.checkbox label="Require Owner Approval for All Discounts" wire:model="require_owner_approval_for_all_discounts" name="require_owner_approval_for_all_discounts" />
+                    </div>
                 </div>
             </div>
 

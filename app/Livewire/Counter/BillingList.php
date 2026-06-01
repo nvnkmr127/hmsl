@@ -176,7 +176,7 @@ class BillingList extends Component
             'selectedBillId' => 'required|integer|exists:bills,id',
             'discountType' => 'required|in:percentage,flat',
             'discountValue' => 'required|numeric|min:0.01',
-            'discountReason' => 'required|string|max:255',
+            'discountReason' => 'nullable|string|max:255',
             'discountItemId' => 'nullable|exists:bill_items,id',
         ]);
 
@@ -211,7 +211,7 @@ class BillingList extends Component
         $this->validate([
             'selectedOpId' => 'required|exists:consultations,id',
             'opDiscountAmount' => 'required|numeric|min:0.01',
-            'opDiscountReason' => 'required|string|max:255',
+            'opDiscountReason' => 'nullable|string|max:255',
         ]);
 
         $op = \App\Models\Consultation::with('bill.items')->findOrFail($this->selectedOpId);

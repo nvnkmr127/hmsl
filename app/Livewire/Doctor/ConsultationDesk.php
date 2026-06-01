@@ -171,7 +171,7 @@ class ConsultationDesk extends Component
         
         $this->validate([
             'discount' => 'required|numeric|min:0',
-            'discountReason' => 'required|string|max:255',
+            'discountReason' => 'nullable|string|max:255',
             'authorizedLimit' => 'required|numeric|min:0',
         ]);
 

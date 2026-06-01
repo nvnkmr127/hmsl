@@ -375,17 +375,18 @@ class BillingService
 
             // 4. LIMITS & SETTINGS
             $requireDocApproval = filter_var(Setting::get('require_doctor_approval_for_discounts', false), FILTER_VALIDATE_BOOLEAN);
+            $requireOwnerApproval = filter_var(Setting::get('require_owner_approval_for_all_discounts', false), FILTER_VALIDATE_BOOLEAN);
             $maxPct = (float) Setting::get('max_discount_percentage', 20);
             $maxAmt = (float) Setting::get('max_discount_amount', 5000);
             $approvalThreshold = (float) Setting::get('discount_approval_threshold', 15);
 
             $type = $discountData['type']; // percentage or flat
             $value = (float) $discountData['value'];
-            $reason = $discountData['reason'];
+            $reason = $discountData['reason'] ?? null;
             $itemId = $discountData['bill_item_id'] ?? null;
 
             if (empty($reason)) {
-                throw new \InvalidArgumentException('Reason is mandatory for applying a discount.');
+                $reason = 'Not specified';
             }
 
             $subtotal = $itemId 
@@ -405,43 +406,54 @@ class BillingService
             }
 
             // 5. APPROVAL & AUDIT LOGIC
-            // Default: approved for doctors and admins
             $status = 'approved';
             $linkingDoctorId = $userDoctor?->id ?: $clinicalDoctorId;
 
-            if ($userDoctor || $isAdmin) {
-                // Doctors and Admins are auto-approved
-                $status = 'approved';
-                
-                // If it's a doctor but not the clinical doctor, we still record them as the doctor_id for this discount
-                if ($userDoctor) {
-                    $linkingDoctorId = $userDoctor->id;
+            $isOwner = \App\Models\HospitalOwner::isOwner($user);
+
+            if ($requireOwnerApproval) {
+                // If owner approval is required, only the owner can auto-approve
+                if ($isOwner) {
+                    $status = 'approved';
+                } else {
+                    $status = 'pending';
                 }
             } else {
-                // STAFF applying
-                if ($requireDocApproval) {
-                    // Check if it's within clinical authorization (one approval required)
-                    if ($isClinicallyAuthorized && $calculatedAmount <= $clinicalLimit) {
-                        $status = 'approved';
-                    } else {
-                        // Needs approval if no pre-authorization or exceeds it
-                        $status = 'pending';
+                // Default legacy logic
+                if ($userDoctor || $isAdmin) {
+                    // Doctors and Admins are auto-approved
+                    $status = 'approved';
+                    
+                    // If it's a doctor but not the clinical doctor, we still record them as the doctor_id for this discount
+                    if ($userDoctor) {
+                        $linkingDoctorId = $userDoctor->id;
                     }
                 } else {
-                    // Staff can apply directly if approval not required by setting
-                    $status = 'approved';
+                    // STAFF applying
+                    if ($requireDocApproval) {
+                        // Check if it's within clinical authorization (one approval required)
+                        if ($isClinicallyAuthorized && $calculatedAmount <= $clinicalLimit) {
+                            $status = 'approved';
+                        } else {
+                            // Needs approval if no pre-authorization or exceeds it
+                            $status = 'pending';
+                        }
+                    } else {
+                        // Staff can apply directly if approval not required by setting
+                        $status = 'approved';
+                    }
                 }
-            }
 
-            // Global threshold check for non-admins (even doctors have a ceiling for auto-approval if configured)
-            if (!$isAdmin && !$isSoleDoctor && $status === 'approved') {
-                $pct = ($calculatedAmount / $subtotal) * 100;
-                if ($pct > $maxPct || $calculatedAmount > $maxAmt) {
-                     throw new \InvalidArgumentException("Discount exceeds the hospital's maximum allowed limit ({$maxPct}% or ₹{$maxAmt}).");
-                }
-                
-                if ($pct > $approvalThreshold) {
-                    $status = 'pending';
+                // Global threshold check for non-admins (even doctors have a ceiling for auto-approval if configured)
+                if (!$isAdmin && !$isSoleDoctor && $status === 'approved') {
+                    $pct = ($calculatedAmount / $subtotal) * 100;
+                    if ($pct > $maxPct || $calculatedAmount > $maxAmt) {
+                         throw new \InvalidArgumentException("Discount exceeds the hospital's maximum allowed limit ({$maxPct}% or ₹{$maxAmt}).");
+                    }
+                    
+                    if ($pct > $approvalThreshold) {
+                        $status = 'pending';
+                    }
                 }
             }
 
@@ -461,9 +473,7 @@ class BillingService
 
             \App\Models\AuditLog::log('discount_applied', $discount, [], $discount->toArray(), ['billing', 'discount']);
 
-            if ($status === 'approved') {
-                $this->recalculatePaymentStatus($bill);
-            }
+            $this->recalculatePaymentStatus($bill);
 
             return $discount;
         });
@@ -491,14 +501,16 @@ class BillingService
     {
         if ($discount->status !== 'pending') return;
 
-        $old = $discount->toArray();
-        $discount->update([
-            'status' => 'rejected',
-            'approved_by' => Auth::id(),
-        ]);
+        DB::transaction(function () use ($discount) {
+            $old = $discount->toArray();
+            $discount->update([
+                'status' => 'rejected',
+                'approved_by' => Auth::id(),
+            ]);
 
-        \App\Models\AuditLog::log('discount_rejected', $discount, $old, $discount->toArray(), ['billing', 'discount']);
-        
-        // No need to recalculate payment status as it was never 'approved'
+            \App\Models\AuditLog::log('discount_rejected', $discount, $old, $discount->toArray(), ['billing', 'discount']);
+            
+            $this->recalculatePaymentStatus($discount->bill);
+        });
     }
 }

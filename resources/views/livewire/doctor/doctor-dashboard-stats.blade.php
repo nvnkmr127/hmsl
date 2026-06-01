@@ -82,4 +82,7 @@
         <p class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">Total Admissions</p>
         <h3 class="text-3xl font-black text-gray-900 dark:text-white">{{ number_format($stats['total_admissions']) }}</h3>
     </div>
+
+    {{-- Front Desk Staff --}}
+    <livewire:doctor.receptionist-list />
 </div>

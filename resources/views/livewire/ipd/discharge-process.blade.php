@@ -171,6 +171,45 @@
                 </div>
             </div>
             @endif
+
+            <!-- Discount Option -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700/50 mt-6">
+                <div class="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-700 pb-3">
+                    <h3 class="text-base font-black text-gray-800 dark:text-gray-100 uppercase tracking-tight flex items-center gap-2">
+                        <svg class="w-5 h-5 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        Bill Adjustment & Discount
+                    </h3>
+                    @if($isAuthorizedByDoctor)
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
+                            Dr. Authorized Limit: ₹{{ number_format($authorizedLimit, 2) }}
+                        </span>
+                    @endif
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+                    <div>
+                        <label class="text-[10px] uppercase font-bold text-gray-500 block mb-1">Discount Type</label>
+                        <select wire:model.live="discountType" class="w-full text-sm rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-900">
+                            <option value="flat">Flat Amount (₹)</option>
+                            <option value="percentage">Percentage (%)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="text-[10px] uppercase font-bold text-gray-500 block mb-1">Discount Value</label>
+                        <input type="number" wire:model.live.debounce.300ms="discountValue" min="0" step="0.01" class="w-full text-sm rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-900">
+                        @error('discountValue') <span class="text-[10px] text-red-500 block mt-1">{{ $message }}</span> @enderror
+                    </div>
+
+                    @if($discountValue > 0)
+                        <div>
+                            <label class="text-[10px] uppercase font-bold text-gray-500 block mb-1">Discount Reason (Mandatory)</label>
+                            <input type="text" wire:model.live="discountReason" placeholder="Reason for discount..." class="w-full text-sm rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-900">
+                            @error('discountReason') <span class="text-[10px] text-red-500 block mt-1">{{ $message }}</span> @enderror
+                        </div>
+                    @endif
+                </div>
+            </div>
             </div>
 
             <!-- Sticky Footer for Summary & Actions -->

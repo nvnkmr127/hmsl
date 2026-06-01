@@ -499,7 +499,7 @@
                 </x-form.select>
             @endif
 
-            <x-form.input type="text" label="Reason (Mandatory)" wire:model="discountReason" placeholder="e.g. Professional Courtesy, Staff Discount..." />
+            <x-form.input type="text" label="Reason (Optional)" wire:model="discountReason" placeholder="e.g. Professional Courtesy, Staff Discount..." />
 
             <div class="flex justify-end gap-3 pt-4">
                 <button type="button" @click="$dispatch('close-modal', { name: 'bill-discount-modal' })" class="btn btn-ghost px-6">Cancel</button>
@@ -518,7 +518,7 @@
 
             <x-form.input type="number" step="0.01" label="Discount Amount (₹)" wire:model.live="opDiscountAmount" class="text-right" />
             
-            <x-form.input type="text" label="Reason (Mandatory)" wire:model="opDiscountReason" placeholder="e.g. Doctor instructed, Professional Courtesy..." />
+            <x-form.input type="text" label="Reason (Optional)" wire:model="opDiscountReason" placeholder="e.g. Doctor instructed, Professional Courtesy..." />
 
             <div class="flex justify-end gap-3 pt-4">
                 <button type="button" @click="$dispatch('close-modal', { name: 'op-discount-modal' })" class="btn btn-ghost px-6">Cancel</button>

@@ -1,12 +1,18 @@
 <div>
-    <x-breadcrumb :items="['Reports' => route('reports.index'), 'Discount Audit' => null]" />
+    @if(!$isDashboard)
+        <x-breadcrumb :items="['Reports' => route('reports.index'), 'Discount Audit' => null]" />
 
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-            <h1 class="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Discount Audit Trail</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">Verify transparency and financial integrity of all applied bill discounts.</p>
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div>
+                <h1 class="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Discount Audit Trail</h1>
+                <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">Verify transparency and financial integrity of all applied bill discounts.</p>
+            </div>
         </div>
-    </div>
+    @else
+        <div class="mt-6 mb-4">
+            <h2 class="text-xl font-black text-gray-900 dark:text-white tracking-tight uppercase">Discount Approvals</h2>
+        </div>
+    @endif
 
     {{-- Filters --}}
     <div class="glass-card p-4 mb-6">
@@ -17,6 +23,17 @@
                     placeholder="Search by bill number or patient name..."
                     id="discount-search"
                 />
+            </div>
+            <div class="flex items-center gap-2 bg-gray-100/50 dark:bg-gray-700/50 rounded-xl px-4 h-[42px]">
+                <div class="flex-1 flex flex-col justify-center">
+                    <span class="text-[9px] font-bold text-gray-400 uppercase leading-none mb-1">From</span>
+                    <input type="date" wire:model.live="fromDate" class="bg-transparent border-none text-xs font-bold text-gray-700 dark:text-gray-200 focus:ring-0 p-0 h-4">
+                </div>
+                <div class="w-px h-6 bg-gray-200 dark:bg-gray-600"></div>
+                <div class="flex-1 flex flex-col justify-center text-right">
+                    <span class="text-[9px] font-bold text-gray-400 uppercase leading-none mb-1">To</span>
+                    <input type="date" wire:model.live="toDate" class="bg-transparent border-none text-xs font-bold text-gray-700 dark:text-gray-200 focus:ring-0 p-0 h-4 text-right">
+                </div>
             </div>
             <select wire:model.live="statusFilter"
                     class="px-4 py-2.5 rounded-xl border-transparent bg-gray-100/50 dark:bg-gray-700/50 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-violet-500/30">
@@ -56,14 +73,30 @@
                             </span>
                         </td>
                         <td class="px-4 py-4">
-                            <p class="text-sm font-bold text-gray-900 dark:text-white">{{ $discount->bill->patient->full_name }}</p>
+                            @if($discount->bill->admission_id)
+                                <a href="{{ route('counter.ipd.show', $discount->bill->admission_id) }}#billing" class="text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
+                                    {{ $discount->bill->patient->full_name }}
+                                </a>
+                            @else
+                                <a href="{{ route('counter.patients.history', $discount->bill->patient_id) }}" class="text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
+                                    {{ $discount->bill->patient->full_name }}
+                                </a>
+                            @endif
                             <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{{ $discount->bill->patient->uhid }}</p>
                         </td>
-                        <td class="px-4 py-4 text-right">
-                            <p class="text-sm font-black text-gray-900 dark:text-white">₹{{ number_format($discount->applied_amount, 2) }}</p>
-                            <p class="text-[10px] text-gray-400 font-bold">
-                                {{ $discount->discount_type === 'percentage' ? $discount->discount_value . '%' : 'Flat' }}
-                            </p>
+                        <td class="px-4 py-4 text-right whitespace-nowrap">
+                            <div class="inline-block text-right">
+                                <p class="text-[10px] text-gray-500 font-medium">Before: <span class="font-bold">₹{{ number_format($discount->bill->subtotal + $discount->bill->tax_amount, 2) }}</span></p>
+                                <p class="text-sm font-black text-rose-600">
+                                    - ₹{{ number_format($discount->applied_amount, 2) }}
+                                    <span class="text-[9px] font-bold text-gray-400">
+                                        ({{ $discount->discount_type === 'percentage' ? $discount->discount_value . '%' : 'Flat' }})
+                                    </span>
+                                </p>
+                                <p class="text-[10px] text-emerald-600 font-bold border-t border-gray-100 dark:border-gray-800/80 pt-0.5 mt-0.5">
+                                    After: ₹{{ number_format(max(0, ($discount->bill->subtotal + $discount->bill->tax_amount) - $discount->applied_amount), 2) }}
+                                </p>
+                            </div>
                         </td>
                         <td class="px-4 py-4">
                             <div class="flex items-center gap-2">
@@ -111,13 +144,15 @@
                                 <x-badge color="success">Verified</x-badge>
                             @elseif($discount->status === 'pending')
                                 <div class="flex items-center gap-2">
-                                    <x-badge color="warning">Pending Approval</x-badge>
-                                    @if(Auth::user()->hasAnyRole(['admin', 'super_admin']) || \App\Models\Doctor::where('user_id', Auth::id())->exists())
-                                        <button wire:click="approve({{ $discount->id }})" class="p-1 hover:bg-emerald-50 text-emerald-600 rounded-lg transition-colors" title="Approve">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                    <x-badge color="warning" class="mr-1">Pending Approval</x-badge>
+                                    @if(Auth::user()->hasAnyRole(['admin', 'super_admin']) || \App\Models\Doctor::where('user_id', Auth::id())->exists() || \App\Models\HospitalOwner::isOwner(Auth::user()))
+                                        <button wire:click="approve({{ $discount->id }})" class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition-all" title="Approve">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                            <span>Approve</span>
                                         </button>
-                                        <button wire:click="reject({{ $discount->id }})" class="p-1 hover:bg-rose-50 text-rose-600 rounded-lg transition-colors" title="Reject">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                        <button wire:click="reject({{ $discount->id }})" class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow-sm transition-all" title="Reject">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                            <span>Reject</span>
                                         </button>
                                     @endif
                                 </div>

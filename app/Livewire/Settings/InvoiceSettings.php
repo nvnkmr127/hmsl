@@ -26,6 +26,9 @@ class InvoiceSettings extends Component
     #[Validate('required|boolean')]
     public $require_doctor_approval_for_discounts;
 
+    #[Validate('required|boolean')]
+    public $require_owner_approval_for_all_discounts;
+
     public function mount(SettingsService $settings)
     {
         $data = $settings->getGroup('invoice');
@@ -36,6 +39,7 @@ class InvoiceSettings extends Component
         $this->tax_percentage = $data['tax_percentage'] ?? '18';
         $this->print_paper_size = $data['print_paper_size'] ?? 'A4';
         $this->require_doctor_approval_for_discounts = filter_var($data['require_doctor_approval_for_discounts'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $this->require_owner_approval_for_all_discounts = filter_var($data['require_owner_approval_for_all_discounts'] ?? false, FILTER_VALIDATE_BOOLEAN);
     }
 
     public function save(SettingsService $settings)
@@ -49,6 +53,7 @@ class InvoiceSettings extends Component
             'tax_percentage' => $this->tax_percentage,
             'print_paper_size' => $this->print_paper_size,
             'require_doctor_approval_for_discounts' => $this->require_doctor_approval_for_discounts,
+            'require_owner_approval_for_all_discounts' => $this->require_owner_approval_for_all_discounts,
         ];
 
         $settings->updateGroup('invoice', $data);

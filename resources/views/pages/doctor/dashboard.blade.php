@@ -9,13 +9,8 @@
         <h1 class="text-3xl font-black text-gray-800 dark:text-white uppercase tracking-tight">Clinical Desk</h1>
         <livewire:doctor.doctor-dashboard-stats />
         
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="lg:col-span-2">
-                <livewire:doctor.consultation-desk />
-            </div>
-            <div class="lg:col-span-1">
-                <livewire:doctor.receptionist-list />
-            </div>
+        <div>
+            <livewire:reports.discount-audit-report :isDashboard="true" />
         </div>
     </div>
 @endsection

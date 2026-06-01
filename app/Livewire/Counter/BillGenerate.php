@@ -216,7 +216,7 @@ class BillGenerate extends Component
             'amountPaid' => 'nullable|numeric|min:0',
             'paymentMethod' => 'nullable|string|max:50',
             'discount' => 'numeric|min:0',
-            'discountReason' => 'nullable|required_if:discount,>0|string|max:255',
+            'discountReason' => 'nullable|string|max:255',
             'items.*.service_key' => 'required_without:items.*.is_preset',
             'items.*.quantity' => 'required|integer|min:1',
         ]);

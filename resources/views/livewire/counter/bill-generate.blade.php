@@ -108,7 +108,7 @@
                         </div>
                         @if($discount > 0)
                             <div class="bg-white/50 dark:bg-gray-900/50 p-3 rounded-xl border border-violet-100 dark:border-violet-900/30">
-                                <x-form.input label="Discount Reason (Mandatory)" wire:model="discountReason" placeholder="e.g. Professional Courtesy, Sole Doctor Disc..." />
+                                <x-form.input label="Discount Reason (Optional)" wire:model="discountReason" placeholder="e.g. Professional Courtesy, Sole Doctor Disc..." />
                             </div>
                         @endif
                     </div>
