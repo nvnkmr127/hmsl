@@ -599,7 +599,7 @@
                                     @error('fee') <p class="text-[10px] font-bold text-white/80 mb-4">{{ $message }}</p> @enderror
                                     
                                     <div class="relative">
-                                        <select wire:model="paymentStatus" class="w-full bg-white/10 hover:bg-white/20 text-white border-none rounded-xl px-4 py-3 text-xs font-bold transition-all outline-none mb-2">
+                                        <select wire:model.live="paymentStatus" class="w-full bg-white/10 hover:bg-white/20 text-white border-none rounded-xl px-4 py-3 text-xs font-bold transition-all outline-none mb-2">
                                             <option class="text-gray-900" value="Paid">Payment: Paid</option>
                                             <option class="text-gray-900" value="Partially Paid">Payment: Partially Paid</option>
                                             <option class="text-gray-900" value="Unpaid">Payment: Unpaid</option>
@@ -607,7 +607,7 @@
                                         @error('paymentStatus') <p class="text-[10px] font-bold text-white/80 mt-2">{{ $message }}</p> @enderror
 
                                         @if($paymentStatus === 'Partially Paid')
-                                            <input type="number" step="1" min="0" wire:model="amountPaid" class="w-full bg-white/10 hover:bg-white/20 text-white border-none rounded-xl px-4 py-3 text-xs font-bold transition-all outline-none mb-2" placeholder="Amount paid">
+                                            <input type="number" step="1" min="0" wire:model.live.debounce.500ms="amountPaid" class="w-full bg-white/10 hover:bg-white/20 text-white border-none rounded-xl px-4 py-3 text-xs font-bold transition-all outline-none mb-2" placeholder="Amount paid">
                                             @error('amountPaid') <p class="text-[10px] font-bold text-white/80 mt-2">{{ $message }}</p> @enderror
                                         @endif
 

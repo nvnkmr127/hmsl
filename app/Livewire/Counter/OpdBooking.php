@@ -275,6 +275,9 @@ class OpdBooking extends Component
             $this->amountPaid = 0;
         } else {
             $this->amountPaid = min(max(0, (float) $this->amountPaid), $fee);
+            if ($this->amountPaid >= $fee) {
+                $this->paymentStatus = 'Paid';
+            }
         }
     }
 
@@ -293,6 +296,32 @@ class OpdBooking extends Component
             $this->amountPaid = 0;
         } else {
             $this->amountPaid = min(max(0, (float) $this->amountPaid), $fee);
+            if ($this->amountPaid >= $fee) {
+                $this->paymentStatus = 'Paid';
+            }
+        }
+    }
+
+    public function updatedAmountPaid($value)
+    {
+        $fee = (float) $this->fee;
+        $paid = (float) $value;
+
+        if ($fee <= 0) {
+            $this->paymentStatus = 'Paid';
+            $this->amountPaid = 0;
+            return;
+        }
+
+        if ($paid >= $fee) {
+            $this->paymentStatus = 'Paid';
+            $this->amountPaid = $fee;
+        } elseif ($paid <= 0) {
+            $this->paymentStatus = 'Unpaid';
+            $this->amountPaid = 0;
+        } else {
+            $this->paymentStatus = 'Partially Paid';
+            $this->amountPaid = $paid;
         }
     }
 
@@ -431,14 +460,21 @@ class OpdBooking extends Component
                     'notes' => $this->notes,
                     'payment_status' => ($this->fee <= 0 || $this->paymentStatus === 'Paid') ? 'Paid' : 'Unpaid',
                     'payment_method' => $this->paymentMode,
+                    'bill_payment_status' => $this->paymentStatus,
+                    'paid_amount' => $this->amountPaid,
                 ]);
 
                 $this->dispatch('notify', ['type' => 'success', 'message' => 'Visit updated successfully.']);
+                
+                if ($shouldPrint) {
+                    $this->dispatch('print-op-slip', ['id' => $consultation->id]);
+                }
+
                 $this->isEditing = false;
                 $this->editingId = null;
                 $this->selectedPatient = null;
                 $this->reset(['weight', 'height', 'temperature', 'notes', 'fee', 'amountPaid']);
-                $this->loadTodayQueue();
+                $this->resetPage();
                 $this->dispatch('booking-completed');
                 return;
                 

@@ -401,6 +401,8 @@ class QuickOpBooking extends Component
                     'valid_upto' => $this->valid_upto,
                     'payment_method' => $this->paymentMode,
                     'notes' => $this->notes,
+                    'bill_payment_status' => 'Paid',
+                    'paid_amount' => $this->fee,
                 ]);
 
                 $this->dispatch('notify', ['type' => 'success', 'message' => "Visit updated successfully."]);

@@ -529,13 +529,93 @@ class OpdService
         return DB::transaction(function () use ($consultation, $data) {
             $fee = isset($data['fee']) ? (float)$data['fee'] : $consultation->fee;
             
-            // 1. Revenue Protection: Block fee change if payments exist
-            if ($consultation->bill && $consultation->bill->payments()->exists() && (float)$fee !== (float)$consultation->fee) {
-                throw new \Exception('Cannot change fee: Payments have already been recorded for this visit.');
+            // 1. Check if we need to adjust payments and bill
+            if ($consultation->bill) {
+                $bill = $consultation->bill;
+                $payments = $bill->payments;
+
+                if ((float)$fee !== (float)$consultation->fee || isset($data['bill_payment_status'])) {
+                    if ($payments->count() > 1) {
+                        if ((float)$fee !== (float)$consultation->fee) {
+                            throw new \Exception('Cannot change fee: Multiple payments have already been recorded for this visit.');
+                        }
+                    } else {
+                        // 0 or 1 payment exists, we can adjust it.
+                        $payment = $payments->first();
+                        $paymentStatus = $data['bill_payment_status'] ?? ($consultation->payment_status === 'Paid' ? 'Paid' : 'Unpaid');
+                        $paidAmount = isset($data['paid_amount']) ? (float)$data['paid_amount'] : ($paymentStatus === 'Paid' ? $fee : 0);
+
+                        if ($fee <= 0) {
+                            // If fee becomes 0, delete the bill and its payments
+                            $bill->items()->delete();
+                            $bill->payments()->delete();
+                            $bill->delete();
+                        } else {
+                            // Adjust payments based on payment status
+                            if ($paymentStatus === 'Paid') {
+                                if ($payment) {
+                                    $payment->update([
+                                        'amount' => $fee,
+                                        'method' => $data['payment_method'] ?? $payment->method,
+                                    ]);
+                                } else {
+                                    $this->billingService->recordPayment($bill, $fee, $data['payment_method'] ?? 'Cash', 'payment');
+                                }
+                            } elseif ($paymentStatus === 'Partially Paid') {
+                                if ($paidAmount > 0) {
+                                    if ($payment) {
+                                        $payment->update([
+                                            'amount' => $paidAmount,
+                                            'method' => $data['payment_method'] ?? $payment->method,
+                                        ]);
+                                    } else {
+                                        $this->billingService->recordPayment($bill, $paidAmount, $data['payment_method'] ?? 'Cash', 'payment');
+                                    }
+                                } else {
+                                    if ($payment) {
+                                        $payment->delete();
+                                    }
+                                }
+                            } else { // Unpaid
+                                if ($payment) {
+                                    $payment->delete();
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                // If there was no bill (because fee was 0) but now fee > 0, we create the bill!
+                if ($fee > 0) {
+                    $consultation->loadMissing(['service', 'doctor']);
+                    $paymentStatus = $data['bill_payment_status'] ?? ($consultation->payment_status === 'Paid' ? 'Paid' : 'Unpaid');
+                    $paidAmount = isset($data['paid_amount']) ? (float)$data['paid_amount'] : ($paymentStatus === 'Paid' ? $fee : 0);
+
+                    $this->billingService->createBill([
+                        'patient_id' => $consultation->patient_id,
+                        'consultation_id' => $consultation->id,
+                        'discount_amount' => $consultation->discount_amount ?? 0,
+                        'payment_status' => $paymentStatus,
+                        'paid_amount' => $paidAmount,
+                        'payment_method' => $data['payment_method'] ?? 'Cash',
+                        'notes' => 'Bill for ' . ($consultation->service?->name ?? 'OPD Consultation'),
+                    ], [
+                        [
+                            'name' => ($consultation->service?->name ?? 'Consultation Fee') . ($consultation->doctor ? ' - ' . $consultation->doctor->full_name : ''),
+                            'type' => 'Consultation',
+                            'quantity' => 1,
+                            'unit_price' => $fee
+                        ]
+                    ]);
+                }
             }
 
+            // Remove payment fields before updating Consultation model
+            $consultationData = $data;
+            unset($consultationData['bill_payment_status'], $consultationData['paid_amount']);
+
             // 2. Update Consultation
-            $consultation->update($data);
+            $consultation->update($consultationData);
 
             // 3. Update Vitals
             $weight = $data['weight'] ?? $consultation->weight;
@@ -564,21 +644,18 @@ class OpdService
                 );
             }
 
-            // 4. Update Bill
+            // 4. Update Bill details if bill exists
+            $consultation->refresh();
             if ($consultation->bill) {
                 $bill = $consultation->bill;
                 
                 // Reload relations to get new names if IDs changed
                 $consultation->load(['service', 'doctor']);
                 
-                $bill->update([
-                    'total_amount' => $fee,
-                    'payment_method' => $data['payment_method'] ?? $bill->payment_method,
-                ]);
-
+                $itemName = ($consultation->service?->name ?? 'Consultation Fee') . ($consultation->doctor ? ' - ' . $consultation->doctor->full_name : '');
+                
                 // Update bill items
                 $bill->items()->delete();
-                $itemName = ($consultation->service?->name ?? 'Consultation Fee') . ($consultation->doctor ? ' - ' . $consultation->doctor->full_name : '');
                 $bill->items()->create([
                     'item_name' => $itemName,
                     'item_type' => 'Consultation',
@@ -586,6 +663,20 @@ class OpdService
                     'unit_price' => $fee,
                     'total_price' => $fee,
                 ]);
+
+                // Update subtotal, calculate tax based on settings, and update total amount on bill before recalculating payments
+                $taxRate = (float) \App\Models\Setting::get('tax_rate', 0);
+                $taxAmount = $taxRate > 0 ? ($fee * ($taxRate / 100)) : 0;
+                $totalAmount = $fee - ($bill->discount_amount ?? 0) + $taxAmount;
+
+                $bill->update([
+                    'subtotal' => $fee,
+                    'tax_amount' => $taxAmount,
+                    'total_amount' => $totalAmount,
+                ]);
+
+                // Recalculate bill
+                $this->billingService->recalculatePaymentStatus($bill);
             }
 
             return $consultation;

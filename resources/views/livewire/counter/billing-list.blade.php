@@ -340,10 +340,11 @@
                                 <div class="mt-3 flex gap-2">
                                     @unless($op->bill)
                                         <button wire:click="$dispatch('open-modal', { name: 'billing-create-modal' })" class="btn btn-primary px-3 py-2 text-xs flex-1">Create Bill</button>
+                                        <a href="{{ route('counter.opd.print', $op->id) }}" target="_blank" class="btn btn-secondary px-3 py-2 text-xs flex-1 text-center justify-center">Print Slip</a>
                                     @else
                                         <x-badge color="indigo">Billed</x-badge>
+                                        <a href="{{ route('billing.bills.print', $op->bill->id) }}" target="_blank" class="btn btn-secondary px-3 py-2 text-xs flex-1 text-center justify-center">Print Bill</a>
                                     @endunless
-                                    <button @click="$dispatch('print-op-slip', { id: {{ $op->id }} })" class="btn btn-secondary px-3 py-2 text-xs flex-1">Print Slip</button>
                                 </div>
                     </div>
                 @empty
@@ -419,13 +420,17 @@
                                     @unless($op->bill)
                                         <button wire:click="openOpDiscountModal({{ $op->id }})" class="btn btn-ghost px-3 py-1.5 text-xs font-bold text-rose-600">Discount</button>
                                         <button wire:click="$dispatch('open-modal', { name: 'billing-create-modal' })" class="btn btn-primary px-3 py-1.5 text-xs font-bold">Create Bill</button>
+                                        <a href="{{ route('counter.opd.print', $op->id) }}" target="_blank" class="btn btn-secondary px-3 py-1.5 text-xs font-bold" title="Print OPD Slip">
+                                            <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                            Print Slip
+                                        </a>
                                     @else
                                         <x-badge color="indigo">Billed</x-badge>
+                                        <a href="{{ route('billing.bills.print', $op->bill->id) }}" target="_blank" class="btn btn-secondary px-3 py-1.5 text-xs font-bold" title="Print Bill">
+                                            <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                            Print Bill
+                                        </a>
                                     @endunless
-                                    <button @click="$dispatch('print-op-slip', { id: {{ $op->id }} })" class="btn btn-secondary px-3 py-1.5 text-xs font-bold" title="Print OPD Slip">
-                                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                                        Print
-                                    </button>
                                 </div>
                             </td>
                         </tr>

@@ -333,11 +333,12 @@ class BillingService
             'payment_method' => $latestMethod ?: $bill->payment_method,
         ]);
 
-        if ($newStatus === 'Paid' && $oldStatus !== 'Paid') {
-            if ($bill->consultation_id) {
-                $bill->consultation()->update(['payment_status' => 'Paid']);
-            }
+        if ($bill->consultation_id) {
+            $consultStatus = $newStatus === 'Paid' ? 'Paid' : 'Unpaid';
+            $bill->consultation()->update(['payment_status' => $consultStatus]);
+        }
 
+        if ($newStatus === 'Paid' && $oldStatus !== 'Paid') {
             event(new \App\Events\Billing\BillSettled($bill->fresh()->load('patient')));
         }
     }
