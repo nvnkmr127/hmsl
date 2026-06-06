@@ -44,6 +44,7 @@ class QuickOpBooking extends Component
     public $bedId;
     public $reason;
     public $activeBookingFound = false;
+    public $manualAdmissionNumber;
 
     // IPD Vitals
     public $pulse;
@@ -329,9 +330,45 @@ class QuickOpBooking extends Component
         $this->updateGrowthStatus();
     }
 
+    public function getAdmissionNumberPrefix()
+    {
+        if (!$this->wardId) {
+            return 'ADM-';
+        }
+        $ward = \App\Models\Ward::find($this->wardId);
+        $isNicu = $ward && strtoupper(trim($ward->code)) === 'NICU';
+        return $isNicu ? 'ADM-NICU-' : 'ADM-';
+    }
+
+    public function checkAdmissionNumberExistence()
+    {
+        if (empty($this->manualAdmissionNumber)) {
+            return;
+        }
+
+        $prefix = $this->getAdmissionNumberPrefix();
+        $fullNumber = $prefix . trim($this->manualAdmissionNumber);
+
+        $exists = \App\Models\Admission::where('admission_number', $fullNumber)->exists();
+
+        if ($exists) {
+            $this->addError('manualAdmissionNumber', 'admission number exist already');
+            $this->dispatch('notify', ['type' => 'error', 'message' => 'admission number exist already']);
+            $this->js('alert("admission number exist already")');
+        } else {
+            $this->resetErrorBag('manualAdmissionNumber');
+        }
+    }
+
+    public function updatedManualAdmissionNumber()
+    {
+        $this->checkAdmissionNumberExistence();
+    }
+
     public function updatedWardId()
     {
         $this->bedId = null;
+        $this->checkAdmissionNumberExistence();
     }
 
     #[Computed]
@@ -453,7 +490,18 @@ class QuickOpBooking extends Component
             'wardId' => 'required|exists:wards,id',
             'bedId' => 'required|exists:beds,id',
             'admissionDate' => 'required',
+            'manualAdmissionNumber' => 'required',
         ]);
+
+        $prefix = $this->getAdmissionNumberPrefix();
+        $fullNumber = $prefix . trim($this->manualAdmissionNumber);
+
+        if (\App\Models\Admission::where('admission_number', $fullNumber)->exists()) {
+            $this->addError('manualAdmissionNumber', 'admission number exist already');
+            $this->dispatch('notify', ['type' => 'error', 'message' => 'admission number exist already']);
+            $this->js('alert("admission number exist already")');
+            return;
+        }
 
         $service = app(\App\Services\IpdService::class);
         $data = [
@@ -471,6 +519,7 @@ class QuickOpBooking extends Component
             'bp_diastolic' => $this->bp_diastolic,
             'respiratory_rate' => $this->respiratory_rate,
             'spo2' => $this->spo2,
+            'admission_number' => $fullNumber,
         ];
 
         try {

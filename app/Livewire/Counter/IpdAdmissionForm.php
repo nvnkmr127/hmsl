@@ -32,6 +32,9 @@ class IpdAdmissionForm extends Component
     #[Validate('required')]
     public $admissionDate;
 
+    #[Validate('required')]
+    public $manualAdmissionNumber;
+
     public $weight;
     public $height;
 
@@ -89,9 +92,45 @@ class IpdAdmissionForm extends Component
         $this->searchPatient = '';
     }
 
+    public function getAdmissionNumberPrefix()
+    {
+        if (!$this->wardId) {
+            return 'ADM-';
+        }
+        $ward = Ward::find($this->wardId);
+        $isNicu = $ward && strtoupper(trim($ward->code)) === 'NICU';
+        return $isNicu ? 'ADM-NICU-' : 'ADM-';
+    }
+
+    public function checkAdmissionNumberExistence()
+    {
+        if (empty($this->manualAdmissionNumber)) {
+            return;
+        }
+
+        $prefix = $this->getAdmissionNumberPrefix();
+        $fullNumber = $prefix . trim($this->manualAdmissionNumber);
+
+        $exists = Admission::where('admission_number', $fullNumber)->exists();
+
+        if ($exists) {
+            $this->addError('manualAdmissionNumber', 'admission number exist already');
+            $this->dispatch('notify', ['type' => 'error', 'message' => 'admission number exist already']);
+            $this->js('alert("admission number exist already")');
+        } else {
+            $this->resetErrorBag('manualAdmissionNumber');
+        }
+    }
+
+    public function updatedManualAdmissionNumber()
+    {
+        $this->checkAdmissionNumberExistence();
+    }
+
     public function updatedWardId()
     {
         $this->bedId = null;
+        $this->checkAdmissionNumberExistence();
     }
 
     #[Computed]
@@ -107,6 +146,16 @@ class IpdAdmissionForm extends Component
     {
         $this->validate();
         
+        $prefix = $this->getAdmissionNumberPrefix();
+        $fullNumber = $prefix . trim($this->manualAdmissionNumber);
+
+        if (Admission::where('admission_number', $fullNumber)->exists()) {
+            $this->addError('manualAdmissionNumber', 'admission number exist already');
+            $this->dispatch('notify', ['type' => 'error', 'message' => 'admission number exist already']);
+            $this->js('alert("admission number exist already")');
+            return;
+        }
+
         $selectedWard = Ward::find($this->wardId);
         $isIcu = $selectedWard && in_array(strtoupper($selectedWard->name), ['NICU', 'PICU']);
 
@@ -138,6 +187,7 @@ class IpdAdmissionForm extends Component
             'guardian_phone' => $this->guardianPhone,
             'guardian_relation' => $this->guardianRelation,
             'emergency_contact' => $this->emergencyContact,
+            'admission_number' => $fullNumber,
         ];
 
         if ($this->isEmergency) {

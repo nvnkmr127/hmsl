@@ -260,6 +260,22 @@
                         @error('admissionDate') <span class="text-[10px] font-bold text-rose-500 ml-1">{{ $message }}</span> @enderror
                     </div>
 
+                    <div class="space-y-3">
+                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Admission Number</label>
+                        <div class="flex items-stretch rounded-2xl bg-gray-50 dark:bg-gray-950 border-2 border-transparent focus-within:border-violet-500 transition-all shadow-sm ring-4 ring-gray-100/50 dark:ring-gray-900/50">
+                            <span class="flex items-center pl-6 pr-2 text-sm font-black text-gray-400 select-none uppercase tracking-wider">
+                                {{ $this->getAdmissionNumberPrefix() }}
+                            </span>
+                            <input 
+                                type="text" 
+                                wire:model.live.debounce.500ms="manualAdmissionNumber" 
+                                placeholder="ENTER NUMBER..." 
+                                class="flex-1 bg-transparent border-none focus:ring-0 pl-1 pr-6 py-5 font-black text-gray-900 dark:text-white text-sm outline-none uppercase tracking-wide"
+                            >
+                        </div>
+                        @error('manualAdmissionNumber') <span class="text-[10px] font-bold text-rose-500 ml-1">{{ $message }}</span> @enderror
+                    </div>
+
                     <div class="space-y-3" x-data="{ open: false, search: @entangle('reason') }">
                         <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Reason for Admission</label>
                         <div class="relative">

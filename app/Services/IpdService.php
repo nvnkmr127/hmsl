@@ -66,10 +66,15 @@ class IpdService
     public function admitPatient(array $data): Admission
     {
         return DB::transaction(function () use ($data) {
-            $data['admission_number'] = $this->generateAdmissionNumber($data['bed_id'] ?? null, $data['ward_id'] ?? null);
+            $data['admission_number'] = $data['admission_number'] ?? $this->generateAdmissionNumber($data['bed_id'] ?? null, $data['ward_id'] ?? null);
             $data['created_by'] = Auth::id();
             $data['status'] = 'Admitted';
             $data['admission_date'] = $data['admission_date'] ?? now()->toDateTimeString();
+
+            // Duplicate admission number check
+            if (Admission::where('admission_number', $data['admission_number'])->exists()) {
+                throw new \RuntimeException("admission number exist already");
+            }
 
             // 1. DUPLICATE ADMISSION CHECK
             $activeAdmission = Admission::where('patient_id', $data['patient_id'])

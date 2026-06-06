@@ -265,7 +265,13 @@
         <img id="bg-form-image" src="{{ asset('images/' . $bgImage) }}" alt="Case Sheet Form"
             style="position: absolute; top: 0; left: 0; width: 210mm; height: 297mm; z-index: 10; display: block; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
         <!-- Header fields -->
-        <div class="print-field" id="f-ip-no">{{ substr($admission->admission_number, -4) }}</div>
+        <div class="print-field" id="f-ip-no">
+            @php
+                $parts = explode('-', $admission->admission_number);
+                $enteredNumber = end($parts);
+            @endphp
+            {{ $enteredNumber }}
+        </div>
         <div class="print-field" id="f-uhid">UHID : {{ $admission->patient->uhid }}</div>
         <div class="print-field" id="f-room-no">{{ $wardShort }}</div>
         <div class="print-field" id="f-bed-no">{{ $bedShort }}</div>
