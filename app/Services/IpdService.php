@@ -22,33 +22,51 @@ class IpdService
         $this->sequenceService = $sequenceService;
     }
 
-    public function generateAdmissionNumber(): string
+    /**
+     * Generate an admission number based on the ward type of the selected bed.
+     *
+     * Ward groups and starting offsets (continuing from previous hospital records):
+     *  - NICU          → sequence 'admission_nicu'  (seeded at 3022, so first new = 3023)
+     *  - PICU + Rooms  → sequence 'admission_ward'  (seeded at 5119, so first new = 5120)
+     */
+    public function generateAdmissionNumber(?int $bedId = null, ?int $wardId = null): string
     {
-        $prefix = \App\Models\Setting::get('admission_prefix', 'ADM');
-        $scope = now()->format('Y');
+        // Determine sequence group from the ward of the selected bed
+        $wardCode = null;
+        if ($bedId) {
+            $wardCode = \App\Models\Bed::with('ward')
+                ->find($bedId)
+                ?->ward
+                ?->code;
+        }
 
-        $seq = $this->sequenceService->next('admission', $scope, function () use ($scope) {
-            $max = 0;
-            $existing = Admission::query()
-                ->where('admission_number', 'like', '%-' . $scope . '-%')
-                ->get(['admission_number']);
+        if (!$wardCode && $wardId) {
+            $wardCode = \App\Models\Ward::find($wardId)?->code;
+        }
 
-            foreach ($existing as $admission) {
-                $parts = explode('-', (string) $admission->admission_number);
-                $n = (int) end($parts);
-                $max = max($max, $n);
-            }
+        $isNicu = $wardCode && strtoupper(trim($wardCode)) === 'NICU';
 
-            return $max;
+        $sequenceName = $isNicu ? 'admission_nicu' : 'admission_ward';
+
+        // Seed values: the last used number from the previous system.
+        // SequenceService will add 1 on first call, so seed = (desired_first - 1).
+        $seedValue = $isNicu ? 3022 : 5119;
+
+        $seq = $this->sequenceService->next($sequenceName, null, function () use ($seedValue) {
+            // Only called once when the sequence row does not exist yet.
+            // Check if there are existing admissions that might have higher numbers.
+            return $seedValue;
         });
 
-        return sprintf('%s-%s-%05d', $prefix, $scope, $seq);
+        $prefix = $isNicu ? 'ADM-NICU-' : 'ADM-';
+
+        return $prefix . $seq;
     }
 
     public function admitPatient(array $data): Admission
     {
         return DB::transaction(function () use ($data) {
-            $data['admission_number'] = $this->generateAdmissionNumber();
+            $data['admission_number'] = $this->generateAdmissionNumber($data['bed_id'] ?? null, $data['ward_id'] ?? null);
             $data['created_by'] = Auth::id();
             $data['status'] = 'Admitted';
             $data['admission_date'] = $data['admission_date'] ?? now()->toDateTimeString();

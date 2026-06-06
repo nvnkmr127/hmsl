@@ -119,6 +119,7 @@
         <div class="totals-table">
             <div class="total-line">Subtotal <span style="float: right;">₹{{ number_format($bill->subtotal, 2) }}</span><div class="clear"></div></div>
             <div class="total-line">Discount <span style="float: right;">- ₹{{ number_format($bill->discount_amount, 2) }}</span><div class="clear"></div></div>
+            <div class="total-line" style="font-weight: bold;">Total Bill <span style="float: right;">₹{{ number_format($bill->total_amount, 2) }}</span><div class="clear"></div></div>
             <div class="total-line">Paid <span style="float: right;">₹{{ number_format($bill->paid_amount, 2) }}</span><div class="clear"></div></div>
             <div class="total-line grand">Balance <span style="float: right;">₹{{ number_format($bill->balance_amount, 2) }}</span><div class="clear"></div></div>
         </div>

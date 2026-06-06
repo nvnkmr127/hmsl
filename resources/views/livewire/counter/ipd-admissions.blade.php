@@ -105,6 +105,10 @@
                                         <a target="_blank" href="{{ route('counter.ipd.print-case-sheet', ['admission' => $adm->id]) }}" class="p-3 bg-purple-50 dark:bg-purple-950/30 text-purple-600 rounded-xl hover:bg-purple-600 hover:text-white transition-all shadow-sm hover:shadow-lg hover:shadow-purple-500/20" title="Test Print Form">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
                                         </a>
+                                        {{-- Print Bill: opens Discharge Process & Final Billing popup --}}
+                                        <a href="{{ route('counter.ipd.show', $adm->id) }}?openBilling=1" class="p-3 bg-amber-50 dark:bg-amber-950/30 text-amber-600 rounded-xl hover:bg-amber-600 hover:text-white transition-all shadow-sm hover:shadow-lg hover:shadow-amber-500/20" title="Print Bill / Billing">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                        </a>
                                         @if($adm->status === 'Admitted')
                                             <button wire:click="initiateTransfer({{ $adm->id }})" class="p-3 bg-blue-50 dark:bg-blue-950/30 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm hover:shadow-lg hover:shadow-blue-500/20" title="Transfer Bed">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
@@ -162,6 +166,19 @@
                     <p class="text-[9px] text-amber-600 dark:text-amber-400/60 font-bold uppercase">Make sure all bills are cleared before checking out.</p>
                 </div>
             </div>
+
+            {{-- Inline error alert (shown when discharge fails) --}}
+            @if($dischargeError)
+                <div class="flex items-start gap-4 p-5 bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800/40 rounded-2xl">
+                    <div class="w-10 h-10 shrink-0 rounded-xl bg-rose-500 text-white flex items-center justify-center">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-black text-rose-800 dark:text-rose-200 uppercase tracking-widest mb-1">Cannot Discharge</h4>
+                        <p class="text-sm font-semibold text-rose-700 dark:text-rose-300 leading-snug">{{ $dischargeError }}</p>
+                    </div>
+                </div>
+            @endif
 
             <div class="space-y-4" x-data="{ open: false, search: @entangle('dischargeNotes') }">
                 <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Follow-up Instructions & Notes</label>

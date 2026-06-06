@@ -57,6 +57,7 @@ class QuickOpBooking extends Component
         // Handle both named array ['id' => 1] and direct argument 1
         $patientId = is_array($id) ? ($id['id'] ?? null) : $id;
         if ($patientId) {
+            $this->isIpd = request()->routeIs('counter.ipd.*');
             $this->selectPatient($patientId);
         }
     }
@@ -144,15 +145,20 @@ class QuickOpBooking extends Component
     }
 
     #[On('quick-op-booking')]
-    public function open($edit_id = null, $patient_id = null)
+    public function open($edit_id = null, $patient_id = null, $ipd = false)
     {
+        // Always show the OPD form when triggered from the "New OP Visit" button.
+        // isIpd is only true when explicitly requested (e.g., a dedicated "Quick Admit" button).
+        $this->isIpd = (bool) $ipd;
+
         if ($edit_id) {
             $this->editBooking($edit_id);
         } else {
             $this->reset([
                 'searchPatient', 'selectedPatient', 'selectedService', 'weight', 'height', 'temperature',
                 'pulse', 'bp_systolic', 'bp_diastolic', 'respiratory_rate', 'spo2',
-                'notes', 'isEditing', 'editingId', 'isReview', 'isFollowUp'
+                'notes', 'isEditing', 'editingId', 'isReview', 'isFollowUp',
+                'wardId', 'bedId', 'reason',
             ]);
             
             if ($patient_id) {

@@ -145,7 +145,7 @@
                             @elseif($discount->status === 'pending')
                                 <div class="flex items-center gap-2">
                                     <x-badge color="warning" class="mr-1">Pending Approval</x-badge>
-                                    @if(Auth::user()->hasAnyRole(['admin', 'super_admin']) || \App\Models\Doctor::where('user_id', Auth::id())->exists() || \App\Models\HospitalOwner::isOwner(Auth::user()))
+                                    @if(Auth::user()->hasAnyRole(['admin', 'super_admin']) || \App\Models\Doctor::where('user_id', Auth::id())->exists())
                                         <button wire:click="approve({{ $discount->id }})" class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition-all" title="Approve">
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                                             <span>Approve</span>

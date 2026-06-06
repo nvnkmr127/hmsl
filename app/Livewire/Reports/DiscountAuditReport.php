@@ -27,9 +27,8 @@ class DiscountAuditReport extends Component
     public function approve($id)
     {
         $user = Auth::user();
-        if (!$user->hasAnyRole(['admin', 'super_admin']) && 
-            !\App\Models\Doctor::where('user_id', $user->id)->exists() && 
-            !\App\Models\HospitalOwner::isOwner($user)) {
+        if (!$user->hasAnyRole(['admin', 'super_admin']) &&
+            !\App\Models\Doctor::where('user_id', $user->id)->exists()) {
             $this->dispatch('notify', ['type' => 'error', 'message' => 'Unauthorized action.']);
             return;
         }
@@ -43,9 +42,8 @@ class DiscountAuditReport extends Component
     public function reject($id)
     {
         $user = Auth::user();
-        if (!$user->hasAnyRole(['admin', 'super_admin']) && 
-            !\App\Models\Doctor::where('user_id', $user->id)->exists() && 
-            !\App\Models\HospitalOwner::isOwner($user)) {
+        if (!$user->hasAnyRole(['admin', 'super_admin']) &&
+            !\App\Models\Doctor::where('user_id', $user->id)->exists()) {
             $this->dispatch('notify', ['type' => 'error', 'message' => 'Unauthorized action.']);
             return;
         }

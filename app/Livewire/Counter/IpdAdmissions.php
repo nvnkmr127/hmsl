@@ -17,6 +17,7 @@ class IpdAdmissions extends Component
     public bool $showDischarged = false;
     public ?int $selectedAdmissionId = null;
     public string $dischargeNotes = '';
+    public string $dischargeError = '';
     public ?int $selectedLabAdmissionId = null;
     public array $selectedLabTests = [];
     public ?string $labNotes = null;
@@ -29,6 +30,7 @@ class IpdAdmissions extends Component
     {
         $this->selectedAdmissionId = (int) $id;
         $this->dischargeNotes = '';
+        $this->dischargeError = '';
         $this->dispatch('open-modal', name: 'ipd-discharge-modal');
     }
 
@@ -86,12 +88,19 @@ class IpdAdmissions extends Component
             return;
         }
 
-        $admission = Admission::findOrFail($this->selectedAdmissionId);
-        $manager->dischargePatient($admission, $this->dischargeNotes ?: null);
+        $this->dischargeError = '';
 
-        $this->dispatch('close-modal', name: 'ipd-discharge-modal');
-        $this->dispatch('notify', ['type' => 'success', 'message' => 'Patient discharged successfully!']);
-        $this->reset(['selectedAdmissionId', 'dischargeNotes']);
+        try {
+            $admission = Admission::findOrFail($this->selectedAdmissionId);
+            $manager->dischargePatient($admission, $this->dischargeNotes ?: null);
+
+            $this->dispatch('close-modal', name: 'ipd-discharge-modal');
+            $this->dispatch('notify', ['type' => 'success', 'message' => 'Patient discharged successfully!']);
+            $this->reset(['selectedAdmissionId', 'dischargeNotes', 'dischargeError']);
+        } catch (\Exception $e) {
+            $this->dischargeError = $e->getMessage();
+            $this->dispatch('notify', ['type' => 'error', 'message' => $e->getMessage()]);
+        }
     }
 
     public function confirmTransfer(IpdService $manager)

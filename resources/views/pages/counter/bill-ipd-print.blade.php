@@ -131,6 +131,7 @@
     <div class="totals-area">
         <div class="total-line"><span>Sub Total</span><span>₹{{ number_format($bill->subtotal, 2) }}</span></div>
         <div class="total-line"><span>Total Discount</span><span>- ₹{{ number_format($bill->discount_amount, 2) }}</span></div>
+        <div class="total-line" style="font-weight: 700;"><span>Total Bill</span><span>₹{{ number_format($bill->total_amount, 2) }}</span></div>
         <div class="total-line"><span>Amount Paid</span><span>₹{{ number_format($bill->paid_amount, 2) }}</span></div>
         <div class="total-line grand"><span>Balance Due</span><span>₹{{ number_format($bill->balance_amount, 2) }}</span></div>
     </div>

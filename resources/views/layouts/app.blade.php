@@ -184,6 +184,19 @@
                 }, 1500);
             });
 
+            Livewire.on('print-bill-and-redirect', (event) => {
+                const data = event[0] ?? event;
+                const printUrlStr = data?.printUrl;
+                const redirectUrlStr = data?.redirectUrl;
+                if (!printUrlStr || !redirectUrlStr) return;
+
+                printUrl(printUrlStr);
+
+                setTimeout(() => {
+                    window.location.href = redirectUrlStr;
+                }, 1500);
+            });
+
             // Auto-Print IPD Case Sheet
             @if(session('print_ipd_case_sheet'))
                 setTimeout(() => {

@@ -12,6 +12,7 @@ use App\Models\ClinicalTemplate;
 use Livewire\Component;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Validate;
+use Livewire\Attributes\On;
 
 class IpdAdmissionForm extends Component
 {
@@ -61,6 +62,13 @@ class IpdAdmissionForm extends Component
             $this->doctorId = $activeDoctors->first()->id;
         }
 
+        $this->loadStats();
+    }
+
+    #[On('booking-completed')]
+    public function handleBookingCompleted()
+    {
+        $this->reset(['searchPatient', 'patientId', 'patient']);
         $this->loadStats();
     }
 
@@ -176,14 +184,21 @@ class IpdAdmissionForm extends Component
             }
 
             $patients = $patients->limit(6)->get();
+
+            // Flag patients who already have an active admission
+            $admittedPatientIds = \App\Models\Admission::whereIn('patient_id', $patients->pluck('id'))
+                ->where('status', 'Admitted')
+                ->pluck('patient_id')
+                ->flip(); // key by patient_id for O(1) lookup
         }
 
         return view('livewire.counter.ipd-admission-form', [
-            'patients' => $patients,
-            'doctors' => Doctor::where('is_active', true)->with('user')->get(),
-            'wards' => Ward::all(),
-            'reasons' => ClinicalTemplate::where('type', 'reason')->get(),
-            'clinicalNotes' => ClinicalTemplate::where('type', 'notes')->get(),
+            'patients'           => $patients,
+            'admittedPatientIds' => $admittedPatientIds ?? collect(),
+            'doctors'            => Doctor::where('is_active', true)->with('user')->get(),
+            'wards'              => Ward::all(),
+            'reasons'            => ClinicalTemplate::where('type', 'reason')->get(),
+            'clinicalNotes'      => ClinicalTemplate::where('type', 'notes')->get(),
         ]);
     }
 }

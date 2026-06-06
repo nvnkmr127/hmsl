@@ -234,13 +234,12 @@
     </style>
 
     @php
-        $months = 999;
-        if ($admission->patient->date_of_birth) {
-            $months = \Carbon\Carbon::parse($admission->patient->date_of_birth)->diffInMonths(\Carbon\Carbon::now());
-        }
-        $bgImage = $months <= 3 ? 'NICU_casesheet.png' : 'case_sheet.png';
+        $wardCode = $admission->bed?->ward?->code ?? '';
+        $wardName = $admission->bed?->ward?->name ?? '';
+        $isNicu = (strtoupper(trim($wardCode)) === 'NICU' || strtoupper(trim($wardName)) === 'NICU');
 
-        $wardName = $admission->bed->ward->name ?? '';
+        $bgImage = $isNicu ? 'NICU_casesheet.png' : 'case_sheet.png';
+
         $bedNo = $admission->bed->bed_number ?? '';
 
         $replacements = [
@@ -260,7 +259,7 @@
         }
     @endphp
 
-    <div class="page-wrapper {{ $months <= 3 ? 'is-nicu' : '' }}">
+    <div class="page-wrapper {{ $isNicu ? 'is-nicu' : '' }}">
 
         <!-- Printed Form Background -->
         <img id="bg-form-image" src="{{ asset('images/' . $bgImage) }}" alt="Case Sheet Form"

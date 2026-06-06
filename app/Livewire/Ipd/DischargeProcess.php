@@ -341,8 +341,9 @@ class DischargeProcess extends Component
             }
         }
 
+        $bill = null;
         try {
-            \Illuminate\Support\Facades\DB::transaction(function () use ($billingService, $finalItems) {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($billingService, $finalItems, &$bill) {
                 // Upsert final bill
                 $bill = $billingService->upsertAdmissionFinalBill($this->admission, $finalItems);
                 
@@ -354,6 +355,7 @@ class DischargeProcess extends Component
                         'type' => $this->discountType,
                         'value' => $this->discountValue,
                         'reason' => $this->discountReason,
+                        'status' => 'approved',
                     ]);
                 } else {
                     $billingService->recalculatePaymentStatus($bill);
@@ -367,7 +369,12 @@ class DischargeProcess extends Component
         $this->dispatch('close-modal', name: 'discharge-process-modal');
         $this->dispatch('refresh');
         
-        return redirect()->route('counter.ipd.discharge', $this->admission->id);
+        if ($bill) {
+            $this->dispatch('print-bill-and-redirect', [
+                'printUrl' => route('billing.bills.print', $bill->id),
+                'redirectUrl' => route('counter.ipd.discharge', $this->admission->id)
+            ]);
+        }
     }
 
     public function render()

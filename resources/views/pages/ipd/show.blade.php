@@ -3,6 +3,13 @@
 @section('title', 'IPD Patient - ' . $admission->patient->full_name)
 
 @section('content')
+    {{-- Auto-open billing popup if ?openBilling=1 --}}
+    <div x-data x-init="
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('openBilling') === '1') {
+            $nextTick(() => $dispatch('open-modal', { name: 'discharge-process-modal' }));
+        }
+    ">
     <x-page-header :title="$admission->patient->full_name" :subtitle="'Admission: ' . $admission->admission_number">
         <x-slot name="actions">
             <a href="{{ route('counter.ipd.index') }}" class="btn btn-secondary">
@@ -100,6 +107,9 @@
                         </div>
                     </div>
                 </x-card>
+            @else
+                {{-- Embed discharge-process (hidden trigger) so modal is available for discharged patients too --}}
+                <livewire:ipd.discharge-process :admission="$admission" :hideTrigger="true" />
             @endif
         </div>
 
@@ -202,4 +212,5 @@
     @unless($admission->status === 'Discharged')
         <livewire:doctor.lab-order-composer />
     @endunless
+    </div>{{-- end x-data auto-open wrapper --}}
 @endsection

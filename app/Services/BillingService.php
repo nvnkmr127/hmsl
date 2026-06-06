@@ -406,53 +406,55 @@ class BillingService
             }
 
             // 5. APPROVAL & AUDIT LOGIC
-            $status = 'approved';
+            $status = $discountData['status'] ?? null;
             $linkingDoctorId = $userDoctor?->id ?: $clinicalDoctorId;
 
             $isOwner = \App\Models\HospitalOwner::isOwner($user);
 
-            if ($requireOwnerApproval) {
-                // If owner approval is required, only the owner can auto-approve
-                if ($isOwner) {
-                    $status = 'approved';
-                } else {
-                    $status = 'pending';
-                }
-            } else {
-                // Default legacy logic
-                if ($userDoctor || $isAdmin) {
-                    // Doctors and Admins are auto-approved
-                    $status = 'approved';
-                    
-                    // If it's a doctor but not the clinical doctor, we still record them as the doctor_id for this discount
-                    if ($userDoctor) {
-                        $linkingDoctorId = $userDoctor->id;
+            if ($status === null) {
+                if ($requireOwnerApproval) {
+                    // If owner approval is required, only the owner can auto-approve
+                    if ($isOwner) {
+                        $status = 'approved';
+                    } else {
+                        $status = 'pending';
                     }
                 } else {
-                    // STAFF applying
-                    if ($requireDocApproval) {
-                        // Check if it's within clinical authorization (one approval required)
-                        if ($isClinicallyAuthorized && $calculatedAmount <= $clinicalLimit) {
-                            $status = 'approved';
-                        } else {
-                            // Needs approval if no pre-authorization or exceeds it
-                            $status = 'pending';
+                    // Default legacy logic
+                    if ($userDoctor || $isAdmin) {
+                        // Doctors and Admins are auto-approved
+                        $status = 'approved';
+                        
+                        // If it's a doctor but not the clinical doctor, we still record them as the doctor_id for this discount
+                        if ($userDoctor) {
+                            $linkingDoctorId = $userDoctor->id;
                         }
                     } else {
-                        // Staff can apply directly if approval not required by setting
-                        $status = 'approved';
+                        // STAFF applying
+                        if ($requireDocApproval) {
+                            // Check if it's within clinical authorization (one approval required)
+                            if ($isClinicallyAuthorized && $calculatedAmount <= $clinicalLimit) {
+                                $status = 'approved';
+                            } else {
+                                // Needs approval if no pre-authorization or exceeds it
+                                $status = 'pending';
+                            }
+                        } else {
+                            // Staff can apply directly if approval not required by setting
+                            $status = 'approved';
+                        }
                     }
-                }
 
-                // Global threshold check for non-admins (even doctors have a ceiling for auto-approval if configured)
-                if (!$isAdmin && !$isSoleDoctor && $status === 'approved') {
-                    $pct = ($calculatedAmount / $subtotal) * 100;
-                    if ($pct > $maxPct || $calculatedAmount > $maxAmt) {
-                         throw new \InvalidArgumentException("Discount exceeds the hospital's maximum allowed limit ({$maxPct}% or ₹{$maxAmt}).");
-                    }
-                    
-                    if ($pct > $approvalThreshold) {
-                        $status = 'pending';
+                    // Global threshold check for non-admins (even doctors have a ceiling for auto-approval if configured)
+                    if (!$isAdmin && !$isSoleDoctor && $status === 'approved') {
+                        $pct = ($calculatedAmount / $subtotal) * 100;
+                        if ($pct > $maxPct || $calculatedAmount > $maxAmt) {
+                             throw new \InvalidArgumentException("Discount exceeds the hospital's maximum allowed limit ({$maxPct}% or ₹{$maxAmt}).");
+                        }
+                        
+                        if ($pct > $approvalThreshold) {
+                            $status = 'pending';
+                        }
                     }
                 }
             }

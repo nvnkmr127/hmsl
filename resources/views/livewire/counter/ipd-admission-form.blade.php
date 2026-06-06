@@ -148,6 +148,7 @@
                 </div>
                 <input 
                     type="text"
+                    id="patient-search-input"
                     placeholder="SEARCH FOR PATIENT: {{ strtoupper([
                         'all' => 'name, patient ID or mobile',
                         'uhid' => 'UHID',
@@ -165,18 +166,38 @@
                 <div class="absolute left-0 right-0 top-full mt-4 z-[50] p-4 bg-white dark:bg-gray-900 rounded-[2.5rem] border border-gray-100 dark:border-gray-800 shadow-3xl animate-in slide-in-from-top-4 duration-300">
                     @if(count($patients))
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            @foreach($patients as $p)
-                                <div wire:click="$dispatch('quick-op-booking', { patient_id: {{ $p->id }} })" class="group cursor-pointer p-5 rounded-2xl bg-gray-50/50 dark:bg-gray-800/30 border border-transparent hover:border-indigo-500 hover:bg-white dark:hover:bg-gray-950 transition-all flex items-center justify-between shadow-sm hover:shadow-xl">
+                        @foreach($patients as $p)
+                                @php $isAdmitted = isset($admittedPatientIds[$p->id]); @endphp
+                                <div
+                                    wire:click="{{ $isAdmitted ? '$dispatch(\'open-modal\', { name: \'already-admitted-modal\' })' : '$dispatch(\'quick-op-booking\', { patient_id: ' . $p->id . ', ipd: true })' }}"
+                                    class="group cursor-pointer p-5 rounded-2xl border transition-all flex items-center justify-between shadow-sm
+                                        {{ $isAdmitted
+                                            ? 'bg-amber-50/60 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/40 hover:border-amber-400'
+                                            : 'bg-gray-50/50 dark:bg-gray-800/30 border-transparent hover:border-indigo-500 hover:bg-white dark:hover:bg-gray-950 hover:shadow-xl' }}"
+                                >
                                     <div class="flex items-center gap-4">
-                                        <div class="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center font-black text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all uppercase">
+                                        <div class="w-12 h-12 rounded-xl flex items-center justify-center font-black transition-all uppercase
+                                            {{ $isAdmitted
+                                                ? 'bg-amber-100 text-amber-600 group-hover:bg-amber-500 group-hover:text-white'
+                                                : 'bg-indigo-500/10 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white' }}">
                                             {{ substr($p->first_name, 0, 1) }}
                                         </div>
                                         <div>
-                                            <p class="font-black text-gray-900 dark:text-white uppercase tracking-tight text-sm">{{ $p->full_name }}</p>
+                                            <p class="font-black uppercase tracking-tight text-sm
+                                                {{ $isAdmitted ? 'text-amber-900 dark:text-amber-200' : 'text-gray-900 dark:text-white' }}">
+                                                {{ $p->full_name }}
+                                            </p>
                                             <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">ID: {{ $p->uhid }} · {{ $p->phone }}</p>
                                         </div>
                                     </div>
-                                    <div class="px-3 py-1 bg-indigo-500 text-white rounded-lg text-[9px] font-black opacity-0 group-hover:opacity-100 transition-opacity">ADMIT</div>
+                                    @if($isAdmitted)
+                                        <div class="flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded-lg text-[9px] font-black uppercase tracking-widest border border-amber-200 dark:border-amber-700/50">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                                            Already Admitted
+                                        </div>
+                                    @else
+                                        <div class="px-3 py-1 bg-indigo-500 text-white rounded-lg text-[9px] font-black opacity-0 group-hover:opacity-100 transition-opacity">ADMIT</div>
+                                    @endif
                                 </div>
                             @endforeach
                         </div>
@@ -404,4 +425,36 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.2); border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.4); }
     </style>
+
+    {{-- Already Admitted Warning Modal --}}
+    <x-modal name="already-admitted-modal" title="Patient Already Admitted" width="md">
+        <div class="p-8 flex flex-col items-center text-center gap-6">
+            <div class="w-20 h-20 rounded-3xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+                <svg class="w-10 h-10 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-xl font-black text-gray-900 dark:text-white tracking-tight mb-2">Patient Already Admitted</h3>
+                <p class="text-sm font-semibold text-gray-500 dark:text-gray-400 leading-relaxed">
+                    This patient currently has an active admission. Please discharge the patient first before creating a new admission.
+                </p>
+            </div>
+            <div class="flex gap-3 w-full">
+                <button
+                    type="button"
+                    @click="$dispatch('close-modal', { name: 'already-admitted-modal' })"
+                    class="flex-1 px-6 py-3.5 text-sm font-black uppercase tracking-widest text-gray-500 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-2xl transition-all"
+                >
+                    Close
+                </button>
+                <a
+                    href="{{ route('counter.ipd.index') }}"
+                    class="flex-1 px-6 py-3.5 text-sm font-black uppercase tracking-widest text-white bg-amber-500 hover:bg-amber-600 rounded-2xl shadow-lg shadow-amber-500/30 transition-all text-center"
+                >
+                    View Admissions
+                </a>
+            </div>
+        </div>
+    </x-modal>
 </div>
