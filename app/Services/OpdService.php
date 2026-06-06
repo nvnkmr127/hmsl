@@ -15,6 +15,7 @@ class OpdService
     protected $billingService;
     const EMERGENCY_FEE = 500;
     const NEWBORN_FREE_DAYS = 9;
+    const POST_DISCHARGE_FREE_DAYS = 7;
 
     public function __construct(\App\Services\BillingService $billingService)
     {
@@ -86,8 +87,36 @@ class OpdService
         $date = $date ? Carbon::parse($date) : now();
         $dob = Carbon::parse($patient->date_of_birth)->startOfDay();
         
-        // Return true if current date is within 7 days of DOB
+        // Return true if current date is within NEWBORN_FREE_DAYS of DOB
         return $dob->diffInDays($date->copy()->startOfDay()) <= self::NEWBORN_FREE_DAYS;
+    }
+
+    /**
+     * Check if a discharged inpatient is within their 7-day free OP window.
+     * Returns true only if the visit date is NOT a Sunday.
+     * (Sunday visits are charged normally — they simply don't get the free benefit.)
+     */
+    public function isPostDischargeBenefit(\App\Models\Patient $patient, $date = null): bool
+    {
+        $date = $date ? Carbon::parse($date)->startOfDay() : now()->startOfDay();
+
+        // Sundays: patient must pay normally even within the 7-day window
+        if ($date->dayOfWeek === Carbon::SUNDAY) {
+            return false;
+        }
+
+        $latestDischarge = $patient->admissions()
+            ->where('status', 'Discharged')
+            ->whereNotNull('discharge_date')
+            ->latest('discharge_date')
+            ->first();
+
+        if (!$latestDischarge) return false;
+
+        $dischargeDate = Carbon::parse($latestDischarge->discharge_date)->startOfDay();
+        $windowEnd     = $dischargeDate->copy()->addDays(self::POST_DISCHARGE_FREE_DAYS);
+
+        return $date->between($dischargeDate, $windowEnd);
     }
 
     /**
@@ -109,6 +138,7 @@ class OpdService
         $suggestedFee = 0;
         $isEmergency = $this->isEmergencyPricing();
         $isNewbornBenefit = $this->isEligibleNewborn($patient, $dateStr);
+        $isPostDischargeBenefit = $this->isPostDischargeBenefit($patient, $dateStr);
 
         $activeValidConsultation = Consultation::where('patient_id', $patient->id)
             ->where('status', '!=', 'Cancelled')
@@ -126,25 +156,40 @@ class OpdService
 
         if ($isNewbornBenefit) {
             return [
-                'is_review' => false,
-                'is_follow_up' => true,
-                'suggested_fee' => 0.0,
-                'is_emergency' => false,
-                'is_newborn_benefit' => true,
-                'valid_upto' => $calculatedValidUpto,
-                'latest_consultation' => $latestConsultation,
+                'is_review'               => false,
+                'is_follow_up'            => true,
+                'suggested_fee'           => 0.0,
+                'is_emergency'            => false,
+                'is_newborn_benefit'      => true,
+                'is_post_discharge'       => false,
+                'valid_upto'              => $calculatedValidUpto,
+                'latest_consultation'     => $latestConsultation,
+            ];
+        }
+
+        if ($isPostDischargeBenefit) {
+            return [
+                'is_review'               => false,
+                'is_follow_up'            => true,
+                'suggested_fee'           => 0.0,
+                'is_emergency'            => false,
+                'is_newborn_benefit'      => false,
+                'is_post_discharge'       => true,
+                'valid_upto'              => $calculatedValidUpto,
+                'latest_consultation'     => $latestConsultation,
             ];
         }
 
         if ($isEmergency) {
             return [
-                'is_review' => false,
-                'is_follow_up' => false,
-                'suggested_fee' => (float) self::EMERGENCY_FEE,
-                'is_emergency' => true,
-                'is_newborn_benefit' => false,
-                'valid_upto' => $calculatedValidUpto,
-                'latest_consultation' => $latestConsultation,
+                'is_review'               => false,
+                'is_follow_up'            => false,
+                'suggested_fee'           => (float) self::EMERGENCY_FEE,
+                'is_emergency'            => true,
+                'is_newborn_benefit'      => false,
+                'is_post_discharge'       => false,
+                'valid_upto'              => $calculatedValidUpto,
+                'latest_consultation'     => $latestConsultation,
             ];
         }
 
@@ -176,12 +221,13 @@ class OpdService
         }
 
         return [
-            'is_review' => $isReview,
-            'is_follow_up' => $isFollowUp,
-            'suggested_fee' => (float)$suggestedFee,
-            'is_emergency' => false,
-            'is_newborn_benefit' => false,
-            'valid_upto' => $calculatedValidUpto,
+            'is_review'           => $isReview,
+            'is_follow_up'        => $isFollowUp,
+            'suggested_fee'       => (float)$suggestedFee,
+            'is_emergency'        => false,
+            'is_newborn_benefit'  => false,
+            'is_post_discharge'   => false,
+            'valid_upto'          => $calculatedValidUpto,
             'latest_consultation' => $latestConsultation,
         ];
     }
@@ -254,7 +300,8 @@ class OpdService
                 : \App\Models\Setting::get('opd_validity_days', 7);
 
             $patient = \App\Models\Patient::find($data['patient_id']);
-            $isNewbornBenefit = $patient ? $this->isEligibleNewborn($patient, $data['consultation_date']) : false;
+            $isNewbornBenefit       = $patient ? $this->isEligibleNewborn($patient, $data['consultation_date']) : false;
+            $isPostDischargeBenefit = $patient ? $this->isPostDischargeBenefit($patient, $data['consultation_date']) : false;
             $isEmergency = $this->isEmergencyPricing();
             
             $isFollowUp = $this->hasActiveValidity($data['patient_id'], $data['service_id'] ?? null, $data['consultation_date']);
@@ -279,19 +326,24 @@ class OpdService
 
             // Priority logic for fee assignment
             if ($isNewbornBenefit) {
-                $data['fee'] = 0;
+                $data['fee']        = 0;
                 $data['visit_type'] = $data['visit_type'] ?? 'Newborn Followup';
+            } elseif ($isPostDischargeBenefit) {
+                $data['fee']        = 0;
+                $data['visit_type'] = $data['visit_type'] ?? 'Post-Discharge Follow-up';
+                // Force follow-up flag so revenue-protection check below is skipped
+                $isFollowUp = true;
             } elseif ($isEmergency) {
-                $data['fee'] = self::EMERGENCY_FEE;
+                $data['fee']        = self::EMERGENCY_FEE;
                 $data['visit_type'] = $data['visit_type'] ?? 'Emergency';
             } elseif ($isFollowUp) {
-                $data['fee'] = 0;
+                $data['fee']        = 0;
                 $data['visit_type'] = $data['visit_type'] ?? 'Follow-up';
             }
 
             // 4. STRICT REVENUE PROTECTION: Ensure fees are never zero due to missing relations
-            // Except for follow-up visits within validity period
-            if (!$isNewbornBenefit && !$isEmergency && !$isFollowUp && (!isset($data['fee']) || $data['fee'] <= 0)) {
+            // Except for follow-up visits within validity period or post-discharge benefit
+            if (!$isNewbornBenefit && !$isPostDischargeBenefit && !$isEmergency && !$isFollowUp && (!isset($data['fee']) || $data['fee'] <= 0)) {
                 if ($service) {
                     $data['fee'] = $service->price;
                 } elseif (isset($data['doctor_id'])) {
@@ -306,7 +358,7 @@ class OpdService
             }
             
             // Still enforce fee if no recent visit and no price found
-            if ($data['fee'] == 0 && !$isNewbornBenefit) {
+            if ($data['fee'] == 0 && !$isNewbornBenefit && !$isPostDischargeBenefit) {
                 $hasRecentVisit = false;
                 if ($service && $service->validity_days > 0) {
                     $hasRecentVisit = Consultation::where('patient_id', $data['patient_id'])

@@ -295,4 +295,52 @@ class ClinicalFlowsTest extends TestCase
             'fee' => 400.00,
         ]);
     }
+
+    public function test_post_discharge_free_op_benefit(): void
+    {
+        $this->seedRoles();
+        $doctor = $this->makeDoctor();
+        $service = $this->makeOpdService();
+        $patient = $this->makePatient('UHID-OPD-FREE-01');
+
+        $ward = Ward::create([
+            'name' => 'General Ward',
+            'type' => 'General',
+            'daily_charge' => 1000,
+            'capacity' => 10,
+            'is_active' => true,
+        ]);
+        $bed = Bed::create(['ward_id' => $ward->id, 'bed_number' => 'G-01', 'is_available' => false]);
+        
+        $admission = Admission::create([
+            'admission_number' => 'ADM-FREE-0001',
+            'patient_id' => $patient->id,
+            'bed_id' => $bed->id,
+            'doctor_id' => $doctor->id,
+            'admission_date' => '2026-06-05 10:00:00',
+            'discharge_date' => '2026-06-08 10:00:00', // Monday
+            'reason_for_admission' => 'Observation',
+            'status' => 'Discharged',
+            'created_by' => 1,
+        ]);
+
+        $manager = app(OpdService::class);
+        
+        // Pick Wednesday (2026-06-10) for booking to avoid Sunday rule
+        $weekdayDate = '2026-06-10';
+
+        $consultation = $manager->bookAppointment([
+            'patient_id' => $patient->id,
+            'doctor_id' => $doctor->id,
+            'service_id' => $service->id,
+            'fee' => 0,
+            'consultation_date' => $weekdayDate,
+            'payment_status' => 'Paid',
+            'payment_method' => 'Cash',
+        ]);
+
+        $this->assertSame(0.0, (float)$consultation->fee);
+        $this->assertSame('Post-Discharge Follow-up', $consultation->visit_type);
+    }
 }
+

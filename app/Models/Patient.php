@@ -121,4 +121,9 @@ class Patient extends Model
     {
         return $this->hasOne(Admission::class)->where('status', 'Admitted');
     }
+
+    public function admissions()
+    {
+        return $this->hasMany(Admission::class);
+    }
 }

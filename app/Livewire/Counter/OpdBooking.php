@@ -62,6 +62,7 @@ class OpdBooking extends Component
     public $latestConsultation;
     public $isEmergency = false;
     public $isNewbornBenefit = false;
+    public $isPostDischargeBenefit = false;
 
     public $showBookingForm = false;
     public $activeBookingFound = false;
@@ -149,9 +150,12 @@ class OpdBooking extends Component
         $this->latestConsultation = $details['latest_consultation'];
         $this->isEmergency = $details['is_emergency'] ?? false;
         $this->isNewbornBenefit = $details['is_newborn_benefit'] ?? false;
+        $this->isPostDischargeBenefit = $details['is_post_discharge'] ?? false;
 
         if ($details['is_newborn_benefit'] ?? false) {
             $this->dispatch('notify', ['type' => 'success', 'message' => 'Newborn Benefit: Free consultation applied (Delivery Attended).']);
+        } elseif ($details['is_post_discharge'] ?? false) {
+            $this->dispatch('notify', ['type' => 'success', 'message' => 'Post-Discharge Benefit: Free consultation (within 7 days of discharge).']);
         } elseif ($details['is_emergency'] ?? false) {
             $this->dispatch('notify', ['type' => 'warning', 'message' => 'Emergency Hours: Flat ₹500 fee applied.']);
         } elseif ($this->isReview) {

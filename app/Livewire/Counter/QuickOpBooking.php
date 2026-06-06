@@ -38,6 +38,7 @@ class QuickOpBooking extends Component
     public $growthForecast;
     public $isEmergency = false;
     public $isNewbornBenefit = false;
+    public $isPostDischargeBenefit = false;
     public $isIpd = false;
     public $wardId;
     public $bedId;
@@ -249,6 +250,7 @@ class QuickOpBooking extends Component
         $this->latestConsultation = $details['latest_consultation'];
         $this->isEmergency = $details['is_emergency'] ?? false;
         $this->isNewbornBenefit = $details['is_newborn_benefit'] ?? false;
+        $this->isPostDischargeBenefit = $details['is_post_discharge'] ?? false;
 
         if ($this->isReview) {
             $this->selectedService = $this->latestConsultation->service_id;
@@ -256,6 +258,8 @@ class QuickOpBooking extends Component
             $this->dispatch('notify', ['type' => 'success', 'message' => 'Review Visit: Auto-selected previous service.']);
         } elseif ($details['is_newborn_benefit'] ?? false) {
             $this->dispatch('notify', ['type' => 'success', 'message' => 'Newborn Benefit: Free consultation applied (Delivery Attended).']);
+        } elseif ($details['is_post_discharge'] ?? false) {
+            $this->dispatch('notify', ['type' => 'success', 'message' => 'Post-Discharge Benefit: Free consultation (within 7 days of discharge).']);
         } elseif ($details['is_emergency'] ?? false) {
             $this->dispatch('notify', ['type' => 'warning', 'message' => 'Emergency Hours: Flat ₹500 fee applied.']);
         } elseif ($this->isFollowUp) {
