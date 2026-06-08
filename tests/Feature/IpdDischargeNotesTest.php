@@ -111,4 +111,61 @@ class IpdDischargeNotesTest extends TestCase
         $bill = Bill::where('admission_id', $admission->id)->first();
         $this->assertNotNull($bill);
     }
+
+    public function test_ipd_admissions_component_renders_with_soft_deleted_patient(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+
+        $user = User::factory()->create();
+        $user->assignRole('doctor_owner');
+
+        $department = Department::create(['name' => 'General']);
+        $doctor = Doctor::create([
+            'user_id' => $user->id,
+            'department_id' => $department->id,
+            'full_name' => 'Dr Owner',
+            'specialization' => 'General',
+            'consultation_fee' => 500,
+            'is_active' => true,
+        ]);
+
+        $patient = Patient::create([
+            'uhid' => 'UHID-IPD-SOFT-DELETE',
+            'first_name' => 'SoftDeleted',
+            'last_name' => 'Patient',
+            'gender' => 'female',
+            'date_of_birth' => '1990-01-01',
+            'phone' => '9888877777',
+            'is_active' => true,
+        ]);
+
+        $ward = Ward::create([
+            'name' => 'Ward A',
+            'type' => 'General',
+            'daily_charge' => 1000,
+            'capacity' => 10,
+            'is_active' => true,
+        ]);
+        $bed = Bed::create(['ward_id' => $ward->id, 'bed_number' => 'A-01', 'is_available' => false]);
+
+        $admission = Admission::create([
+            'admission_number' => 'ADM-TEST-9002',
+            'patient_id' => $patient->id,
+            'bed_id' => $bed->id,
+            'doctor_id' => $doctor->id,
+            'admission_date' => now()->subDay(),
+            'reason_for_admission' => 'Observation',
+            'status' => 'Admitted',
+            'created_by' => $user->id,
+        ]);
+
+        // Soft delete the patient
+        $patient->delete();
+
+        Livewire::actingAs($user)
+            ->test('counter.ipd-admissions')
+            ->assertSee('SoftDeleted')
+            ->assertSee('Patient')
+            ->assertSee('UHID-IPD-SOFT-DELETE');
+    }
 }

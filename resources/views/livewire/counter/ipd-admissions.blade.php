@@ -54,11 +54,17 @@
                                 <td class="px-8 py-6">
                                     <div class="flex items-center gap-4">
                                         <div class="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center text-indigo-600 font-black text-lg group-hover:bg-indigo-600 group-hover:text-white transition-all duration-500">
-                                            {{ substr($adm->patient->first_name, 0, 1) }}
+                                            {{ $adm->patient ? substr($adm->patient->first_name, 0, 1) : '?' }}
                                         </div>
                                         <div>
-                                            <a href="{{ route('counter.ipd.show', $adm->id) }}" class="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight hover:text-indigo-600">{{ $adm->patient->full_name }}</a>
-                                            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ $adm->patient->gender }} · {{ $adm->patient->age }}</p>
+                                            <a href="{{ route('counter.ipd.show', $adm->id) }}" class="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight hover:text-indigo-600">{{ $adm->patient ? $adm->patient->full_name : 'Deleted/Unknown Patient' }}</a>
+                                            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                                @if($adm->patient)
+                                                    {{ $adm->patient->gender }} · {{ $adm->patient->age }}
+                                                @else
+                                                    No Patient Info
+                                                @endif
+                                            </p>
                                         </div>
                                     </div>
                                 </td>
@@ -67,7 +73,7 @@
                                         <p class="text-xs font-black text-gray-700 dark:text-gray-300 uppercase tracking-wide">{{ $adm->admission_number }}</p>
                                         <div class="flex items-center gap-2">
                                             <span class="w-1.5 h-1.5 rounded-full bg-violet-400"></span>
-                                            <span class="text-[10px] font-black text-violet-500 uppercase tracking-widest">{{ $adm->patient->uhid }}</span>
+                                            <span class="text-[10px] font-black text-violet-500 uppercase tracking-widest">{{ $adm->patient ? $adm->patient->uhid : '—' }}</span>
                                         </div>
                                     </div>
                                 </td>
@@ -99,7 +105,7 @@
                                 </td>
                                 <td class="px-8 py-6 text-right">
                                     <div class="flex justify-end gap-2">
-                                        <a href="{{ route('billing.index', ['search' => $adm->patient->uhid]) }}" class="p-3 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white transition-all shadow-sm hover:shadow-lg hover:shadow-emerald-500/20" title="Collect Due">
+                                        <a href="{{ $adm->patient ? route('billing.index', ['search' => $adm->patient->uhid]) : '#' }}" class="p-3 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white transition-all shadow-sm hover:shadow-lg hover:shadow-emerald-500/20" title="Collect Due">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                         </a>
                                         <a target="_blank" href="{{ route('counter.ipd.print-case-sheet', ['admission' => $adm->id]) }}" class="p-3 bg-purple-50 dark:bg-purple-950/30 text-purple-600 rounded-xl hover:bg-purple-600 hover:text-white transition-all shadow-sm hover:shadow-lg hover:shadow-purple-500/20" title="Test Print Form">
@@ -124,9 +130,11 @@
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                                             </a>
                                         @endif
-                                        <a href="{{ route('counter.patients.history', $adm->patient_id) }}" class="p-3 bg-gray-50 dark:bg-gray-800 text-gray-400 rounded-xl hover:bg-violet-600 hover:text-white transition-all shadow-sm" title="Clinical History">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.168.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-                                        </a>
+                                        @if($adm->patient)
+                                            <a href="{{ route('counter.patients.history', $adm->patient_id) }}" class="p-3 bg-gray-50 dark:bg-gray-800 text-gray-400 rounded-xl hover:bg-violet-600 hover:text-white transition-all shadow-sm" title="Clinical History">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.168.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                                            </a>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
