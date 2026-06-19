@@ -32,7 +32,8 @@
     <div>
         <p class="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] px-3 mb-5">Registration & Billing</p>
         @can('view patients')
-        <x-nav-link href="{{ route('counter.patients.index') }}" :active="request()->routeIs('counter.patients.*')" icon="users">Patients</x-nav-link>
+        <x-nav-link href="{{ route('counter.patients.index') }}" :active="request()->routeIs('counter.patients.*') && !request()->query('viewRecycleBin')" icon="users">Patients</x-nav-link>
+        <x-nav-link href="{{ route('counter.patients.index', ['viewRecycleBin' => true]) }}" :active="request()->routeIs('counter.patients.*') && request()->query('viewRecycleBin')" icon="trash">Recycle Bin</x-nav-link>
         @endcan
         @can('view opd')
         <x-nav-link href="{{ route('counter.opd.index') }}" :active="request()->routeIs('counter.opd.*')" icon="calendar">Outpatient</x-nav-link>
@@ -56,7 +57,8 @@
         @endcan
 
         @can('view patients')
-        <x-nav-link href="{{ route('doctor.patients.index') }}" :active="request()->routeIs('doctor.patients.*')" icon="users">Patient Files</x-nav-link>
+        <x-nav-link href="{{ route('doctor.patients.index') }}" :active="request()->routeIs('doctor.patients.*') && !request()->query('viewRecycleBin')" icon="users">Patient Files</x-nav-link>
+        <x-nav-link href="{{ route('doctor.patients.index', ['viewRecycleBin' => true]) }}" :active="request()->routeIs('doctor.patients.*') && request()->query('viewRecycleBin')" icon="trash">Recycle Bin</x-nav-link>
         @endcan
         
         @can('view lab')

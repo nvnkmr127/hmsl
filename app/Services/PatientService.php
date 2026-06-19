@@ -52,9 +52,10 @@ class PatientService
         }
     }
 
-    public function getAll(?string $search = null, array $filters = [], string $sortBy = 'latest')
+    public function getAll(?string $search = null, array $filters = [], string $sortBy = 'latest', bool $onlyTrashed = false)
     {
-        return Patient::query()
+        $query = $onlyTrashed ? Patient::onlyTrashed() : Patient::query();
+        return $query
             ->with(['latestConsultation.doctor'])
             ->when($search, fn($q) => $q->search($search))
             ->when($filters['gender'] ?? null, fn($q) => $q->where('gender', $filters['gender']))
@@ -71,6 +72,7 @@ class PatientService
             'today' => Patient::whereDate('created_at', now())->count(),
             'male'  => Patient::where('gender', 'Male')->count(),
             'female'=> Patient::where('gender', 'Female')->count(),
+            'trashed'=> Patient::onlyTrashed()->count(),
         ];
     }
 
@@ -103,5 +105,12 @@ class PatientService
     public function delete(Patient $patient)
     {
         return $patient->delete();
+    }
+
+    public function restore($id)
+    {
+        $patient = Patient::onlyTrashed()->findOrFail($id);
+        $patient->restore();
+        return $patient;
     }
 }

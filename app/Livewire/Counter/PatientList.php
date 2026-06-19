@@ -15,16 +15,19 @@ class PatientList extends Component
     public $search = '';
     public $genderFilter = '';
     public $sortBy = 'latest';
+    public $viewRecycleBin = false;
 
     protected $queryString = [
         'search' => ['except' => ''],
         'genderFilter' => ['except' => ''],
         'sortBy' => ['except' => 'latest'],
+        'viewRecycleBin' => ['except' => false],
     ];
 
     public function updatedSearch() { $this->resetPage(); }
     public function updatedGenderFilter() { $this->resetPage(); }
     public function updatedSortBy() { $this->resetPage(); }
+    public function updatedViewRecycleBin() { $this->resetPage(); }
 
     #[On('patient-saved'), On('booking-completed')]
     public function refreshList()
@@ -39,15 +42,27 @@ class PatientList extends Component
         
         $this->dispatch('notify', [
             'type' => 'success',
-            'message' => 'Patient record deleted successfully!'
+            'message' => 'Patient record moved to Recycle Bin.'
         ]);
+    }
+
+    public function restorePatient($id, PatientService $service)
+    {
+        $service->restore($id);
+        
+        $this->dispatch('notify', [
+            'type' => 'success',
+            'message' => 'Patient record restored successfully!'
+        ]);
+        
+        $this->resetPage();
     }
 
     public function downloadExport(PatientService $service)
     {
         $patients = $service->getAll($this->search, [
             'gender' => $this->genderFilter,
-        ], $this->sortBy);
+        ], $this->sortBy, $this->viewRecycleBin);
 
         $filename = "hms-patients-" . now()->format('Y-m-d-His') . ".csv";
         
@@ -67,7 +82,7 @@ class PatientList extends Component
         return view('livewire.counter.patient-list', [
             'patients' => $service->getAll($this->search, [
                 'gender' => $this->genderFilter,
-            ], $this->sortBy),
+            ], $this->sortBy, $this->viewRecycleBin),
             'stats' => $service->getStats(),
         ]);
     }
