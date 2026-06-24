@@ -10,8 +10,8 @@
                 </svg>
             </div>
             <div>
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Today's Collection</p>
-                <p class="text-sm font-black text-gray-900 dark:text-white">₹{{ number_format($stats['today_revenue'], 2) }}</p>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Paid</p>
+                <p class="text-sm font-black text-gray-900 dark:text-white">₹{{ number_format($stats['total_paid'], 2) }}</p>
             </div>
         </div>
         <div class="glass-card p-4 flex items-center gap-3">
@@ -48,7 +48,7 @@
             </div>
         </div>
     </div>
-    @else
+    @elseif($activeTab === 'op')
     <div class="grid grid-cols-1 sm:grid-cols-5 gap-4 mb-6">
         <div class="glass-card p-4 relative overflow-hidden group hover:scale-[1.02] transition-all duration-300">
             <div class="absolute -right-4 -top-4 w-16 h-16 bg-indigo-500/5 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
@@ -96,10 +96,46 @@
             <p class="text-[10px] font-bold text-rose-500 mt-1">Total Reductions</p>
         </div>
     </div>
+    @elseif($activeTab === 'ip')
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div class="glass-card p-4 relative overflow-hidden group hover:scale-[1.02] transition-all duration-300">
+            <div class="absolute -right-4 -top-4 w-16 h-16 bg-indigo-500/5 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total IP Admissions</p>
+            <div class="flex items-end gap-2">
+                <p class="text-2xl font-black text-gray-900 dark:text-white">{{ $ipStats['total'] }}</p>
+                <span class="text-[10px] font-bold text-indigo-500 mb-1">Admissions</span>
+            </div>
+            <div class="mt-2 w-full h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                <div class="h-full bg-indigo-500 rounded-full" style="width: 100%"></div>
+            </div>
+        </div>
+        <div class="glass-card p-4 relative overflow-hidden group hover:scale-[1.02] transition-all duration-300">
+            <div class="absolute -right-4 -top-4 w-16 h-16 bg-amber-500/5 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Currently Admitted</p>
+            <div class="flex items-end gap-2">
+                <p class="text-2xl font-black text-amber-600">{{ $ipStats['admitted'] }}</p>
+                <span class="text-[10px] font-bold text-amber-500 mb-1">Patients</span>
+            </div>
+            <div class="mt-2 w-full h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                <div class="h-full bg-amber-500 rounded-full" style="width: {{ $ipStats['total'] > 0 ? ($ipStats['admitted'] / $ipStats['total']) * 100 : 0 }}%"></div>
+            </div>
+        </div>
+        <div class="glass-card p-4 relative overflow-hidden group hover:scale-[1.02] transition-all duration-300">
+            <div class="absolute -right-4 -top-4 w-16 h-16 bg-emerald-500/5 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Discharged</p>
+            <div class="flex items-end gap-2">
+                <p class="text-2xl font-black text-emerald-600">{{ $ipStats['discharged'] }}</p>
+                <span class="text-[10px] font-bold text-emerald-500 mb-1">Discharged</span>
+            </div>
+            <div class="mt-2 w-full h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                <div class="h-full bg-emerald-500 rounded-full" style="width: {{ $ipStats['total'] > 0 ? ($ipStats['discharged'] / $ipStats['total']) * 100 : 0 }}%"></div>
+            </div>
+        </div>
+    </div>
     @endif
 
     {{-- Tab Switcher --}}
-    <div class="mb-4 border-b border-gray-100 dark:border-gray-800">
+    <div class="mb-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
         <nav class="flex gap-1">
             <button wire:click="setTab('bills')" class="px-4 py-2 text-xs font-black uppercase tracking-widest border-b-2 {{ $activeTab === 'bills' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700' }} transition-all">
                 All Bills
@@ -107,43 +143,80 @@
             <button wire:click="setTab('op')" class="px-4 py-2 text-xs font-black uppercase tracking-widest border-b-2 {{ $activeTab === 'op' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700' }} transition-all">
                 OP Bookings
             </button>
+            <button wire:click="setTab('ip')" class="px-4 py-2 text-xs font-black uppercase tracking-widest border-b-2 {{ $activeTab === 'ip' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700' }} transition-all">
+                Inpatient (IP)
+            </button>
         </nav>
+        <div>
+            @if($activeTab === 'bills')
+                <button wire:click="exportBills" class="btn btn-secondary px-3 py-1.5 text-xs font-bold">
+                    <svg class="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Export
+                </button>
+            @elseif($activeTab === 'op')
+                <button wire:click="exportOp" class="btn btn-secondary px-3 py-1.5 text-xs font-bold">
+                    <svg class="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Export
+                </button>
+            @elseif($activeTab === 'ip')
+                <button wire:click="exportIp" class="btn btn-secondary px-3 py-1.5 text-xs font-bold">
+                    <svg class="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Export
+                </button>
+            @endif
+        </div>
     </div>
 
     {{-- Filters --}}
     @if($activeTab === 'bills')
-    <div class="glass-card p-4 mb-4">
-        <div class="flex flex-wrap gap-3 items-center">
-            <div class="flex-1 min-w-[200px]">
+    <div class="glass-card p-3 mb-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
+            <div class="lg:col-span-4">
+                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1 block">Search</label>
                 <x-form.input
                     wire:model.live.debounce.350ms="search"
                     placeholder="Search bill number, patient name or UHID…"
                     id="billing-search"
                 />
             </div>
-            <select wire:model.live="statusFilter"
-                    id="billing-status-filter"
-                    class="px-4 py-2.5 rounded-xl border-transparent bg-gray-100/50 dark:bg-gray-700/50 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
-                <option value="">All Statuses</option>
-                <option value="Paid">Paid</option>
-                <option value="Unpaid">Unpaid</option>
-                <option value="Partially Paid">Partially Paid</option>
-            </select>
-            <select wire:model.live="methodFilter"
-                    id="billing-method-filter"
-                    class="px-4 py-2.5 rounded-xl border-transparent bg-gray-100/50 dark:bg-gray-700/50 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
-                <option value="">All Methods</option>
-                <option value="Cash">Cash</option>
-                <option value="Card">Card / POS</option>
-                <option value="UPI">UPI</option>
-                <option value="Insurance">Insurance</option>
-            </select>
-            <input type="date" wire:model.live="dateFilter"
-                   class="px-4 py-2.5 rounded-xl border-transparent bg-gray-100/50 dark:bg-gray-700/50 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-                   title="Filter by Date">
+            <div class="lg:col-span-2">
+                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1 block">Status</label>
+                <select wire:model.live="statusFilter"
+                        class="w-full px-4 py-2.5 rounded-xl border-transparent bg-gray-100/50 dark:bg-gray-700/50 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+                    <option value="">All Statuses</option>
+                    <option value="Paid">Paid</option>
+                    <option value="Unpaid">Unpaid</option>
+                    <option value="Partially Paid">Partially Paid</option>
+                </select>
+            </div>
+            <div class="lg:col-span-2">
+                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1 block">Method</label>
+                <select wire:model.live="methodFilter"
+                        class="w-full px-4 py-2.5 rounded-xl border-transparent bg-gray-100/50 dark:bg-gray-700/50 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+                    <option value="">All Methods</option>
+                    <option value="Cash">Cash</option>
+                    <option value="Card">Card / POS</option>
+                    <option value="UPI">UPI</option>
+                    <option value="Insurance">Insurance</option>
+                </select>
+            </div>
+            <div class="lg:col-span-3 flex items-center gap-2 bg-gray-100/50 dark:bg-gray-700/50 rounded-xl px-4 h-[42px]">
+                <div class="flex-1 flex flex-col justify-center">
+                    <span class="text-[9px] font-bold text-gray-400 uppercase leading-none mb-1">From</span>
+                    <input type="date" wire:model.live="fromDate" class="bg-transparent border-none text-xs font-bold text-gray-700 dark:text-gray-200 focus:ring-0 p-0 h-4">
+                </div>
+                <div class="w-px h-6 bg-gray-200 dark:bg-gray-600"></div>
+                <div class="flex-1 flex flex-col justify-center text-right">
+                    <span class="text-[9px] font-bold text-gray-400 uppercase leading-none mb-1">To</span>
+                    <input type="date" wire:model.live="toDate" class="bg-transparent border-none text-xs font-bold text-gray-700 dark:text-gray-200 focus:ring-0 p-0 h-4 text-right">
+                </div>
+            </div>
+            <div class="lg:col-span-1 flex justify-end">
+                <button wire:click="resetBillsFilters" 
+                        class="w-[42px] h-[42px] flex items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-rose-500 transition-all hover:rotate-90" title="Clear Filters">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
         </div>
     </div>
-    @else
+    @elseif($activeTab === 'op')
     <div class="glass-card p-3 mb-6">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
             <div class="lg:col-span-3">
@@ -193,6 +266,56 @@
             </div>
         </div>
     </div>
+    @elseif($activeTab === 'ip')
+    <div class="glass-card p-3 mb-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
+            <div class="lg:col-span-3">
+                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1 block">Search Patient</label>
+                <x-form.input
+                    wire:model.live.debounce.350ms="ipSearch"
+                    placeholder="Name, UHID..."
+                    id="ip-search"
+                />
+            </div>
+            <div class="lg:col-span-2">
+                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1 block">Status</label>
+                <select wire:model.live="ipStatusFilter"
+                        class="w-full px-4 py-2.5 rounded-xl border-transparent bg-gray-100/50 dark:bg-gray-700/50 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+                    <option value="">All Statuses</option>
+                    <option value="Admitted">Admitted</option>
+                    <option value="Discharged">Discharged</option>
+                    <option value="Cancelled">Cancelled</option>
+                </select>
+            </div>
+            <div class="lg:col-span-2">
+                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1 block">Doctor</label>
+                <select wire:model.live="ipDoctorFilter"
+                        class="w-full px-4 py-2.5 rounded-xl border-transparent bg-gray-100/50 dark:bg-gray-700/50 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+                    <option value="">All Doctors</option>
+                    @foreach($doctors as $doctor)
+                        <option value="{{ $doctor->id }}">{{ $doctor->full_name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="lg:col-span-4 flex items-center gap-2 bg-gray-100/50 dark:bg-gray-700/50 rounded-xl px-4 h-[42px]">
+                <div class="flex-1 flex flex-col justify-center">
+                    <span class="text-[9px] font-bold text-gray-400 uppercase leading-none mb-1">From</span>
+                    <input type="date" wire:model.live="ipFromDate" class="bg-transparent border-none text-xs font-bold text-gray-700 dark:text-gray-200 focus:ring-0 p-0 h-4">
+                </div>
+                <div class="w-px h-6 bg-gray-200 dark:bg-gray-600"></div>
+                <div class="flex-1 flex flex-col justify-center text-right">
+                    <span class="text-[9px] font-bold text-gray-400 uppercase leading-none mb-1">To</span>
+                    <input type="date" wire:model.live="ipToDate" class="bg-transparent border-none text-xs font-bold text-gray-700 dark:text-gray-200 focus:ring-0 p-0 h-4 text-right">
+                </div>
+            </div>
+            <div class="lg:col-span-1 flex justify-end">
+                <button wire:click="resetIpFilters" 
+                        class="w-[42px] h-[42px] flex items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-rose-500 transition-all hover:rotate-90" title="Clear Filters">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
     @endif
 
     {{-- Table --}}
@@ -205,8 +328,12 @@
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <p class="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400 truncate">{{ $bill->bill_number }}</p>
-                                <p class="font-bold text-gray-900 dark:text-white text-sm truncate">{{ $bill->patient?->full_name ?? 'N/A' }}</p>
-                                <p class="text-xs text-gray-400 truncate">{{ $bill->patient?->uhid ?? '—' }}</p>
+                                @if($bill->patient)
+                                    <a href="{{ route('patients.show', $bill->patient->id) }}" class="font-bold text-indigo-600 hover:underline dark:text-indigo-400 text-sm truncate block">{{ $bill->patient->full_name }}</a>
+                                    <p class="text-xs text-gray-400 truncate">{{ $bill->patient->uhid ?? '—' }}</p>
+                                @else
+                                    <p class="font-bold text-gray-900 dark:text-white text-sm truncate">N/A</p>
+                                @endif
                             </div>
                             <div class="text-right flex-shrink-0">
                                 <p class="text-sm font-black text-gray-900 dark:text-white">₹{{ number_format($bill->total_amount, 2) }}</p>
@@ -259,8 +386,12 @@
                                 <span class="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">{{ $bill->bill_number }}</span>
                             </td>
                             <td class="px-4 py-3">
-                                <p class="font-bold text-gray-900 dark:text-white text-sm">{{ $bill->patient?->full_name ?? 'N/A' }}</p>
-                                <p class="text-xs text-gray-400">{{ $bill->patient?->uhid ?? '—' }}</p>
+                                @if($bill->patient)
+                                    <a href="{{ route('patients.show', $bill->patient->id) }}" class="font-bold text-indigo-600 hover:underline dark:text-indigo-400 text-sm block">{{ $bill->patient->full_name }}</a>
+                                    <p class="text-xs text-gray-400">{{ $bill->patient->uhid ?? '—' }}</p>
+                                @else
+                                    <p class="font-bold text-gray-900 dark:text-white text-sm">N/A</p>
+                                @endif
                             </td>
                             <td class="px-4 py-3 text-right font-bold text-gray-900 dark:text-white">
                                 ₹{{ number_format($bill->total_amount, 2) }}
@@ -292,8 +423,8 @@
                 </tbody>
             </x-table.wrapper>
             </div>
-            <div class="px-4 py-3 border-t border-gray-100 dark:border-gray-700/50">{{ $bills->links() }}</div>
-        @else
+            <div class="px-4 py-3 border-t border-gray-100 dark:border-gray-700/50">{{ $bills->links('vendor.livewire.tailwind') }}</div>
+        @elseif($activeTab === 'op')
             {{-- OP BOOKINGS LIST --}}
             <div class="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
                 @forelse($ops as $op)
@@ -301,13 +432,17 @@
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <p class="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400 truncate">TOKEN #{{ $op->token_number }}</p>
-                                <p class="font-black text-gray-900 dark:text-white text-sm truncate">{{ $op->patient?->full_name ?? 'N/A' }}</p>
-                                <div class="mt-1 flex items-center gap-2">
-                                    <span class="text-[10px] font-black text-rose-500 uppercase">M/O: {{ $op->patient?->mother_name ?? '—' }}</span>
-                                    <span class="text-gray-300">•</span>
-                                    <span class="text-[10px] font-black text-emerald-600 uppercase">{{ $op->patient?->address ?? '—' }}</span>
-                                </div>
-                                <p class="text-xs text-gray-400 truncate mt-1">{{ $op->patient?->uhid ?? '—' }}</p>
+                                @if($op->patient)
+                                    <a href="{{ route('patients.show', $op->patient->id) }}" class="font-black text-indigo-600 hover:underline dark:text-indigo-400 text-sm truncate block">{{ $op->patient->full_name }}</a>
+                                    <div class="mt-1 flex items-center gap-2">
+                                        <span class="text-[10px] font-black text-rose-500 uppercase">M/O: {{ $op->patient->mother_name ?? '—' }}</span>
+                                        <span class="text-gray-300">•</span>
+                                        <span class="text-[10px] font-black text-emerald-600 uppercase">{{ $op->patient->address ?? '—' }}</span>
+                                    </div>
+                                    <p class="text-xs text-gray-400 truncate mt-1">{{ $op->patient->uhid ?? '—' }}</p>
+                                @else
+                                    <p class="font-black text-gray-900 dark:text-white text-sm truncate block">N/A</p>
+                                @endif
                             </div>
                             <div class="text-right flex-shrink-0">
                                 <p class="text-sm font-black text-gray-900 dark:text-white">₹{{ number_format($op->fee, 0) }}</p>
@@ -337,15 +472,15 @@
                             </div>
                             <p class="text-xs text-gray-400">{{ $op->consultation_date->format('d M Y') }}</p>
                         </div>
-                                <div class="mt-3 flex gap-2">
-                                    @unless($op->bill)
-                                        <button wire:click="$dispatch('open-modal', { name: 'billing-create-modal' })" class="btn btn-primary px-3 py-2 text-xs flex-1">Create Bill</button>
-                                        <a href="{{ route('counter.opd.print', $op->id) }}" target="_blank" class="btn btn-secondary px-3 py-2 text-xs flex-1 text-center justify-center">Print Slip</a>
-                                    @else
-                                        <x-badge color="indigo">Billed</x-badge>
-                                        <a href="{{ route('billing.bills.print', $op->bill->id) }}" target="_blank" class="btn btn-secondary px-3 py-2 text-xs flex-1 text-center justify-center">Print Bill</a>
-                                    @endunless
-                                </div>
+                        <div class="mt-3 flex gap-2">
+                            @unless($op->bill)
+                                <button wire:click="$dispatch('open-modal', { name: 'billing-create-modal' })" class="btn btn-primary px-3 py-2 text-xs flex-1">Create Bill</button>
+                                <a href="{{ route('counter.opd.print', $op->id) }}" target="_blank" class="btn btn-secondary px-3 py-2 text-xs flex-1 text-center justify-center">Print Slip</a>
+                            @else
+                                <x-badge color="indigo">Billed</x-badge>
+                                <a href="{{ route('billing.bills.print', $op->bill->id) }}" target="_blank" class="btn btn-secondary px-3 py-2 text-xs flex-1 text-center justify-center">Print Bill</a>
+                            @endunless
+                        </div>
                     </div>
                 @empty
                     <div class="p-8 text-center text-sm font-semibold text-gray-500 dark:text-gray-400">No OP bookings found.</div>
@@ -374,8 +509,11 @@
                                     </div>
                                     <div class="min-w-0">
                                         <div class="flex items-center gap-2">
-                                            <p class="font-black text-gray-900 dark:text-white text-sm truncate">{{ $op->patient?->full_name ?? 'N/A' }}</p>
-                                            <span class="px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-900/30 text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase">Child</span>
+                                            @if($op->patient)
+                                                <a href="{{ route('patients.show', $op->patient->id) }}" class="font-black text-indigo-600 hover:underline dark:text-indigo-400 text-sm truncate">{{ $op->patient->full_name }}</a>
+                                            @else
+                                                <p class="font-black text-gray-900 dark:text-white text-sm truncate">N/A</p>
+                                            @endif
                                         </div>
                                         <div class="mt-1 flex items-center gap-2">
                                             <span class="text-[10px] font-black text-rose-500 uppercase tracking-tight">M/O: {{ $op->patient?->mother_name ?? '—' }}</span>
@@ -440,7 +578,146 @@
                 </tbody>
             </x-table.wrapper>
             </div>
-            <div class="px-4 py-3 border-t border-gray-100 dark:border-gray-700/50">{{ $ops->links() }}</div>
+            <div class="px-4 py-3 border-t border-gray-100 dark:border-gray-700/50">{{ $ops->links('vendor.livewire.tailwind') }}</div>
+        @elseif($activeTab === 'ip')
+            {{-- IP ADMISSIONS LIST --}}
+            <div class="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+                @forelse($ips as $ip)
+                    <div wire:key="ip-mobile-{{ $ip->id }}" class="p-4">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <p class="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400 truncate">IP #{{ $ip->admission_number }}</p>
+                                @if($ip->patient)
+                                    <a href="{{ route('patients.show', $ip->patient->id) }}" class="font-black text-indigo-600 hover:underline dark:text-indigo-400 text-sm truncate block">{{ $ip->patient->full_name }}</a>
+                                    <p class="text-xs text-gray-400 truncate mt-1">{{ $ip->patient->uhid ?? '—' }}</p>
+                                @else
+                                    <p class="font-black text-gray-900 dark:text-white text-sm truncate block">N/A</p>
+                                @endif
+                            </div>
+                            <div class="text-right flex-shrink-0">
+                                <p class="text-sm font-black text-gray-900 dark:text-white">Ward: {{ $ip->ward_name ?? 'N/A' }}</p>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-center justify-between gap-3">
+                            <div class="flex flex-wrap items-center gap-2">
+                                @if($ip->status === 'Admitted')
+                                    <x-badge color="indigo">{{ $ip->status }}</x-badge>
+                                @elseif($ip->status === 'Discharged')
+                                    <x-badge color="success">{{ $ip->status }}</x-badge>
+                                @else
+                                    <x-badge color="amber">{{ $ip->status }}</x-badge>
+                                @endif
+                                
+                                @if($ip->finalBill)
+                                    @if($ip->finalBill->payment_status === 'Paid')
+                                        <x-badge color="success">Paid</x-badge>
+                                    @else
+                                        <x-badge color="danger">{{ $ip->finalBill->payment_status }}</x-badge>
+                                    @endif
+                                @else
+                                    <x-badge color="warning">Not Billed</x-badge>
+                                @endif
+                            </div>
+                            <p class="text-xs text-gray-400">{{ $ip->admission_date ? $ip->admission_date->format('d M Y') : '—' }}</p>
+                        </div>
+                        <div class="mt-3 flex gap-2">
+                            @unless($ip->finalBill)
+                                <button wire:click="$dispatch('open-modal', { name: 'billing-create-modal' })" class="btn btn-primary px-3 py-2 text-xs flex-1">Create Bill</button>
+                            @else
+                                <x-badge color="indigo">Billed</x-badge>
+                                <a href="{{ route('billing.bills.print', $ip->finalBill->id) }}" target="_blank" class="btn btn-secondary px-3 py-2 text-xs flex-1 text-center justify-center">Print Bill</a>
+                            @endunless
+                        </div>
+                    </div>
+                @empty
+                    <div class="p-8 text-center text-sm font-semibold text-gray-500 dark:text-gray-400">No IP admissions found.</div>
+                @endforelse
+            </div>
+
+            <div class="hidden md:block">
+            <x-table.wrapper>
+                <thead>
+                    <tr>
+                        <x-table.th>Patient Info</x-table.th>
+                        <x-table.th>Admission Details</x-table.th>
+                        <x-table.th>Ward / Bed</x-table.th>
+                        <x-table.th>Status</x-table.th>
+                        <x-table.th class="text-right">Actions</x-table.th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($ips as $ip)
+                        <tr wire:key="ip-desktop-{{ $ip->id }}" class="hover:bg-gray-50/50 dark:hover:bg-gray-700/20 transition-colors">
+                            <td class="px-4 py-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 flex flex-col items-center justify-center border border-indigo-100/50 dark:border-indigo-800/30 flex-shrink-0">
+                                        <span class="text-[9px] font-black text-indigo-400 uppercase leading-none">IP NO</span>
+                                        <span class="text-sm font-black text-indigo-600 dark:text-indigo-400">#{{ $ip->admission_number }}</span>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="flex items-center gap-2">
+                                            @if($ip->patient)
+                                                <a href="{{ route('patients.show', $ip->patient->id) }}" class="font-black text-indigo-600 hover:underline dark:text-indigo-400 text-sm truncate">{{ $ip->patient->full_name }}</a>
+                                            @else
+                                                <p class="font-black text-gray-900 dark:text-white text-sm truncate">N/A</p>
+                                            @endif
+                                        </div>
+                                        <p class="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-tighter">{{ $ip->patient?->uhid ?? '—' }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3">
+                                <div class="flex flex-col gap-1">
+                                    <span class="text-sm font-black text-gray-900 dark:text-white">{{ $ip->doctor?->full_name ?? '—' }}</span>
+                                    <span class="text-[10px] font-bold text-gray-400">{{ $ip->admission_date ? $ip->admission_date->format('d M Y') : '—' }}</span>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3">
+                                <span class="font-black text-gray-900 dark:text-white text-sm">{{ $ip->ward_name ?? '—' }}</span>
+                                <div class="text-[10px] font-bold text-gray-400 mt-1">Bed: {{ $ip->bed?->bed_number ?? '—' }}</div>
+                            </td>
+                            <td class="px-4 py-3">
+                                <div class="flex flex-col gap-1">
+                                    @if($ip->status === 'Admitted')
+                                        <x-badge color="indigo">{{ $ip->status }}</x-badge>
+                                    @elseif($ip->status === 'Discharged')
+                                        <x-badge color="success">{{ $ip->status }}</x-badge>
+                                    @else
+                                        <x-badge color="amber">{{ $ip->status }}</x-badge>
+                                    @endif
+                                    
+                                    @if($ip->finalBill)
+                                        @if($ip->finalBill->payment_status === 'Paid')
+                                            <x-badge color="success">Paid</x-badge>
+                                        @else
+                                            <x-badge color="danger">{{ $ip->finalBill->payment_status }}</x-badge>
+                                        @endif
+                                    @else
+                                        <x-badge color="warning">Not Billed</x-badge>
+                                    @endif
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 text-right">
+                                 <div class="flex justify-end gap-1">
+                                    @unless($ip->finalBill)
+                                        <button wire:click="$dispatch('open-modal', { name: 'billing-create-modal' })" class="btn btn-primary px-3 py-1.5 text-xs font-bold">Create Bill</button>
+                                    @else
+                                        <x-badge color="indigo">Billed</x-badge>
+                                        <a href="{{ route('billing.bills.print', $ip->finalBill->id) }}" target="_blank" class="btn btn-secondary px-3 py-1.5 text-xs font-bold" title="Print Bill">
+                                            <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                            Print Bill
+                                        </a>
+                                    @endunless
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <x-table.empty colspan="5" message="No IP admissions found." />
+                    @endforelse
+                </tbody>
+            </x-table.wrapper>
+            </div>
+            <div class="px-4 py-3 border-t border-gray-100 dark:border-gray-700/50">{{ $ips->links('vendor.livewire.tailwind') }}</div>
         @endif
     </div>
 

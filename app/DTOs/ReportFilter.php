@@ -12,6 +12,9 @@ class ReportFilter
         public ?string $invoiceType = null,
         public ?int $wardId = null,
         public ?string $paymentMethod = null,
+        public ?string $gender = null,
+        public ?string $ageGroup = null,
+        public ?string $city = null,
     ) {
         $this->from = $this->from ?: now()->startOfMonth()->toDateString();
         $this->to = $this->to ?: now()->toDateString();
@@ -27,6 +30,9 @@ class ReportFilter
             invoiceType: $data['invoice_type'] ?? null,
             wardId: isset($data['ward_id']) ? (int) $data['ward_id'] : null,
             paymentMethod: $data['payment_method'] ?? null,
+            gender: $data['gender'] ?? null,
+            ageGroup: $data['age_group'] ?? null,
+            city: $data['city'] ?? null,
         );
     }
 
@@ -40,6 +46,9 @@ class ReportFilter
             'invoice_type' => $this->invoiceType,
             'ward_id' => $this->wardId,
             'payment_method' => $this->paymentMethod,
+            'gender' => $this->gender,
+            'age_group' => $this->ageGroup,
+            'city' => $this->city,
         ];
     }
 }

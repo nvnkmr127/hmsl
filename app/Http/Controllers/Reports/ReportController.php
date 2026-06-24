@@ -19,15 +19,12 @@ class ReportController extends Controller
                 ['title' => 'Discount Audit', 'route' => 'reports.discounts', 'icon' => 'discount', 'desc' => 'Traceability for all price adjustments and authorizers.'],
             ],
             'Patient Flow' => [
+                ['title' => 'Inpatient Intelligence', 'route' => 'reports.ipd', 'icon' => 'bed', 'desc' => 'Detailed analytics on IPD admissions and wards.'],
                 ['title' => 'Visit Intelligence', 'route' => 'reports.visits', 'icon' => 'visit', 'desc' => 'Detailed analytics on OPD volume and revisit patterns.'],
-                ['title' => 'Registration Metrics', 'route' => 'reports.index', 'icon' => 'patient', 'desc' => 'Patient demographics and registration trends.'],
+                ['title' => 'Registration Metrics', 'route' => 'reports.registrations', 'icon' => 'patient', 'desc' => 'Patient demographics and registration trends.'],
             ],
             'Clinical Excellence' => [
                 ['title' => 'Consultation Stats', 'route' => 'reports.doctor-consults', 'icon' => 'doctor', 'desc' => 'Doctor-wise performance and caseload analysis.'],
-                ['title' => 'Laboratory Usage', 'route' => 'reports.lab', 'icon' => 'lab', 'desc' => 'Diagnostic service utilization and turnaround trends.'],
-            ],
-            'Inventory & Logistics' => [
-                ['title' => 'Stock Intelligence', 'route' => 'reports.inventory', 'icon' => 'inventory', 'desc' => 'Real-time inventory levels and consumption patterns.'],
             ]
         ];
 
@@ -44,6 +41,16 @@ class ReportController extends Controller
         return view('pages.reports.visits');
     }
 
+    public function ipd()
+    {
+        return view('pages.reports.ipd');
+    }
+    
+    public function registrations()
+    {
+        return view('pages.reports.registrations');
+    }
+
     public function dues()
     {
         return view('pages.reports.dues');
@@ -52,15 +59,5 @@ class ReportController extends Controller
     public function doctorConsults()
     {
         return view('pages.reports.doctor-consults');
-    }
-
-    public function inventory()
-    {
-        return view('pages.reports.inventory');
-    }
-
-    public function lab()
-    {
-        return view('pages.reports.lab');
     }
 }

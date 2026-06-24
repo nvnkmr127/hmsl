@@ -6,21 +6,24 @@ use App\DTOs\ReportFilter;
 use App\Services\ReportService;
 use Livewire\Component;
 use Livewire\WithPagination;
+use App\Models\Admission;
+use App\Models\Doctor;
+use App\Models\Ward;
 
-class OpdReport extends Component
+class IpdReport extends Component
 {
     use WithPagination;
 
     public $from;
     public $to;
     public $doctorId = '';
-    public $departmentId = '';
+    public $wardId = '';
     
     protected $queryString = [
         'from' => ['except' => ''],
         'to' => ['except' => ''],
         'doctorId' => ['except' => ''],
-        'departmentId' => ['except' => ''],
+        'wardId' => ['except' => ''],
     ];
 
     public function mount()
@@ -31,7 +34,7 @@ class OpdReport extends Component
 
     public function updated($property)
     {
-        if (in_array($property, ['from', 'to', 'doctorId', 'departmentId'])) {
+        if (in_array($property, ['from', 'to', 'doctorId', 'wardId'])) {
             $this->resetPage();
         }
     }
@@ -42,30 +45,30 @@ class OpdReport extends Component
             from: $this->from,
             to: $this->to,
             doctorId: $this->doctorId ? (int) $this->doctorId : null,
-            departmentId: $this->departmentId ? (int) $this->departmentId : null
+            wardId: $this->wardId ? (int) $this->wardId : null
         );
 
-        $stats = $reportService->getOpdStats($filter);
+        $stats = $reportService->getIpdStats($filter);
 
-        $query = \App\Models\Consultation::query()
-            ->with(['patient', 'doctor', 'doctor.department'])
-            ->whereBetween('consultation_date', [$filter->from, $filter->to]);
+        $query = Admission::query()
+            ->with(['patient', 'doctor', 'bed.ward'])
+            ->whereBetween('admission_date', [$filter->from, $filter->to]);
 
         if ($filter->doctorId) {
             $query->where('doctor_id', $filter->doctorId);
         }
 
-        if ($filter->departmentId) {
-            $query->whereHas('doctor', fn($q) => $q->where('department_id', $filter->departmentId));
+        if ($filter->wardId) {
+            $query->whereHas('bed', fn($q) => $q->where('ward_id', $filter->wardId));
         }
 
-        $visits = $query->latest('consultation_date')->paginate(10);
+        $admissions = $query->latest('admission_date')->paginate(10);
 
-        return view('livewire.reports.opd-report', [
+        return view('livewire.reports.ipd-report', [
             'stats' => $stats,
-            'visits' => $visits,
-            'doctors' => \App\Models\Doctor::where('is_active', true)->get(),
-            'departments' => \App\Models\Department::where('is_active', true)->get(),
+            'admissions' => $admissions,
+            'doctors' => Doctor::where('is_active', true)->get(),
+            'wards' => Ward::where('is_active', true)->get(),
         ]);
     }
 }

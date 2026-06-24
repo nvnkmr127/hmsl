@@ -85,37 +85,67 @@
         </div>
     </div>
 
-    <!-- Table Section (Optional based on MT-120.2) -->
+    <!-- Patient Visits Datatable -->
     <div class="bg-white dark:bg-slate-900 rounded-[3rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
         <div class="p-10 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between">
-            <h3 class="text-lg font-black text-slate-800 dark:text-white uppercase tracking-tight">Physician Caseload Detail</h3>
-            <button class="px-6 py-2.5 bg-slate-900 dark:bg-primary-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:scale-105 transition-all">Export PDF</button>
+            <div>
+                <h3 class="text-lg font-black text-slate-800 dark:text-white uppercase tracking-tight">Patient Visit Records</h3>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Detailed list of all consultations</p>
+            </div>
+            <button class="px-6 py-2.5 bg-slate-900 dark:bg-primary-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:scale-105 transition-all">Export CSV</button>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-left">
                 <thead>
                     <tr class="bg-slate-50/50 dark:bg-slate-800/50">
-                        <th class="px-10 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Doctor Name</th>
-                        <th class="px-10 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Visit Count</th>
-                        <th class="px-10 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Growth Index</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date & Time</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Patient</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Doctor</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Department</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Visit Type</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50 dark:divide-slate-800/50">
-                    @foreach($stats['doctor_wise'] as $name => $count)
+                    @forelse($visits as $visit)
                     <tr class="hover:bg-slate-50/30 dark:hover:bg-slate-800/30 transition-colors">
-                        <td class="px-10 py-5">
-                            <span class="text-sm font-black text-slate-900 dark:text-white">{{ $name }}</span>
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-bold text-slate-900 dark:text-white">{{ \Carbon\Carbon::parse($visit->consultation_date)->format('d M Y') }}</div>
+                            <div class="text-xs text-slate-500">{{ \Carbon\Carbon::parse($visit->consultation_time)->format('h:i A') }}</div>
                         </td>
-                        <td class="px-10 py-5 text-center">
-                            <span class="px-4 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-[11px] font-black text-slate-600 dark:text-slate-300 uppercase">{{ $count }}</span>
+                        <td class="px-6 py-4">
+                            <a href="{{ route('patients.show', $visit->patient_id) }}" class="text-sm font-black text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
+                                {{ $visit->patient->full_name ?? 'N/A' }}
+                            </a>
+                            <div class="text-xs text-slate-500">{{ $visit->patient->uhid ?? '' }}</div>
                         </td>
-                        <td class="px-10 py-5 text-right">
-                            <span class="text-xs font-bold text-emerald-500">+{{ rand(5, 15) }}%</span>
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-bold text-slate-700 dark:text-slate-300">{{ $visit->doctor->full_name ?? 'N/A' }}</div>
+                        </td>
+                        <td class="px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-400">
+                            {{ $visit->doctor->department->name ?? 'N/A' }}
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider {{ $visit->visit_type == 'New' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' : 'bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400' }}">
+                                {{ $visit->visit_type }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider {{ $visit->status == 'Completed' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400' : 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400' }}">
+                                {{ $visit->status }}
+                            </span>
                         </td>
                     </tr>
-                    @endforeach
+                    @empty
+                    <tr>
+                        <td colspan="6" class="px-6 py-8 text-center text-sm font-semibold text-slate-500">No visits found for the selected criteria.</td>
+                    </tr>
+                    @endforelse
                 </tbody>
             </table>
+        </div>
+        <div class="p-6 border-t border-slate-50 dark:border-slate-800">
+            {{ $visits->links() }}
         </div>
     </div>
 </div>

@@ -31,12 +31,12 @@ document.addEventListener('livewire:initialized', () => {
                 label: '{{ $attributes->get('label', 'Data') }}',
                 data: Object.values(chartData),
                 backgroundColor: [
-                    'rgba(79, 70, 229, 0.2)',
-                    'rgba(16, 185, 129, 0.2)',
-                    'rgba(245, 158, 11, 0.2)',
-                    'rgba(239, 68, 68, 0.2)',
-                    'rgba(139, 92, 246, 0.2)',
-                    'rgba(236, 72, 153, 0.2)'
+                    'rgba(79, 70, 229, 0.8)',
+                    'rgba(16, 185, 129, 0.8)',
+                    'rgba(245, 158, 11, 0.8)',
+                    'rgba(239, 68, 68, 0.8)',
+                    'rgba(139, 92, 246, 0.8)',
+                    'rgba(236, 72, 153, 0.8)'
                 ],
                 borderColor: [
                     'rgba(79, 70, 229, 1)',
@@ -47,8 +47,9 @@ document.addEventListener('livewire:initialized', () => {
                     'rgba(236, 72, 153, 1)'
                 ],
                 borderWidth: 2,
-                borderRadius: 8,
-                tension: 0.4
+                borderRadius: '{{ $type === "bar" ? 8 : 0 }}',
+                tension: 0.4,
+                fill: '{{ $type === "line" }}' ? true : false,
             }]
         },
         options: {
@@ -56,10 +57,11 @@ document.addEventListener('livewire:initialized', () => {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    display: false
+                    display: '{{ in_array($type, ["doughnut", "pie", "donut"]) }}' == '1',
+                    position: 'bottom'
                 }
             },
-            scales: {
+            scales: '{{ in_array($type, ["doughnut", "pie", "donut", "polarArea"]) }}' == '1' ? {} : {
                 y: {
                     beginAtZero: true,
                     grid: {
@@ -78,9 +80,14 @@ document.addEventListener('livewire:initialized', () => {
     });
 
     Livewire.on('refreshChart-{{ $id }}', (eventData) => {
-        chart.data.labels = Object.keys(eventData[0].data);
-        chart.data.datasets[0].data = Object.values(eventData[0].data);
-        chart.update();
+        let payload = (Array.isArray(eventData) && eventData.length > 0) ? eventData[0] : eventData;
+        let dataToUpdate = payload.data !== undefined ? payload.data : payload;
+        
+        if (dataToUpdate) {
+            chart.data.labels = Object.keys(dataToUpdate);
+            chart.data.datasets[0].data = Object.values(dataToUpdate);
+            chart.update();
+        }
     });
 });
 </script>

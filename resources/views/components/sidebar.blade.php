@@ -110,10 +110,8 @@
                     :active="request()->routeIs('reports.doctor-consults')" icon="stethoscope">Doctor Stats</x-nav-link>
                 <x-nav-link href="{{ route('reports.discounts') }}" :active="request()->routeIs('reports.discounts')"
                     icon="credit-card">Discount Audit</x-nav-link>
-                <x-nav-link href="{{ route('reports.inventory') }}" :active="request()->routeIs('reports.inventory')"
-                    icon="box">Stock Reports</x-nav-link>
-                <x-nav-link href="{{ route('reports.lab') }}" :active="request()->routeIs('reports.lab')" icon="beaker">Lab
-                    Analytics</x-nav-link>
+                <x-nav-link href="{{ route('reports.ipd') }}" :active="request()->routeIs('reports.ipd')"
+                    icon="bed">IPD Analytics</x-nav-link>
             </x-nav-group>
         </div>
     @endcan

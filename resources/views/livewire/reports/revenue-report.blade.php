@@ -62,6 +62,36 @@
         </div>
     </div>
 
+    @php
+        $dailyNet = collect($stats['daily_trend'])->pluck('net', 'date')->toArray();
+        $dailyPatients = collect($stats['daily_trend'])->pluck('patients', 'date')->toArray();
+    @endphp
+
+    <!-- Daily Flow Charts Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        <!-- Daily Revenue Histogram -->
+        <div class="bg-white dark:bg-slate-900 p-10 rounded-[3rem] border border-slate-100 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-10">
+                <div>
+                    <h3 class="text-lg font-black text-slate-800 dark:text-white uppercase tracking-tight">Daily Net Revenue</h3>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Histogram flow of income</p>
+                </div>
+            </div>
+            <x-chart type="bar" :data="$dailyNet" id="daily-revenue-chart" label="Net Revenue (₹)" />
+        </div>
+
+        <!-- Daily Patient Flow Histogram -->
+        <div class="bg-white dark:bg-slate-900 p-10 rounded-[3rem] border border-slate-100 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-10">
+                <div>
+                    <h3 class="text-lg font-black text-slate-800 dark:text-white uppercase tracking-tight">Patient Flow</h3>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Histogram flow of patients</p>
+                </div>
+            </div>
+            <x-chart type="bar" :data="$dailyPatients" id="daily-patient-chart" label="Patients" />
+        </div>
+    </div>
+
     <!-- Charts Row -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
         <!-- Revenue by Type -->
@@ -84,6 +114,43 @@
                 </div>
             </div>
             <x-chart type="bar" :data="$stats['method_breakdown']" id="method-breakdown-chart" label="Total (₹)" />
+        </div>
+    </div>
+
+    <!-- Day-wise Stats Table -->
+    <div class="bg-white dark:bg-slate-900 p-10 rounded-[3rem] border border-slate-100 dark:border-slate-800 shadow-sm">
+        <div class="mb-8">
+            <h3 class="text-lg font-black text-slate-800 dark:text-white uppercase tracking-tight">Daily Performance Logs</h3>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Detailed day-wise stats and amounts</p>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-200 dark:border-slate-700">
+                        <th class="py-4 px-4 text-xs font-black text-slate-500 uppercase tracking-widest">Date</th>
+                        <th class="py-4 px-4 text-xs font-black text-slate-500 uppercase tracking-widest">Patients/Bills</th>
+                        <th class="py-4 px-4 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Gross (₹)</th>
+                        <th class="py-4 px-4 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Refunds (₹)</th>
+                        <th class="py-4 px-4 text-xs font-black text-emerald-600 uppercase tracking-widest text-right">Net Collection (₹)</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/50">
+                    @forelse($stats['daily_trend'] as $day)
+                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                        <td class="py-4 px-4 text-sm font-bold text-slate-700 dark:text-slate-300">{{ \Carbon\Carbon::parse($day['date'])->format('d M Y') }}</td>
+                        <td class="py-4 px-4 text-sm font-semibold text-slate-600 dark:text-slate-400">{{ $day['patients'] }}</td>
+                        <td class="py-4 px-4 text-sm font-bold text-slate-700 dark:text-slate-300 text-right">{{ number_format($day['gross'], 2) }}</td>
+                        <td class="py-4 px-4 text-sm font-bold text-rose-500 text-right">{{ number_format($day['refunds'], 2) }}</td>
+                        <td class="py-4 px-4 text-sm font-black text-emerald-600 dark:text-emerald-500 text-right">{{ number_format($day['net'], 2) }}</td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="5" class="py-8 text-center text-sm text-slate-500 font-semibold">No daily performance data found for the selected period.</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
