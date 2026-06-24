@@ -33,7 +33,9 @@ class BillingFindToken extends Component
                         $pq->where('uhid', 'like', $term)
                             ->orWhere('first_name', 'like', $term)
                             ->orWhere('last_name', 'like', $term)
-                            ->orWhere('phone', 'like', $term);
+                            ->orWhere('phone', 'like', $term)
+                            ->orWhere('father_name', 'like', $term)
+                            ->orWhere('mother_name', 'like', $term);
                     })
                     ->orWhereHas('doctor', function ($dq) use ($term) {
                         $dq->where('full_name', 'like', $term);

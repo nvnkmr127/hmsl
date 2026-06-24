@@ -8,6 +8,7 @@ use App\Models\Bill;
 use App\Models\BillPayment;
 use App\Models\Consultation;
 use App\Models\Patient;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class ReportService

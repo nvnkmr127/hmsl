@@ -329,7 +329,7 @@
                             <div class="min-w-0">
                                 <p class="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400 truncate">{{ $bill->bill_number }}</p>
                                 @if($bill->patient)
-                                    <a href="{{ route('patients.show', $bill->patient->id) }}" class="font-bold text-indigo-600 hover:underline dark:text-indigo-400 text-sm truncate block">{{ $bill->patient->full_name }}</a>
+                                    <a href="{{ route('counter.patients.history', $bill->patient->id) }}" class="font-bold text-indigo-600 hover:underline dark:text-indigo-400 text-sm truncate block">{{ $bill->patient->full_name }}</a>
                                     <p class="text-xs text-gray-400 truncate">{{ $bill->patient->uhid ?? '—' }}</p>
                                 @else
                                     <p class="font-bold text-gray-900 dark:text-white text-sm truncate">N/A</p>
@@ -387,7 +387,7 @@
                             </td>
                             <td class="px-4 py-3">
                                 @if($bill->patient)
-                                    <a href="{{ route('patients.show', $bill->patient->id) }}" class="font-bold text-indigo-600 hover:underline dark:text-indigo-400 text-sm block">{{ $bill->patient->full_name }}</a>
+                                    <a href="{{ route('counter.patients.history', $bill->patient->id) }}" class="font-bold text-indigo-600 hover:underline dark:text-indigo-400 text-sm block">{{ $bill->patient->full_name }}</a>
                                     <p class="text-xs text-gray-400">{{ $bill->patient->uhid ?? '—' }}</p>
                                 @else
                                     <p class="font-bold text-gray-900 dark:text-white text-sm">N/A</p>
@@ -433,7 +433,7 @@
                             <div class="min-w-0">
                                 <p class="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400 truncate">TOKEN #{{ $op->token_number }}</p>
                                 @if($op->patient)
-                                    <a href="{{ route('patients.show', $op->patient->id) }}" class="font-black text-indigo-600 hover:underline dark:text-indigo-400 text-sm truncate block">{{ $op->patient->full_name }}</a>
+                                    <a href="{{ route('counter.patients.history', $op->patient->id) }}" class="font-black text-indigo-600 hover:underline dark:text-indigo-400 text-sm truncate block">{{ $op->patient->full_name }}</a>
                                     <div class="mt-1 flex items-center gap-2">
                                         <span class="text-[10px] font-black text-rose-500 uppercase">M/O: {{ $op->patient->mother_name ?? '—' }}</span>
                                         <span class="text-gray-300">•</span>
@@ -510,7 +510,7 @@
                                     <div class="min-w-0">
                                         <div class="flex items-center gap-2">
                                             @if($op->patient)
-                                                <a href="{{ route('patients.show', $op->patient->id) }}" class="font-black text-indigo-600 hover:underline dark:text-indigo-400 text-sm truncate">{{ $op->patient->full_name }}</a>
+                                                <a href="{{ route('counter.patients.history', $op->patient->id) }}" class="font-black text-indigo-600 hover:underline dark:text-indigo-400 text-sm truncate">{{ $op->patient->full_name }}</a>
                                             @else
                                                 <p class="font-black text-gray-900 dark:text-white text-sm truncate">N/A</p>
                                             @endif
@@ -588,7 +588,7 @@
                             <div class="min-w-0">
                                 <p class="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400 truncate">IP #{{ $ip->admission_number }}</p>
                                 @if($ip->patient)
-                                    <a href="{{ route('patients.show', $ip->patient->id) }}" class="font-black text-indigo-600 hover:underline dark:text-indigo-400 text-sm truncate block">{{ $ip->patient->full_name }}</a>
+                                    <a href="{{ route('counter.patients.history', $ip->patient->id) }}" class="font-black text-indigo-600 hover:underline dark:text-indigo-400 text-sm truncate block">{{ $ip->patient->full_name }}</a>
                                     <p class="text-xs text-gray-400 truncate mt-1">{{ $ip->patient->uhid ?? '—' }}</p>
                                 @else
                                     <p class="font-black text-gray-900 dark:text-white text-sm truncate block">N/A</p>
@@ -657,7 +657,7 @@
                                     <div class="min-w-0">
                                         <div class="flex items-center gap-2">
                                             @if($ip->patient)
-                                                <a href="{{ route('patients.show', $ip->patient->id) }}" class="font-black text-indigo-600 hover:underline dark:text-indigo-400 text-sm truncate">{{ $ip->patient->full_name }}</a>
+                                                <a href="{{ route('counter.patients.history', $ip->patient->id) }}" class="font-black text-indigo-600 hover:underline dark:text-indigo-400 text-sm truncate">{{ $ip->patient->full_name }}</a>
                                             @else
                                                 <p class="font-black text-gray-900 dark:text-white text-sm truncate">N/A</p>
                                             @endif

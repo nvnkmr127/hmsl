@@ -25,7 +25,9 @@ class BillingFindPatient extends Component
                     $qq->where('uhid', 'like', $term)
                         ->orWhere('first_name', 'like', $term)
                         ->orWhere('last_name', 'like', $term)
-                        ->orWhere('phone', 'like', $term);
+                        ->orWhere('phone', 'like', $term)
+                        ->orWhere('father_name', 'like', $term)
+                        ->orWhere('mother_name', 'like', $term);
                 });
             })
             ->orderByDesc('created_at')

@@ -132,12 +132,12 @@ class BillingList extends Component
             foreach ($bills as $bill) {
                 fputcsv($handle, [
                     $bill->bill_number,
-                    $bill->created_at->format('Y-m-d H:i'),
+                    $bill->created_at->format('d M Y, h:i A'),
                     $bill->patient ? $bill->patient->full_name : 'N/A',
                     $bill->total_amount,
                     $bill->paid_amount,
                     $bill->balance_amount,
-                    $bill->payment_status,
+                    ucfirst($bill->payment_status),
                     $bill->payment_method ?? 'N/A'
                 ]);
             }
@@ -155,15 +155,16 @@ class BillingList extends Component
             fputcsv($handle, ['Token', 'Date', 'Patient', 'Doctor', 'Visit Type', 'Fee', 'Discount', 'Status']);
 
             foreach ($ops as $op) {
+                $status = $op->bill ? ucfirst($op->bill->payment_status) : 'Not Billed';
                 fputcsv($handle, [
                     $op->token_number,
-                    $op->consultation_date->format('Y-m-d H:i'),
+                    $op->created_at->format('d M Y, h:i A'),
                     $op->patient ? $op->patient->full_name : 'N/A',
                     $op->doctor ? $op->doctor->full_name : 'N/A',
                     $op->visit_type,
                     $op->fee,
                     $op->discount_amount,
-                    $op->status
+                    $status
                 ]);
             }
             fclose($handle);
@@ -180,13 +181,14 @@ class BillingList extends Component
             fputcsv($handle, ['Admission No', 'Date', 'Patient', 'Doctor', 'Ward', 'Status']);
 
             foreach ($ips as $ip) {
+                $status = $ip->finalBill ? ucfirst($ip->finalBill->payment_status) : 'Not Billed';
                 fputcsv($handle, [
                     $ip->admission_number,
-                    $ip->admission_date ? $ip->admission_date->format('Y-m-d H:i') : 'N/A',
+                    $ip->created_at->format('d M Y, h:i A'),
                     $ip->patient ? $ip->patient->full_name : 'N/A',
                     $ip->doctor ? $ip->doctor->full_name : 'N/A',
                     $ip->ward_name ?? 'N/A',
-                    $ip->status
+                    $status
                 ]);
             }
             fclose($handle);
@@ -359,53 +361,70 @@ class BillingList extends Component
     {
         return \App\Models\Bill::with(['patient', 'consultation.doctor', 'payments', 'discounts'])
             ->when($this->search, function ($q) {
-                $q->where('bill_number', 'like', "%{$this->search}%")
-                  ->orWhereHas('patient', fn($pq) =>
-                      $pq->where('first_name', 'like', "%{$this->search}%")
-                         ->orWhere('last_name', 'like', "%{$this->search}%")
-                         ->orWhere('uhid', 'like', "%{$this->search}%")
-                  );
+                $q->where(function ($query) {
+                    $query->where('bill_number', 'like', "%{$this->search}%")
+                      ->orWhereHas('patient', fn($pq) =>
+                          $pq->where('first_name', 'like', "%{$this->search}%")
+                             ->orWhere('last_name', 'like', "%{$this->search}%")
+                             ->orWhere('uhid', 'like', "%{$this->search}%")
+                             ->orWhere('phone', 'like', "%{$this->search}%")
+                             ->orWhere('father_name', 'like', "%{$this->search}%")
+                             ->orWhere('mother_name', 'like', "%{$this->search}%")
+                      );
+                });
             })
             ->when($this->statusFilter, fn($q) => $q->where('payment_status', $this->statusFilter))
             ->when($this->methodFilter, fn($q) => $q->where('payment_method', $this->methodFilter))
             ->when($this->fromDate, fn($q) => $q->whereDate('created_at', '>=', $this->fromDate))
             ->when($this->toDate, fn($q) => $q->whereDate('created_at', '<=', $this->toDate))
-            ->when(!$this->fromDate && !$this->toDate, fn($q) => $q->whereDate('created_at', today()));
+            ->when(!$this->fromDate && !$this->toDate && empty($this->search), fn($q) => $q->whereDate('created_at', today()));
     }
 
     private function getOpQuery()
     {
         return \App\Models\Consultation::query()
             ->when($this->opSearch, function ($q) {
-                $q->whereHas('patient', fn($pq) =>
-                    $pq->where('first_name', 'like', "%{$this->opSearch}%")
-                       ->orWhere('last_name', 'like', "%{$this->opSearch}%")
-                       ->orWhere('uhid', 'like', "%{$this->opSearch}%")
-                );
+                $q->where(function ($query) {
+                    $query->where('token_number', 'like', "%{$this->opSearch}%")
+                        ->orWhereHas('patient', fn($pq) =>
+                            $pq->where('first_name', 'like', "%{$this->opSearch}%")
+                               ->orWhere('last_name', 'like', "%{$this->opSearch}%")
+                               ->orWhere('uhid', 'like', "%{$this->opSearch}%")
+                               ->orWhere('phone', 'like', "%{$this->opSearch}%")
+                               ->orWhere('father_name', 'like', "%{$this->opSearch}%")
+                               ->orWhere('mother_name', 'like', "%{$this->opSearch}%")
+                        );
+                });
             })
             ->when($this->opStatusFilter, fn($q) => $q->where('status', $this->opStatusFilter))
             ->when($this->opDoctorFilter, fn($q) => $q->where('doctor_id', $this->opDoctorFilter))
             ->when($this->opVisitTypeFilter, fn($q) => $q->where('visit_type', $this->opVisitTypeFilter))
             ->when($this->opFromDate, fn($q) => $q->whereDate('consultation_date', '>=', $this->opFromDate))
             ->when($this->opToDate, fn($q) => $q->whereDate('consultation_date', '<=', $this->opToDate))
-            ->when(!$this->opFromDate && !$this->opToDate, fn($q) => $q->whereDate('consultation_date', today()));
+            ->when(!$this->opFromDate && !$this->opToDate && empty($this->opSearch), fn($q) => $q->whereDate('consultation_date', today()));
     }
 
     private function getIpQuery()
     {
         return \App\Models\Admission::query()
             ->when($this->ipSearch, function ($q) {
-                $q->whereHas('patient', fn($pq) =>
-                    $pq->where('first_name', 'like', "%{$this->ipSearch}%")
-                       ->orWhere('last_name', 'like', "%{$this->ipSearch}%")
-                       ->orWhere('uhid', 'like', "%{$this->ipSearch}%")
-                );
+                $q->where(function ($query) {
+                    $query->where('admission_number', 'like', "%{$this->ipSearch}%")
+                        ->orWhereHas('patient', fn($pq) =>
+                            $pq->where('first_name', 'like', "%{$this->ipSearch}%")
+                               ->orWhere('last_name', 'like', "%{$this->ipSearch}%")
+                               ->orWhere('uhid', 'like', "%{$this->ipSearch}%")
+                               ->orWhere('phone', 'like', "%{$this->ipSearch}%")
+                               ->orWhere('father_name', 'like', "%{$this->ipSearch}%")
+                               ->orWhere('mother_name', 'like', "%{$this->ipSearch}%")
+                        );
+                });
             })
             ->when($this->ipStatusFilter, fn($q) => $q->where('status', $this->ipStatusFilter))
             ->when($this->ipDoctorFilter, fn($q) => $q->where('doctor_id', $this->ipDoctorFilter))
             ->when($this->ipFromDate, fn($q) => $q->whereDate('admission_date', '>=', $this->ipFromDate))
             ->when($this->ipToDate, fn($q) => $q->whereDate('admission_date', '<=', $this->ipToDate))
-            ->when(!$this->ipFromDate && !$this->ipToDate, fn($q) => $q->whereDate('admission_date', today()));
+            ->when(!$this->ipFromDate && !$this->ipToDate && empty($this->ipSearch), fn($q) => $q->whereDate('admission_date', today()));
     }
 
     public function render()
