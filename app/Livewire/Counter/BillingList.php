@@ -424,7 +424,14 @@ class BillingList extends Component
             ->when($this->ipDoctorFilter, fn($q) => $q->where('doctor_id', $this->ipDoctorFilter))
             ->when($this->ipFromDate, fn($q) => $q->whereDate('admission_date', '>=', $this->ipFromDate))
             ->when($this->ipToDate, fn($q) => $q->whereDate('admission_date', '<=', $this->ipToDate))
-            ->when(!$this->ipFromDate && !$this->ipToDate && empty($this->ipSearch), fn($q) => $q->whereDate('admission_date', today()));
+            ->when(!$this->ipFromDate && !$this->ipToDate && empty($this->ipSearch), function ($q) {
+                $q->where(function ($query) {
+                    $query->where('status', 'Admitted')
+                          ->orWhereDate('admission_date', today())
+                          ->orWhereDate('discharge_date', today())
+                          ->orWhereDate('created_at', today());
+                });
+            });
     }
 
     public function render()
