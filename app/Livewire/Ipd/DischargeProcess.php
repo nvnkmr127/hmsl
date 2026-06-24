@@ -68,41 +68,102 @@ class DischargeProcess extends Component
             }
         }
         
-        if ($bedHistories = \App\Models\AdmissionBedHistory::with(['bed.ward'])->where('admission_id', $this->admission->id)->get()) {
-            if ($bedHistories->isNotEmpty()) {
-                foreach ($bedHistories as $history) {
-                    $start = Carbon::parse($history->start_time);
-                    $end = $history->end_time ? Carbon::parse($history->end_time) : now();
-                    
-                    $stayHours = max(0, $start->diffInHours($end));
-                    $fullDays = floor($stayHours / 24);
-                    $remainderHours = $stayHours % 24;
-                    
-                    if ($stayHours == 0) {
-                        $stayDays = 0.5;
-                    } else {
-                        if ($remainderHours > 0 && $remainderHours <= 12) {
-                            $stayDays = $fullDays + 0.5;
-                        } elseif ($remainderHours > 12) {
-                            $stayDays = $fullDays + 1;
-                        } else {
-                            $stayDays = $fullDays;
+        if ($bill && $bill->items()->whereIn('item_type', ['IPD', 'Service'])->exists()) {
+            // Load from existing bill
+            foreach ($bill->items as $item) {
+                if ($item->item_type === 'IPD') {
+                    $wardId = '';
+                    foreach ($wards as $ward) {
+                        if (str_starts_with($item->item_name, $ward->name)) {
+                            $wardId = $ward->id;
+                            break;
                         }
                     }
                     
-                    $ward = $history->bed?->ward;
-                    $bed = $history->bed;
-                    $dailyCharge = (float) ($history->daily_charge ?? $bed?->per_day_charge ?? $ward?->daily_charge ?? 0);
+                    // Try to extract dates from name e.g. "Ward [12/10 - 15/10]"
+                    $startDate = '';
+                    $endDate = '';
+                    if (preg_match('/\[(\d{2}\/\d{2})\s*-\s*(\d{2}\/\d{2})\]/', $item->item_name, $matches)) {
+                        try {
+                            $startDate = Carbon::createFromFormat('d/m/Y', $matches[1] . '/' . date('Y'))->format('Y-m-d\TH:i');
+                            $endDate = Carbon::createFromFormat('d/m/Y', $matches[2] . '/' . date('Y'))->format('Y-m-d\TH:i');
+                        } catch (\Exception $e) {}
+                    }
 
                     $this->bedCharges[] = [
-                        'ward_id' => $ward?->id ?? '',
-                        'name' => ($ward?->name ?? 'Ward') . ($bed ? ' - ' . $bed->bed_number : ''),
-                        'start_date' => $start->format('Y-m-d\TH:i'),
-                        'end_date' => $end->format('Y-m-d\TH:i'),
-                        'days' => $stayDays,
-                        'price' => $dailyCharge,
-                        'total' => $stayDays * $dailyCharge
+                        'ward_id' => $wardId,
+                        'name' => $item->item_name,
+                        'start_date' => $startDate,
+                        'end_date' => $endDate,
+                        'days' => $item->quantity,
+                        'price' => $item->unit_price,
+                        'total' => $item->total_price
                     ];
+                } elseif ($item->item_type === 'Service') {
+                    // Try to find service ID
+                    $serviceId = 'manual';
+                    $service = \App\Models\IpService::where('name', $item->item_name)->first();
+                    if ($service) {
+                        $serviceId = $service->id;
+                    }
+                    
+                    $this->ipServiceCharges[] = [
+                        'service_id' => $serviceId,
+                        'name' => $item->item_name,
+                        'quantity' => $item->quantity,
+                        'price' => $item->unit_price,
+                        'total' => $item->total_price
+                    ];
+                }
+            }
+            
+            // Adjust existing charges selection based on bill items
+            // If the bill has items, we should only select those that are in the bill.
+            $billItemNames = $bill->items->pluck('item_name')->toArray();
+            $this->selectedExistingCharges = [];
+            foreach ($this->existingCharges as $charge) {
+                if (in_array($charge['name'], $billItemNames)) {
+                    $this->selectedExistingCharges[] = $charge['id'];
+                }
+            }
+        } else {
+            // Calculate from history if no draft bill
+            if ($bedHistories = \App\Models\AdmissionBedHistory::with(['bed.ward'])->where('admission_id', $this->admission->id)->get()) {
+                if ($bedHistories->isNotEmpty()) {
+                    foreach ($bedHistories as $history) {
+                        $start = Carbon::parse($history->start_time);
+                        $end = $history->end_time ? Carbon::parse($history->end_time) : now();
+                        
+                        $stayHours = max(0, $start->diffInHours($end));
+                        $fullDays = floor($stayHours / 24);
+                        $remainderHours = $stayHours % 24;
+                        
+                        if ($stayHours == 0) {
+                            $stayDays = 0.5;
+                        } else {
+                            if ($remainderHours > 0 && $remainderHours <= 12) {
+                                $stayDays = $fullDays + 0.5;
+                            } elseif ($remainderHours > 12) {
+                                $stayDays = $fullDays + 1;
+                            } else {
+                                $stayDays = $fullDays;
+                            }
+                        }
+                        
+                        $ward = $history->bed?->ward;
+                        $bed = $history->bed;
+                        $dailyCharge = (float) ($history->daily_charge ?? $bed?->per_day_charge ?? $ward?->daily_charge ?? 0);
+
+                        $this->bedCharges[] = [
+                            'ward_id' => $ward?->id ?? '',
+                            'name' => ($ward?->name ?? 'Ward') . ($bed ? ' - ' . $bed->bed_number : ''),
+                            'start_date' => $start->format('Y-m-d\TH:i'),
+                            'end_date' => $end->format('Y-m-d\TH:i'),
+                            'days' => $stayDays,
+                            'price' => $dailyCharge,
+                            'total' => $stayDays * $dailyCharge
+                        ];
+                    }
                 }
             }
         }
@@ -275,7 +336,7 @@ class DischargeProcess extends Component
     public function generateBill()
     {
         $this->validate([
-            'bedCharges.*.ward_id' => 'required|exists:wards,id',
+            'bedCharges.*.name' => 'required|string',
             'discountValue' => 'required|numeric|min:0',
             'discountReason' => 'nullable|string|max:255',
         ]);

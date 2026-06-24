@@ -149,7 +149,7 @@
                         </div>
                         <div>
                             <p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Newborn Privilege</p>
-                            <p class="text-xs font-bold text-emerald-700 dark:text-indigo-300">Free consultation for newborns attended by our doctors (Valid till age 9 days).</p>
+                            <p class="text-xs font-bold text-emerald-700 dark:text-indigo-300">Free consultation for newborns attended by our doctors (Valid till age 8 days).</p>
                         </div>
                     </div>
                 @elseif($isEmergency)

@@ -29,6 +29,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Dashboard') — {{ config('app.name', 'HMS') }}</title>
 
+    <link rel="icon" href="{{ asset('images/Logo.png') }}">
     <link rel="stylesheet" href="/fonts/inter.css">
 
     <script src="/js/chart.js"></script>

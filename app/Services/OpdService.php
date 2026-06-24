@@ -14,7 +14,7 @@ class OpdService
 {
     protected $billingService;
     const EMERGENCY_FEE = 500;
-    const NEWBORN_FREE_DAYS = 9;
+    const NEWBORN_FREE_DAYS = 8;
     const POST_DISCHARGE_FREE_DAYS = 7;
 
     public function __construct(\App\Services\BillingService $billingService)
@@ -149,7 +149,7 @@ class OpdService
         if ($activeValidConsultation) {
             $calculatedValidUpto = Carbon::parse($activeValidConsultation->valid_upto)->toDateString();
         } else if ($isNewbornBenefit) {
-            $calculatedValidUpto = $date->copy()->addDays(9)->toDateString();
+            $calculatedValidUpto = $date->copy()->addDays(8)->toDateString();
         } else {
             $calculatedValidUpto = $this->getValidityDate($dateStr, $serviceId ?: ($latestConsultation?->service_id));
         }
@@ -317,7 +317,7 @@ class OpdService
                     $data['valid_upto'] = Carbon::parse($activeValidConsultation->valid_upto)->toDateString();
                 } else {
                     if ($isNewbornBenefit) {
-                        $data['valid_upto'] = $consultationDate->copy()->addDays(9)->toDateString();
+                        $data['valid_upto'] = $consultationDate->copy()->addDays(8)->toDateString();
                     } else {
                         $data['valid_upto'] = $consultationDate->copy()->addDays((int)$validityDays)->toDateString();
                     }

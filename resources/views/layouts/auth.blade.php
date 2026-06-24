@@ -9,6 +9,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'HMS') }} — Login</title>
 
+    <link rel="icon" href="{{ asset('images/Logo.png') }}">
     <link rel="stylesheet" href="/fonts/jakarta.css">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
