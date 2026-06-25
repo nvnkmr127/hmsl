@@ -136,7 +136,7 @@
                     @elseif($isFollowUp)
                         <div class="absolute -top-3 -right-3">
                             <span class="bg-emerald-500 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg border-2 border-white dark:border-gray-900 uppercase tracking-widest">
-                                Follow-up Visit
+                                Review Visit
                             </span>
                         </div>
                     @endif
@@ -486,7 +486,7 @@
                                 <div class="bg-emerald-500 p-5 rounded-3xl text-white shadow-2xl shadow-emerald-500/20 relative overflow-hidden group">
                                     <div class="relative z-10">
                                         <p class="text-[10px] font-black uppercase opacity-60 tracking-widest mb-2">
-                                            {{ $isNewbornBenefit ? 'Newborn Benefit' : ($isReview ? 'Review Visit' : 'Follow-up Visit') }}
+                                            {{ $isNewbornBenefit ? 'Newborn Benefit' : 'Review Visit' }}
                                         </p>
                                         <p class="text-2xl font-black mb-4">No Charge</p>
                                         <p class="text-[10px] font-bold opacity-80 leading-relaxed uppercase tracking-widest">

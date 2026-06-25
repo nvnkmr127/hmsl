@@ -30,12 +30,18 @@ class SystemPayloadFactory
         $consultsQuery = \App\Models\Consultation::whereDate('consultation_date', $date);
         $totalConsults = (int) $consultsQuery->count();
         
-        $visitSplit = \App\Models\Consultation::whereDate('consultation_date', $date)
+        $visitSplitRaw = Consultation::whereDate('consultation_date', $date)
+            ->where('status', '!=', 'Cancelled')
             ->select('visit_type', DB::raw('COUNT(*) as count'))
             ->groupBy('visit_type')
-            ->get()
             ->pluck('count', 'visit_type')
             ->toArray();
+
+        $visitSplit = [];
+        foreach ($visitSplitRaw as $type => $count) {
+            $key = $type === 'Follow-up' ? 'Review' : $type;
+            $visitSplit[$key] = ($visitSplit[$key] ?? 0) + $count;
+        }
 
         // Clinical Performance
         $doctorSplit = \App\Models\Consultation::whereDate('consultation_date', $date)

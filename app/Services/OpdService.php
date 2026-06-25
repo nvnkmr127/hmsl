@@ -338,7 +338,7 @@ class OpdService
                 $data['visit_type'] = $data['visit_type'] ?? 'Emergency';
             } elseif ($isFollowUp) {
                 $data['fee']        = 0;
-                $data['visit_type'] = $data['visit_type'] ?? 'Follow-up';
+                $data['visit_type'] = $data['visit_type'] ?? 'Review';
             }
 
             // 4. STRICT REVENUE PROTECTION: Ensure fees are never zero due to missing relations

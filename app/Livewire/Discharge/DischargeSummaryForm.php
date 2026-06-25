@@ -240,6 +240,12 @@ class DischargeSummaryForm extends Component
             $this->summary = $service->createDraft($this->admission);
         }
 
+        $bill = $this->admission->finalBill;
+        if ($bill && $bill->payment_status !== 'Paid') {
+            $this->dispatch('open-modal', name: 'pending-bill-modal');
+            return;
+        }
+
         $service = app(DischargeSummaryService::class);
 
         try {

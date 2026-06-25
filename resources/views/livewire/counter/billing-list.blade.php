@@ -356,6 +356,8 @@
                             <div class="flex items-center gap-2">
                                 @if($bill->payment_status !== 'Paid' || $bill->balance_amount > 0)
                                     <button wire:click="openPaymentModal({{ $bill->id }})" class="btn btn-ghost px-3 py-2 text-xs">Collect</button>
+                                @else
+                                    <span class="px-3 py-2 text-[10px] font-black text-emerald-500 uppercase tracking-widest flex items-center">Settled</span>
                                 @endif
                                 <a href="{{ route('billing.bills.print', $bill->id) }}" target="_blank" class="btn btn-secondary px-3 py-2 text-xs">Print</a>
                             </div>
@@ -454,8 +456,8 @@
                         </div>
                         <div class="mt-3 flex items-center justify-between gap-3">
                             <div class="flex flex-wrap items-center gap-2">
-                                @if($op->visit_type === 'Review')
-                                    <x-badge color="amber">{{ $op->visit_type }}</x-badge>
+                                @if($op->visit_type === 'Review' || $op->visit_type === 'Follow-up')
+                                    <x-badge color="amber">{{ $op->visit_type === 'Follow-up' ? 'Review' : $op->visit_type }}</x-badge>
                                 @else
                                     <x-badge color="indigo">{{ $op->visit_type }}</x-badge>
                                 @endif
@@ -526,10 +528,8 @@
                             </td>
                             <td class="px-4 py-3">
                                 <div class="flex flex-col gap-1">
-                                    @if($op->visit_type === 'Review')
-                                        <x-badge color="amber">{{ $op->visit_type }}</x-badge>
-                                    @elseif($op->visit_type === 'Follow-up')
-                                        <x-badge color="success">{{ $op->visit_type }}</x-badge>
+                                    @if($op->visit_type === 'Review' || $op->visit_type === 'Follow-up')
+                                        <x-badge color="amber">{{ $op->visit_type === 'Follow-up' ? 'Review' : $op->visit_type }}</x-badge>
                                     @else
                                         <x-badge color="indigo">{{ $op->visit_type }}</x-badge>
                                     @endif
@@ -625,6 +625,11 @@
                                 <button wire:click="$dispatch('open-modal', { name: 'billing-create-modal' })" class="btn btn-primary px-3 py-2 text-xs flex-1">Create Bill</button>
                             @else
                                 <x-badge color="indigo">Billed</x-badge>
+                                @if($ip->finalBill->payment_status !== 'Paid' || $ip->finalBill->balance_amount > 0)
+                                    <button wire:click="openPaymentModal({{ $ip->finalBill->id }})" class="btn btn-primary px-3 py-2 text-xs flex-1">Collect</button>
+                                @else
+                                    <span class="px-3 py-2 text-[10px] font-black text-emerald-500 uppercase tracking-widest flex items-center flex-1 justify-center bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">Settled</span>
+                                @endif
                                 <a href="{{ route('billing.bills.print', $ip->finalBill->id) }}" target="_blank" class="btn btn-secondary px-3 py-2 text-xs flex-1 text-center justify-center">Print Bill</a>
                             @endunless
                         </div>
@@ -698,14 +703,22 @@
                                 </div>
                             </td>
                             <td class="px-4 py-3 text-right">
-                                 <div class="flex justify-end gap-1">
+                                 <div class="flex items-center justify-end gap-2">
                                     @unless($ip->finalBill)
                                         <button wire:click="$dispatch('open-modal', { name: 'billing-create-modal' })" class="btn btn-primary px-3 py-1.5 text-xs font-bold">Create Bill</button>
                                     @else
                                         <x-badge color="indigo">Billed</x-badge>
+                                        @if($ip->finalBill->payment_status !== 'Paid' || $ip->finalBill->balance_amount > 0)
+                                            <button wire:click="openPaymentModal({{ $ip->finalBill->id }})" class="btn btn-primary px-3 py-1.5 text-xs font-bold shadow-sm">
+                                                <svg class="w-3.5 h-3.5 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                                Collect
+                                            </button>
+                                        @else
+                                            <span class="px-3 py-1.5 text-[10px] font-black text-emerald-500 uppercase tracking-widest">Settled</span>
+                                        @endif
                                         <a href="{{ route('billing.bills.print', $ip->finalBill->id) }}" target="_blank" class="btn btn-secondary px-3 py-1.5 text-xs font-bold" title="Print Bill">
-                                            <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                                            Print Bill
+                                            <svg class="w-3.5 h-3.5 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                            Print
                                         </a>
                                     @endunless
                                 </div>

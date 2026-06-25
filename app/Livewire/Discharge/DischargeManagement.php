@@ -49,6 +49,12 @@ class DischargeManagement extends Component
                 return;
             }
 
+            $bill = $admission->finalBill;
+            if ($bill && $bill->payment_status !== 'Paid') {
+                $this->dispatch('open-modal', name: 'pending-bill-modal');
+                return;
+            }
+
             $manager->dischargePatient($admission, $this->dischargeNotes);
 
             $this->dispatch('close-modal', name: 'discharge-modal');

@@ -586,8 +586,8 @@
                                     <div class="flex items-center justify-between mb-4">
                                         <label class="text-[10px] font-black text-violet-200 uppercase tracking-widest">Total Amount</label>
                                         <div class="flex items-center gap-2">
-                                            @if($isFollowUp)
-                                                <div class="px-2 py-0.5 bg-emerald-500 rounded-md text-[9px] font-black uppercase tracking-widest text-white animate-bounce">FREE FOLLOW-UP</div>
+                                            @if($isFollowUp || $isReview)
+                                                <div class="px-2 py-0.5 bg-amber-500 rounded-md text-[9px] font-black uppercase tracking-widest text-white animate-bounce">FREE REVIEW</div>
                                             @endif
                                             <div class="px-2 py-0.5 bg-white/20 rounded-md text-[9px] font-black uppercase tracking-widest">REALTIME</div>
                                         </div>

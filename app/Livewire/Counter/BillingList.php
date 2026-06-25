@@ -16,6 +16,13 @@ class BillingList extends Component
 
     public $activeTab = 'bills';
 
+    public function mount()
+    {
+        if (request()->has('collect_bill')) {
+            $this->openPaymentModal((int) request('collect_bill'));
+        }
+    }
+
     // Bills Filters
     public $search = '';
     public $statusFilter = '';
@@ -57,6 +64,9 @@ class BillingList extends Component
     public $selectedOpId = null;
     public $opDiscountAmount = 0;
     public $opDiscountReason = '';
+
+    public ?string $return_route = null;
+    public ?int $return_id = null;
 
     protected $queryString = [
         'search' => ['except' => ''],
@@ -212,7 +222,7 @@ class BillingList extends Component
         }
     }
 
-    public function openPaymentModal(int $billId): void
+    public function openPaymentModal(int $billId)
     {
         $bill = Bill::with('payments')->findOrFail($billId);
         $this->selectedBillId = $bill->id;
@@ -224,7 +234,7 @@ class BillingList extends Component
         $this->dispatch('open-modal', name: 'billing-payment-modal');
     }
 
-    public function submitPayment(BillingService $service): void
+    public function submitPayment(BillingService $service)
     {
         $this->validate([
             'selectedBillId' => 'required|integer|exists:bills,id',
@@ -258,7 +268,19 @@ class BillingList extends Component
 
             $this->dispatch('close-modal', name: 'billing-payment-modal');
             $this->dispatch('notify', ['type' => 'success', 'message' => 'Payment saved.']);
-            $this->reset(['selectedBillId', 'paymentType', 'paymentMethod', 'paymentAmount', 'paymentReference', 'paymentNotes']);
+            
+            $returnRoute = $this->return_route;
+            $returnId = $this->return_id;
+            
+            $this->reset(['selectedBillId', 'paymentType', 'paymentMethod', 'paymentAmount', 'paymentReference', 'paymentNotes', 'return_route', 'return_id']);
+
+            if ($returnRoute && $bill->payment_status === 'Paid') {
+                if ($returnId) {
+                    return redirect()->route($returnRoute, $returnId);
+                } else {
+                    return redirect()->route($returnRoute);
+                }
+            }
         } catch (\Exception $e) {
             $this->dispatch('notify', ['type' => 'error', 'message' => $e->getMessage()]);
         }
@@ -376,8 +398,7 @@ class BillingList extends Component
             ->when($this->statusFilter, fn($q) => $q->where('payment_status', $this->statusFilter))
             ->when($this->methodFilter, fn($q) => $q->where('payment_method', $this->methodFilter))
             ->when($this->fromDate, fn($q) => $q->whereDate('created_at', '>=', $this->fromDate))
-            ->when($this->toDate, fn($q) => $q->whereDate('created_at', '<=', $this->toDate))
-            ->when(!$this->fromDate && !$this->toDate && empty($this->search), fn($q) => $q->whereDate('created_at', today()));
+            ->when($this->toDate, fn($q) => $q->whereDate('created_at', '<=', $this->toDate));
     }
 
     private function getOpQuery()
@@ -400,8 +421,7 @@ class BillingList extends Component
             ->when($this->opDoctorFilter, fn($q) => $q->where('doctor_id', $this->opDoctorFilter))
             ->when($this->opVisitTypeFilter, fn($q) => $q->where('visit_type', $this->opVisitTypeFilter))
             ->when($this->opFromDate, fn($q) => $q->whereDate('consultation_date', '>=', $this->opFromDate))
-            ->when($this->opToDate, fn($q) => $q->whereDate('consultation_date', '<=', $this->opToDate))
-            ->when(!$this->opFromDate && !$this->opToDate && empty($this->opSearch), fn($q) => $q->whereDate('consultation_date', today()));
+            ->when($this->opToDate, fn($q) => $q->whereDate('consultation_date', '<=', $this->opToDate));
     }
 
     private function getIpQuery()
@@ -423,15 +443,7 @@ class BillingList extends Component
             ->when($this->ipStatusFilter, fn($q) => $q->where('status', $this->ipStatusFilter))
             ->when($this->ipDoctorFilter, fn($q) => $q->where('doctor_id', $this->ipDoctorFilter))
             ->when($this->ipFromDate, fn($q) => $q->whereDate('admission_date', '>=', $this->ipFromDate))
-            ->when($this->ipToDate, fn($q) => $q->whereDate('admission_date', '<=', $this->ipToDate))
-            ->when(!$this->ipFromDate && !$this->ipToDate && empty($this->ipSearch), function ($q) {
-                $q->where(function ($query) {
-                    $query->where('status', 'Admitted')
-                          ->orWhereDate('admission_date', today())
-                          ->orWhereDate('discharge_date', today())
-                          ->orWhereDate('created_at', today());
-                });
-            });
+            ->when($this->ipToDate, fn($q) => $q->whereDate('admission_date', '<=', $this->ipToDate));
     }
 
     public function render()
@@ -462,7 +474,7 @@ class BillingList extends Component
         // Specific OP Reports Stats
         $opStatsRaw = (clone $opBase)->selectRaw('
             COUNT(*) as total,
-            SUM(CASE WHEN visit_type = "Review" THEN 1 ELSE 0 END) as review,
+            SUM(CASE WHEN visit_type IN ("Review", "Follow-up") THEN 1 ELSE 0 END) as review,
             SUM(CASE WHEN payment_status = "Paid" AND fee > 0 THEN 1 ELSE 0 END) as paid,
             SUM(fee) as revenue,
             SUM(discount_amount) as discount

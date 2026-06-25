@@ -31,12 +31,18 @@ class ReportService
 
         $totalVisits = (clone $query)->count();
         
-        $visitTypes = (clone $query)
+        $visitTypesRaw = (clone $query)
+            ->where('status', '!=', 'Cancelled')
             ->select('visit_type', DB::raw('count(*) as count'))
             ->groupBy('visit_type')
-            ->get()
             ->pluck('count', 'visit_type')
             ->toArray();
+
+        $visitTypes = [];
+        foreach ($visitTypesRaw as $type => $count) {
+            $key = $type === 'Follow-up' ? 'Review' : $type;
+            $visitTypes[$key] = ($visitTypes[$key] ?? 0) + $count;
+        }
 
         $doctorWise = (clone $query)
             ->with('doctor:id,full_name')

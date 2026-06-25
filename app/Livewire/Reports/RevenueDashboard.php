@@ -94,12 +94,23 @@ class RevenueDashboard extends Component
             ->groupBy('doctor_id')
             ->get();
 
-        $visitTypeSplit = \App\Models\Consultation::query()
+        $visitTypeSplitRaw = \App\Models\Consultation::query()
             ->whereBetween('consultation_date', [$this->startDate, $this->endDate])
             ->where('status', '!=', 'Cancelled')
             ->select('visit_type', DB::raw('COUNT(*) as count'), DB::raw('SUM(fee) as total'))
             ->groupBy('visit_type')
             ->get();
+
+        $mergedSplit = [];
+        foreach ($visitTypeSplitRaw as $item) {
+            $key = $item->visit_type === 'Follow-up' ? 'Review' : $item->visit_type;
+            if (!isset($mergedSplit[$key])) {
+                $mergedSplit[$key] = (object)['visit_type' => $key, 'count' => 0, 'total' => 0];
+            }
+            $mergedSplit[$key]->count += $item->count;
+            $mergedSplit[$key]->total += $item->total;
+        }
+        $visitTypeSplit = collect(array_values($mergedSplit));
 
         return view('livewire.reports.revenue-dashboard', [
             'totalRevenue' => $totalRevenue,

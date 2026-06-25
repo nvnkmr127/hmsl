@@ -448,7 +448,7 @@ class QuickOpBooking extends Component
                 $consultation = $service->bookAppointment([
                     'patient_id' => $this->selectedPatient->id,
                     'service_id' => $this->selectedService,
-                    'visit_type' => $this->isReview ? 'Review' : ($this->isFollowUp ? 'Follow-up' : 'New'),
+                    'visit_type' => $this->isReview ? 'Review' : ($this->isFollowUp ? 'Review' : 'New'),
                     'doctor_id' => $this->selectedDoctor,
                     'weight' => $this->weight,
                     'height' => $this->height,
