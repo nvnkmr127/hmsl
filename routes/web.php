@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Models\Admission;
 use App\Models\Bill;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Admin\BackupController;
 
 Route::get('/', function () {
     if (auth()->check()) {
@@ -70,4 +71,21 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/billing', [App\Http\Controllers\Counter\BillController::class, 'index'])->name('billing.index')->middleware('permission:view billing');
     Route::get('/billing/bills/{bill}/print', [App\Http\Controllers\Counter\BillController::class, 'print'])->whereNumber('bill')->name('billing.bills.print')->middleware('permission:view billing');
     Route::get('/billing/bills/{bill}/pdf', [App\Http\Controllers\Counter\BillController::class, 'pdf'])->whereNumber('bill')->name('billing.bills.pdf');
+
+    Route::prefix('admin/backups')->name('admin.backups.')->middleware('permission:manage settings')->group(function () {
+        Route::get('/', [BackupController::class, 'index'])->name('index');
+        Route::post('/', [BackupController::class, 'store'])->name('store');
+        Route::delete('/{id}', [BackupController::class, 'destroy'])->name('destroy');
+        Route::get('/download/{fileName}', [BackupController::class, 'download'])->name('download');
+        Route::post('/manual', [BackupController::class, 'createManualBackup'])->name('manual');
+        Route::post('/cleanup', [BackupController::class, 'cleanupBackups'])->name('cleanup');
+        Route::put('/settings', [BackupController::class, 'updateSettings'])->name('settings');
+        Route::post('/restore/database', [BackupController::class, 'restoreDatabase'])->name('restore.database');
+        Route::post('/restore/settings', [BackupController::class, 'restoreSettings'])->name('restore.settings');
+        Route::post('/gdrive/authorize', [BackupController::class, 'authorizeGoogleDrive'])->name('gdrive.authorize');
+        Route::get('/gdrive/callback', [BackupController::class, 'handleGoogleDriveCallback'])->name('gdrive.callback');
+        Route::get('/gdrive/test', [BackupController::class, 'testGoogleDriveConnection'])->name('gdrive.test');
+        Route::get('/gdrive/list', [BackupController::class, 'listGoogleDriveBackups'])->name('gdrive.list');
+        Route::post('/gdrive/upload', [BackupController::class, 'uploadToGoogleDrive'])->name('gdrive.upload');
+    });
 });
