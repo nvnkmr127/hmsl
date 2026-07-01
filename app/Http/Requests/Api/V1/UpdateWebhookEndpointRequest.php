@@ -20,12 +20,7 @@ class UpdateWebhookEndpointRequest extends FormRequest
             'name' => 'sometimes|required|string|max:150',
             'url' => 'sometimes|required|url',
             'events' => 'sometimes|required|array|min:1',
-            'events.*' => 'string|in:' . implode(',', [
-                'patient.registered', 'appointment.booked', 'consultation.completed',
-                'admission.created', 'invoice.paid', 'payment.received',
-                'prescription.dispensed', 'medicine.low_stock', 'lab.order_created',
-                'lab.order_completed', 'daily.summary'
-            ]),
+            'events.*' => 'string|in:' . implode(',', array_keys(config('webhooks.events', []))),
             'is_active' => 'sometimes|boolean',
         ];
     }

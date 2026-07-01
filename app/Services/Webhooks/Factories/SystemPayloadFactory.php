@@ -30,7 +30,7 @@ class SystemPayloadFactory
         $consultsQuery = \App\Models\Consultation::whereDate('consultation_date', $date);
         $totalConsults = (int) $consultsQuery->count();
         
-        $visitSplitRaw = Consultation::whereDate('consultation_date', $date)
+        $visitSplitRaw = \App\Models\Consultation::whereDate('consultation_date', $date)
             ->where('status', '!=', 'Cancelled')
             ->select('visit_type', DB::raw('COUNT(*) as count'))
             ->groupBy('visit_type')
