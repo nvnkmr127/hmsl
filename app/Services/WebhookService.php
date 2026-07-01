@@ -115,7 +115,7 @@ class WebhookService
         $status = 'failed';
         if ($response && $response->successful()) {
             $status = 'success';
-        } elseif ($attempt < 5 && ($errorCategory !== 'AUTH_ERROR' && $errorCategory !== 'CLIENT_ERROR')) {
+        } elseif ($attempt < 5 && !in_array($errorCategory, ['AUTH_ERROR', 'CLIENT_ERROR', 'SSRF_BLOCKED'], true)) {
             $status = 'retrying';
         }
 

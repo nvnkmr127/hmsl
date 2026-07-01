@@ -129,7 +129,6 @@ class SendWebhookJob implements ShouldQueue, ShouldBeUnique
         $truncatedError = Str::limit($error, 1000);
 
         $this->endpoint->increment('consecutive_failures');
-        $this->endpoint->consecutive_failures++;
         $this->endpoint->update(['last_failure_at' => now()]);
 
         // Auto-pause if too many consecutive failures
@@ -183,8 +182,8 @@ class SendWebhookJob implements ShouldQueue, ShouldBeUnique
 
     protected function shouldRetry(int $status, string $category): bool
     {
-        // Don't retry on AUTH_ERROR or CLIENT_ERROR (except 429)
-        if ($category === 'AUTH_ERROR' || ($category === 'CLIENT_ERROR' && $status !== 429)) {
+        // Don't retry on AUTH_ERROR, SSRF_BLOCKED, or CLIENT_ERROR (except 429)
+        if (in_array($category, ['AUTH_ERROR', 'SSRF_BLOCKED'], true) || ($category === 'CLIENT_ERROR' && $status !== 429)) {
             return false;
         }
 
