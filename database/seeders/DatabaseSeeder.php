@@ -19,8 +19,14 @@ class DatabaseSeeder extends Seeder
             ClinicalTemplateSeeder::class,
             MasterDataSeeder::class,
             VaccinationSeeder::class,
-            PatientSeeder::class,
-            // ComprehensiveDataSeeder::class,
         ]);
+
+        // Only seed mock data in local or testing environments
+        if (app()->environment('local', 'testing')) {
+            $this->call([
+                PatientSeeder::class,
+                ComprehensiveDataSeeder::class,
+            ]);
+        }
     }
 }

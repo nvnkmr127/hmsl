@@ -210,6 +210,12 @@
                                 Appointment Details
                             </h4>
                             
+                            <div class="space-y-1.5">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Consultation Date</label>
+                                <input type="date" wire:model.live="consultation_date" max="{{ date('Y-m-d') }}" class="w-full bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-indigo-500 rounded-2xl px-5 py-4 font-bold text-gray-900 dark:text-white transition-all outline-none">
+                                @error('consultation_date') <p class="text-[10px] font-bold text-rose-500 mt-1 ml-1">{{ $message }}</p> @enderror
+                            </div>
+                            
                             @if(!$isIpd)
                                 @if(!$isReview)
                                 <div class="space-y-1.5">
