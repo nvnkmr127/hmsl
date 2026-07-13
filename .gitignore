@@ -68,9 +68,3 @@ database/database.sqlite
 /tauri_old
 /trash_bin
 /src-tauri/target
-
-/tauri/src-tauri/binaries/
-/tauri/src-tauri/php_bin/
-/tauri/src-tauri/bin/
-/dist/
-/tauri/installer/

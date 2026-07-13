@@ -9,9 +9,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/preferences', [SettingsController::class, 'preferences'])->name('preferences');
         Route::get('/invoice', [SettingsController::class, 'invoice'])->name('invoice');
         
-        // Sync
-        Route::get('/sync', fn() => view('pages.settings.sync'))->name('sync.index');
-
         // Webhooks
         Route::get('/webhooks', fn() => view('pages.settings.webhooks'))->name('webhooks.index');
         Route::get('/webhooks/logs', fn() => view('pages.settings.webhook-logs'))->name('webhooks.logs');

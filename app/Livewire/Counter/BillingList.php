@@ -274,7 +274,7 @@ class BillingList extends Component
             
             $this->reset(['selectedBillId', 'paymentType', 'paymentMethod', 'paymentAmount', 'paymentReference', 'paymentNotes', 'return_route', 'return_id']);
 
-            if ($returnRoute && ($bill->payment_status === 'Paid' || $this->paymentMethod === 'Insurance')) {
+            if ($returnRoute && $bill->payment_status === 'Paid') {
                 if ($returnId) {
                     return redirect()->route($returnRoute, $returnId);
                 } else {

@@ -124,40 +124,4 @@ class SyncService
 
         return $deltas;
     }
-
-    /**
-     * Resolve a sync conflict.
-     */
-    public function resolveConflict(int $conflictId, string $resolution): void
-    {
-        $conflict = \App\Sync\Models\SyncConflict::findOrFail($conflictId);
-
-        if ($resolution === 'local') {
-            $conflict->update([
-                'resolution' => 'resolved_local',
-                'resolved_at' => now(),
-            ]);
-        } elseif ($resolution === 'server') {
-            $table = $conflict->table_name;
-            $serverData = $conflict->server_data;
-            $uuid = $conflict->record_uuid;
-
-            DB::transaction(function () use ($table, $uuid, $serverData) {
-                $dataToUpdate = $serverData;
-                unset($dataToUpdate['id']);
-
-                $existing = DB::table($table)->where('sync_id', $uuid)->first();
-                if ($existing) {
-                    DB::table($table)->where('sync_id', $uuid)->update($dataToUpdate);
-                } else {
-                    DB::table($table)->insert($serverData);
-                }
-            });
-
-            $conflict->update([
-                'resolution' => 'resolved_server',
-                'resolved_at' => now(),
-            ]);
-        }
-    }
 }

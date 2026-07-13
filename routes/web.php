@@ -18,13 +18,6 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/setup/first-run', function () {
-    if (file_exists(base_path('.first_run_complete'))) {
-        return redirect('/login');
-    }
-    return view('setup.first-run');
-})->name('setup.first-run');
-
 // Public Signed Downloads (for webhooks)
 Route::get('/public/opd-slip/{id}', [App\Http\Controllers\Counter\OpdController::class, 'download'])
     ->name('public.opd.download')
@@ -40,7 +33,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Development Auto-Login
-if (app()->environment('local') || env('ALLOW_AUTOLOGIN', false)) {
+if (app()->environment('local')) {
     Route::get('/autologin', [App\Http\Controllers\Auth\AutoLoginController::class, 'login'])->name('autologin');
 }
 
@@ -95,9 +88,4 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/gdrive/list', [BackupController::class, 'listGoogleDriveBackups'])->name('gdrive.list');
         Route::post('/gdrive/upload', [BackupController::class, 'uploadToGoogleDrive'])->name('gdrive.upload');
     });
-    Route::get('/change-password', \App\Livewire\Auth\ChangePassword::class)->name('password.change');
-    Route::post('/sync/now', function () {
-        Illuminate\Support\Facades\Artisan::call('sync:perform');
-        return response()->json(['status' => 'ok']);
-    })->name('sync.now');
 });

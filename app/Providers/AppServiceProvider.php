@@ -23,11 +23,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Disable SSL certificate verification for HTTP client requests
-        \Illuminate\Support\Facades\Http::globalOptions([
-            'verify' => false,
-        ]);
-
         $events = [
             \App\Events\Patients\PatientRegistered::class,
             \App\Events\Patients\PatientUpdated::class,
@@ -73,29 +68,11 @@ class AppServiceProvider extends ServiceProvider
                 \App\Models\Admission::class,
                 \App\Models\Bed::class,
                 \App\Models\Ward::class,
-                \App\Models\User::class,
             ];
 
             foreach ($syncModels as $model) {
                 if (class_exists($model)) {
                     $model::observe(\App\Sync\Observers\SyncOutboxObserver::class);
-                }
-            }
-        }
-
-        // Auto-run migrations for SQLite if database file does not exist
-        if (config('database.default') === 'sqlite') {
-            $dbPath = config('database.connections.sqlite.database');
-            if ($dbPath && $dbPath !== ':memory:' && !file_exists($dbPath)) {
-                $dir = dirname($dbPath);
-                if (!is_dir($dir)) {
-                    mkdir($dir, 0755, true);
-                }
-                touch($dbPath);
-                try {
-                    \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-                } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error('Auto-migration failed: ' . $e->getMessage());
                 }
             }
         }

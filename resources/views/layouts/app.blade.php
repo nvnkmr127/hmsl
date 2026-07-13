@@ -47,7 +47,10 @@
     <!-- ════════════════════════════
          OFFLINE BANNER
     ════════════════════════════ -->
-    <x-offline-banner />
+    <div id="offline-banner"
+         class="hidden fixed top-0 inset-x-0 z-[9999] bg-amber-500 text-white text-center text-xs font-bold py-1.5 tracking-wide shadow-md">
+        ⚡ Offline Mode — Changes will sync automatically when connection is restored
+    </div>
 
     <!-- ════════════════════════════
          MOBILE SIDEBAR OVERLAY

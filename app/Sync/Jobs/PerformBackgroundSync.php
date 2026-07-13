@@ -27,11 +27,6 @@ class PerformBackgroundSync implements ShouldQueue
      */
     public function handle(SyncEngine $engine): void
     {
-        if (!config('sync.enabled')) {
-            Log::info('Background Sync Skipped: synchronization is disabled.');
-            return;
-        }
-
         try {
             Log::info('Background Sync Started.');
             

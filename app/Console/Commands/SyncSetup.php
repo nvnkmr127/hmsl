@@ -30,7 +30,7 @@ class SyncSetup extends Command
         $this->info("Registering device '$name' with $url...");
 
         try {
-            $response = Http::withoutVerifying()->post($url . '/api/v1/sync/register', [
+            $response = Http::post($url . '/api/v1/sync/register', [
                 'device_uuid' => $uuid,
                 'name' => $name,
             ]);

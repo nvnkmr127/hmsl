@@ -18,9 +18,6 @@ class SyncOutbox extends Model
         'status',
         'error_message',
         'attempts',
-        'retry_count',
-        'last_error',
-        'failed_at',
     ];
 
     protected $casts = [

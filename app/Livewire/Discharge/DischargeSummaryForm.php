@@ -241,7 +241,7 @@ class DischargeSummaryForm extends Component
         }
 
         $bill = $this->admission->finalBill;
-        if ($bill && $bill->payment_status !== 'Paid' && $bill->payment_method !== 'Insurance') {
+        if ($bill && $bill->payment_status !== 'Paid') {
             $this->dispatch('open-modal', name: 'pending-bill-modal');
             return;
         }
