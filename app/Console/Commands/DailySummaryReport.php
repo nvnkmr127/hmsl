@@ -13,7 +13,7 @@ class DailySummaryReport extends Command
      *
      * @var string
      */
-    protected $signature = 'hms:report-summary {date? : The date for the report in YYYY-MM-DD format}';
+    protected $signature = 'hms:report-summary {date? : The date for the report in YYYY-MM-DD format} {--shift= : The shift name (e.g. Day or Night)}';
 
     /**
      * The console command description.
@@ -28,9 +28,12 @@ class DailySummaryReport extends Command
     public function handle()
     {
         $date = $this->argument('date') ?: now()->format('Y-m-d');
-        $this->info("Generating Daily Summary for: {$date}");
+        $shift = $this->option('shift');
+        
+        $label = $date . ($shift ? " ({$shift} summary)" : "");
+        $this->info("Generating Daily Summary for: {$label}");
 
-        $summary = SystemPayloadFactory::createDailySummary($date);
+        $summary = SystemPayloadFactory::createDailySummary($date, $shift);
 
         event(new DailySummaryGenerated($summary));
 

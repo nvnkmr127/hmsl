@@ -129,37 +129,12 @@ class WebhookEndpointApiController extends Controller
      */
     public function events()
     {
-        return response()->json([
-            'data' => [
-                'Patient Management' => [
-                    'patient.registered' => 'Patient Registered',
-                    'patient.updated' => 'Patient Updated',
-                    'patient.deleted' => 'Patient Deleted',
-                ],
-                'OPD / Consultations' => [
-                    'appointment.booked' => 'Appointment Booked',
-                    'consultation.created' => 'Consultation Created',
-                    'consultation.completed' => 'Consultation Completed',
-                ],
-                'IPD / Admissions' => [
-                    'admission.created' => 'Admission Created',
-                    'admission.discharged' => 'Patient Discharged',
-                ],
-                'Billing & Payments' => [
-                    'invoice.paid' => 'Invoice Paid',
-                    'payment.received' => 'Payment Received',
-                ],
-                'Clinical Services' => [
-                    'prescription.created' => 'Prescription Created',
-                    'prescription.dispensed' => 'Prescription Dispensed',
-                    'medicine.low_stock' => 'Medicine Low Stock',
-                    'lab.order_created' => 'Lab Order Created',
-                    'lab.order_completed' => 'Lab Order Completed',
-                ],
-                'System Events' => [
-                    'daily.summary' => 'Daily Summary',
-                ],
-            ]
-        ]);
+        $grouped = [];
+
+        foreach (config('webhooks.events', []) as $key => $event) {
+            $grouped[$event['group']][$key] = $event['label'];
+        }
+
+        return response()->json(['data' => $grouped]);
     }
 }

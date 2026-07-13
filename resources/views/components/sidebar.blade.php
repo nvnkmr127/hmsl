@@ -185,6 +185,8 @@
                             icon="clipboard" target="_blank">System Logs</x-nav-link>
                     @endif
                 </x-nav-group>
+                <x-nav-link href="{{ route('admin.backups.index') }}" :active="request()->routeIs('admin.backups.*')"
+                    icon="database">Backup & Restore</x-nav-link>
             @endcan
         </div>
     @endcanany

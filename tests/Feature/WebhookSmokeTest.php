@@ -78,4 +78,49 @@ class WebhookSmokeTest extends TestCase
         // 4. Verify job queued
         Queue::assertPushed(\App\Jobs\SendWebhookJob::class);
     }
+
+    /**
+     * The event key accepted when registering an endpoint must match the
+     * key actually used when the daily summary is dispatched, otherwise
+     * subscribed endpoints silently never receive the webhook.
+     */
+    public function test_endpoint_subscribed_to_daily_summary_receives_dispatch(): void
+    {
+        Queue::fake();
+
+        $endpoint = WebhookEndpoint::create([
+            'name' => 'Daily Summary Endpoint',
+            'url' => 'https://example.com/webhook',
+            'secret' => 'whsec_test',
+            'events' => ['system.daily.summary'],
+            'is_active' => true,
+        ]);
+
+        app(WebhookService::class)->dispatchDailySummary('2026-07-01');
+
+        $this->assertDatabaseHas('webhook_outbox', [
+            'event_type' => 'system.daily.summary',
+            'status' => 'dispatched',
+        ]);
+
+        Queue::assertPushed(\App\Jobs\SendWebhookJob::class, function ($job) use ($endpoint) {
+            return $job->endpoint->is($endpoint);
+        });
+    }
+
+    /**
+     * The API's allowed event list must stay in sync with the real webhook
+     * catalog (config/webhooks.php), or endpoints registered via the API
+     * can never be validly subscribed to events like system.daily.summary.
+     */
+    public function test_api_allowed_events_match_catalog(): void
+    {
+        $catalogEvents = array_keys(config('webhooks.events', []));
+
+        $storeRules = (new \App\Http\Requests\Api\V1\StoreWebhookEndpointRequest())->rules();
+        $updateRules = (new \App\Http\Requests\Api\V1\UpdateWebhookEndpointRequest())->rules();
+
+        $this->assertStringContainsString('in:' . implode(',', $catalogEvents), $storeRules['events.*']);
+        $this->assertStringContainsString('in:' . implode(',', $catalogEvents), $updateRules['events.*']);
+    }
 }

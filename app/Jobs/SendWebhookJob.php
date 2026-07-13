@@ -37,7 +37,8 @@ class SendWebhookJob implements ShouldQueue, ShouldBeUnique
 
     public function uniqueId(): string
     {
-        return $this->correlationId . '_' . $this->endpoint->id . '_' . $this->attempt;
+        $payloadHash = md5(json_encode($this->payload));
+        return $this->correlationId . '_' . $this->endpoint->id . '_' . $this->attempt . '_' . $payloadHash;
     }
 
     /**
@@ -157,6 +158,9 @@ class SendWebhookJob implements ShouldQueue, ShouldBeUnique
         // Retry logic: Retry on 429 or 5xx or connection issues
         if ($this->shouldRetry($status, $category) && $this->attempt < 5) {
             $this->scheduleRetry();
+        } elseif ($this->attempt >= 5) {
+            // Throw exception so it logs to failed_jobs
+            throw new \Exception("Webhook delivery failed permanently after {$this->attempt} attempts. Last error: {$truncatedError}");
         }
     }
 
@@ -178,8 +182,8 @@ class SendWebhookJob implements ShouldQueue, ShouldBeUnique
 
     protected function shouldRetry(int $status, string $category): bool
     {
-        // Don't retry on AUTH_ERROR or CLIENT_ERROR (except 429)
-        if ($category === 'AUTH_ERROR' || ($category === 'CLIENT_ERROR' && $status !== 429)) {
+        // Don't retry on AUTH_ERROR, SSRF_BLOCKED, or CLIENT_ERROR (except 429)
+        if (in_array($category, ['AUTH_ERROR', 'SSRF_BLOCKED'], true) || ($category === 'CLIENT_ERROR' && $status !== 429)) {
             return false;
         }
 

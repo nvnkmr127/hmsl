@@ -15,7 +15,8 @@ The wrapper:
 
 | Job Key | Purpose | Schedule (cron) | Underlying Command | Dependencies |
 |---|---|---|---|---|
-| `report-summary` | Daily activity metrics + dispatch `system.daily.summary` webhook | `0 8 * * *` | `hms:report-summary` | DB, queue worker, webhook endpoints configured |
+| `report-summary-day` | Day activity metrics + dispatch `system.daily.summary` webhook | `0 21 * * *` | `hms:report-summary --shift=Day` | DB, queue worker, webhook endpoints configured |
+| `report-summary-night` | Night activity metrics + dispatch `system.daily.summary` webhook | `0 10 * * *` | `hms:report-summary --shift=Night` | DB, queue worker, webhook endpoints configured |
 | `prune-webhooks` | Delete old webhook delivery logs, inbound logs, and dispatched outbox rows | `0 0 * * *` | `hms:prune-webhooks --days=7` | DB |
 | `retry-outbox` | Retry stuck webhook outbox entries by re-queueing delivery jobs | `*/30 * * * *` | `hms:retry-outbox --minutes=15` | DB, queue worker |
 | `queue-worker` | Process queued jobs without a long-running daemon (cPanel-friendly) | `* * * * *` | `queue:work --stop-when-empty --tries=1 --max-time=50` | DB |
@@ -45,7 +46,8 @@ Use this command template (adjust paths):
 `<cron> cd /home/<cpanel-user>/<project-root> && <php-bin> artisan hms:cron-run <job-key> >/dev/null 2>&1`
 
 Example (generic):
-- `0 8 * * * cd /home/<cpanel-user>/hms && php artisan hms:cron-run report-summary >/dev/null 2>&1`
+- `0 21 * * * cd /home/<cpanel-user>/hms && php artisan hms:cron-run report-summary-day >/dev/null 2>&1`
+- `0 10 * * * cd /home/<cpanel-user>/hms && php artisan hms:cron-run report-summary-night >/dev/null 2>&1`
 - `0 0 * * * cd /home/<cpanel-user>/hms && php artisan hms:cron-run prune-webhooks >/dev/null 2>&1`
 - `*/30 * * * * cd /home/<cpanel-user>/hms && php artisan hms:cron-run retry-outbox >/dev/null 2>&1`
 - `* * * * * cd /home/<cpanel-user>/hms && php artisan hms:cron-run queue-worker >/dev/null 2>&1`
@@ -60,7 +62,8 @@ Notes:
 ### Logging
 
 Per-job logs:
-- `storage/logs/cron/report-summary.log`
+- `storage/logs/cron/report-summary-day.log`
+- `storage/logs/cron/report-summary-night.log`
 - `storage/logs/cron/prune-webhooks.log`
 - `storage/logs/cron/retry-outbox.log`
 - `storage/logs/cron/queue-worker.log`
@@ -85,7 +88,7 @@ To receive alerts, create a webhook endpoint subscribed to `system.cron.failed`.
 After deploying to the server:
 - Run `php artisan migrate`
 - Run `php artisan hms:cron-list`
-- Trigger one job manually: `php artisan hms:cron-run report-summary`
+- Trigger one job manually: `php artisan hms:cron-run report-summary-day`
 - Confirm:
   - Log file appended in `storage/logs/cron/`
   - A `cron_job_runs` row exists with `status=succeeded`

@@ -2,13 +2,30 @@
 
 return [
     'jobs' => [
-        'report-summary' => [
+        'report-summary-day' => [
             'enabled' => true,
-            'label' => 'Daily Summary Report',
-            'description' => 'Generates daily activity metrics and dispatches system.daily.summary via webhooks.',
-            'cron' => '0 8 * * *',
+            'label' => 'Day Summary Report',
+            'description' => 'Generates day activity metrics and dispatches system.daily.summary via webhooks.',
+            'cron' => '0 21 * * *',
             'command' => 'hms:report-summary',
-            'args' => [],
+            'args' => [
+                '--shift' => 'Day',
+            ],
+            'dependencies' => [
+                'database',
+                'queue_worker',
+                'webhooks_configured',
+            ],
+        ],
+        'report-summary-night' => [
+            'enabled' => true,
+            'label' => 'Night Summary Report',
+            'description' => 'Generates night activity metrics and dispatches system.daily.summary via webhooks.',
+            'cron' => '0 10 * * *',
+            'command' => 'hms:report-summary',
+            'args' => [
+                '--shift' => 'Night',
+            ],
             'dependencies' => [
                 'database',
                 'queue_worker',

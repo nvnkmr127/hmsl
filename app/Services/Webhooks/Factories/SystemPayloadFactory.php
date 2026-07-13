@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\DB;
 
 class SystemPayloadFactory
 {
-    public static function createDailySummary(?string $date = null): array
+    public static function createDailySummary(?string $date = null, ?string $shift = null): array
     {
         $date = $date ?: now()->toDateString();
         
@@ -30,7 +30,7 @@ class SystemPayloadFactory
         $consultsQuery = \App\Models\Consultation::whereDate('consultation_date', $date);
         $totalConsults = (int) $consultsQuery->count();
         
-        $visitSplitRaw = Consultation::whereDate('consultation_date', $date)
+        $visitSplitRaw = \App\Models\Consultation::whereDate('consultation_date', $date)
             ->where('status', '!=', 'Cancelled')
             ->select('visit_type', DB::raw('COUNT(*) as count'))
             ->groupBy('visit_type')
@@ -59,8 +59,10 @@ class SystemPayloadFactory
         $activeAdmissions = (int) \App\Models\Admission::where('status', 'Admitted')->count();
         $todayAdmissions = (int) \App\Models\Admission::whereDate('admission_date', $date)->count();
 
+        $dateLabel = $shift ? "{$date} ({$shift} summary)" : $date;
+
         return [
-            'date' => $date,
+            'date' => $dateLabel,
             'summary' => [
                 'revenue' => [
                     'net_collection' => (float)($totalPaid - $totalRefunded),
