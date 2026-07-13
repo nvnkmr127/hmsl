@@ -25,6 +25,14 @@ Route::prefix('v1')->group(function () {
     // Public Endpoints
     Route::post('/login', [AuthApiController::class, 'login']);
     Route::post('/webhooks/{source}', [WebhookController::class, 'handle']);
+    Route::get('/ping', function () {
+        return response()->json([
+            'status' => 'ok',
+            'timestamp' => now()->toIso8601String(),
+            'version' => '1.0.0',
+            'server' => 'hms-central',
+        ]);
+    });
 
     // Authenticated Endpoints
     Route::middleware('auth:sanctum')->group(function () {
@@ -58,9 +66,10 @@ Route::prefix('v1')->group(function () {
     });
 
     // Synchronization Endpoints (Used by local instances to sync with this server)
-    Route::group(['prefix' => 'sync', 'middleware' => 'auth:sanctum'], function () {
+    Route::group(['prefix' => 'sync', 'middleware' => ['auth:sanctum', 'sync.device']], function () {
         Route::post('/push', [\App\Sync\API\Controllers\SyncController::class, 'push']);
         Route::get('/pull', [\App\Sync\API\Controllers\SyncController::class, 'pull']);
+        Route::get('/status', [\App\Sync\API\Controllers\SyncController::class, 'status']);
     });
     
     // Device Registration (Public or restricted by other means)

@@ -1,0 +1,12 @@
+extension_dir = "./ext"
+extension=pdo_sqlite
+extension=mbstring
+extension=openssl
+extension=fileinfo
+extension=gd
+extension=curl
+memory_limit=256M
+max_execution_time=60
+display_errors=Off
+log_errors=On
+error_log=./storage/logs/php_errors.log

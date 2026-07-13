@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HMS - Loading</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-white flex flex-col items-center justify-center min-h-screen p-6 overflow-hidden select-none">
+    <div class="max-w-md w-full text-center space-y-8">
+        <!-- Spinner & Animation -->
+        <div class="relative w-24 h-24 mx-auto flex items-center justify-center">
+            <div class="absolute inset-0 rounded-full bg-indigo-500/20 blur-xl animate-pulse"></div>
+            <div class="relative z-10 w-16 h-16 rounded-3xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                <svg class="w-8 h-8 text-white animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+            </div>
+        </div>
+
+        <div class="space-y-3">
+            <h1 class="text-2xl font-extrabold uppercase tracking-wider text-indigo-400">Initializing</h1>
+            <p class="text-sm font-semibold text-gray-400">Preparing Hospital Management System...</p>
+        </div>
+
+        <div class="bg-slate-800/40 border border-slate-700/40 rounded-2xl p-5 text-xs text-gray-400">
+            <p class="font-medium animate-pulse">Please wait while the system starts up for the first time.</p>
+            <p class="text-[9px] text-indigo-400/60 font-semibold tracking-wider uppercase mt-1.5">Starting database setup</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -30,14 +30,29 @@ class SyncOutboxObserver
             return;
         }
 
+        $syncId = $model->sync_id;
+
+        // If sync_id is missing, try to assign one and persist it quietly
+        if (empty($syncId)) {
+            $syncId = (string) \Illuminate\Support\Str::uuid();
+            try {
+                \Illuminate\Support\Facades\DB::table($model->getTable())
+                    ->where('id', $model->getKey())
+                    ->update(['sync_id' => $syncId]);
+            } catch (\Exception $e) {
+                // Cannot assign sync_id — skip outbox entry to avoid NOT NULL constraint error
+                return;
+            }
+        }
+
         SyncOutbox::create([
-            'device_id' => config('sync.device_id'),
-            'table_name' => $model->getTable(),
-            'record_uuid' => $model->sync_id,
-            'action' => $action,
-            'payload' => $model->toArray(),
-            'sync_version' => $model->sync_version,
-            'status' => 'pending',
+            'device_id'    => config('sync.device_id'),
+            'table_name'   => $model->getTable(),
+            'record_uuid'  => $syncId,
+            'action'       => $action,
+            'payload'      => $model->toArray(),
+            'sync_version' => $model->sync_version ?? 1,
+            'status'       => 'pending',
         ]);
     }
 }

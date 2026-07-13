@@ -3,12 +3,12 @@
   "build": {
     "beforeDevCommand": "",
     "beforeBuildCommand": "",
-    "devPath": "http://localhost:8000",
-    "distDir": "http://localhost:8000",
+    "devPath": "http://127.0.0.1:8000",
+    "distDir": "http://127.0.0.1:8000",
     "withGlobalTauri": false
   },
   "package": {
-    "productName": "HMS Desktop",
+    "productName": "HMS - Hospital Management",
     "version": "1.0.0"
   },
   "tauri": {
@@ -20,53 +20,67 @@
         "execute": true,
         "sidecar": true,
         "scope": [
-          { "name": "php-x86_64-pc-windows-msvc", "sidecar": true }
+          { "name": "binaries/php-x86_64-pc-windows-msvc", "sidecar": true }
         ]
       },
-      "window": {
-        "all": true
-      }
+      "window": { "all": true },
+      "notification": { "all": true }
     },
     "bundle": {
       "active": true,
-      "targets": "all",
-      "identifier": "com.hmsl.desktop",
-      "icon": [],
-      "externalBin": [
-        "bin/php"
-      ],
+      "targets": ["nsis"],
+      "identifier": "com.hms.offline",
+      "icon": ["icons/icon.ico", "icons/icon.png"],
+      "externalBin": ["binaries/php"],
       "resources": [
-        "../app/**",
-        "../bootstrap/**",
-        "../config/**",
-        "../database/**",
-        "../resources/**",
-        "../routes/**",
-        "../storage/**",
-        "../public/**",
-        "../vendor/**",
-        "../artisan",
-        "../.env.offline"
-      ]
+        "../../app",
+        "../../bootstrap",
+        "../../config",
+        "../../database/factories",
+        "../../database/migrations",
+        "../../database/seeders",
+        "../../database/.gitignore",
+        "../../resources",
+        "../../routes",
+        "../../storage",
+        "../../public",
+        "../../vendor",
+        "../../artisan",
+        "../../.env.offline",
+        "../../composer.json",
+        "php_bin"
+      ],
+      "windows": {
+        "nsis": {
+          "installMode": "currentUser",
+          "license": "LICENSE.txt",
+          "installerIcon": "icons/install.ico",
+          "sidebarImage": "icons/sidebar.bmp",
+          "headerImage": "icons/header.bmp"
+        }
+      }
     },
-    "security": {
-      "csp": null
-    },
-    "updater": {
-      "active": false
+    "security": { "csp": null },
+    "updater": { "active": false },
+    "systemTray": {
+      "iconPath": "icons/tray.png",
+      "iconAsTemplate": false,
+      "menuOnLeftClick": false
     },
     "windows": [
       {
-        "title": "HMS Desktop",
-        "width": 1400,
+        "label": "main",
+        "title": "HMS - Hospital Management",
+        "url": "about:blank",
+        "width": 1440,
         "height": 900,
-        "minWidth": 1024,
-        "minHeight": 700,
+        "minWidth": 1280,
+        "minHeight": 720,
         "resizable": true,
         "fullscreen": false,
-        "visible": false,
-        "url": "http://localhost:8000",
-        "decorations": true
+        "center": true,
+        "decorations": true,
+        "visible": true
       }
     ]
   }

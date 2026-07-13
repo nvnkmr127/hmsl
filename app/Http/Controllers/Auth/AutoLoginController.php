@@ -11,8 +11,8 @@ class AutoLoginController extends Controller
 {
     public function login(Request $request)
     {
-        if (!app()->isLocal()) {
-            abort(403, 'Auto-login is only available in the local environment.');
+        if (!app()->isLocal() && !env('ALLOW_AUTOLOGIN', false)) {
+            abort(403, 'Auto-login is not allowed.');
         }
 
         $role = $request->query('role');

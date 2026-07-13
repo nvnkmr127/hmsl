@@ -50,6 +50,7 @@
     </button>
 </form>
 
+@if(app()->isLocal() || env('ALLOW_AUTOLOGIN', false))
 <!-- Quick access -->
 <div class="mt-8">
     <div class="flex items-center gap-3 mb-4">
@@ -67,4 +68,5 @@
         @endforeach
     </div>
 </div>
+@endif
 @endsection

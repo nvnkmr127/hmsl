@@ -50,7 +50,7 @@ class DischargeManagement extends Component
             }
 
             $bill = $admission->finalBill;
-            if ($bill && $bill->payment_status !== 'Paid') {
+            if ($bill && $bill->payment_status !== 'Paid' && $bill->payment_method !== 'Insurance') {
                 $this->dispatch('open-modal', name: 'pending-bill-modal');
                 return;
             }

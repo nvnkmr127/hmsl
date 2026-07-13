@@ -17,6 +17,13 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/setup/first-run', function () {
+    if (file_exists(base_path('.first_run_complete'))) {
+        return redirect('/login');
+    }
+    return view('setup.first-run');
+})->name('setup.first-run');
+
 // Public Signed Downloads (for webhooks)
 Route::get('/public/opd-slip/{id}', [App\Http\Controllers\Counter\OpdController::class, 'download'])
     ->name('public.opd.download')
@@ -32,7 +39,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Development Auto-Login
-if (app()->environment('local')) {
+if (app()->environment('local') || env('ALLOW_AUTOLOGIN', false)) {
     Route::get('/autologin', [App\Http\Controllers\Auth\AutoLoginController::class, 'login'])->name('autologin');
 }
 
@@ -70,4 +77,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/billing', [App\Http\Controllers\Counter\BillController::class, 'index'])->name('billing.index')->middleware('permission:view billing');
     Route::get('/billing/bills/{bill}/print', [App\Http\Controllers\Counter\BillController::class, 'print'])->whereNumber('bill')->name('billing.bills.print')->middleware('permission:view billing');
     Route::get('/billing/bills/{bill}/pdf', [App\Http\Controllers\Counter\BillController::class, 'pdf'])->whereNumber('bill')->name('billing.bills.pdf');
+    Route::get('/change-password', \App\Livewire\Auth\ChangePassword::class)->name('password.change');
+    Route::post('/sync/now', function () {
+        Illuminate\Support\Facades\Artisan::call('sync:perform');
+        return response()->json(['status' => 'ok']);
+    })->name('sync.now');
 });

@@ -6,6 +6,7 @@
             ['route' => 'settings.invoice', 'label' => 'Invoice & Print'],
             ['route' => 'settings.webhooks.index', 'label' => 'Webhooks'],
             ['route' => 'settings.api-tokens.index', 'label' => 'API Tokens'],
+            ['route' => 'settings.sync.index', 'label' => 'Offline Sync'],
         ];
     @endphp
 

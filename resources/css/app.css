@@ -490,3 +490,10 @@
 
 /* Hover: white/8 helper (since Tailwind arbitrary opacity isn't always available) */
 .hover\:bg-white\/8:hover { background-color: rgba(255,255,255,0.08); }
+
+/* Prevent text selection on UI chrome elements */
+nav, aside, header, .sidebar, .btn, button, label {
+  user-select: none;
+  -webkit-user-select: none;
+}
+

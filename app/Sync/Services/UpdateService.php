@@ -19,10 +19,14 @@ class UpdateService
         }
 
         try {
-            $response = Http::withToken($token)
+            $versionPath = base_path('VERSION');
+            $currentVersion = file_exists($versionPath) ? trim(file_get_contents($versionPath)) : env('APP_VERSION', '1.0.0');
+
+            $response = Http::withoutVerifying()
+                ->withToken($token)
                 ->timeout(10)
                 ->get($serverUrl . '/api/v1/update/check', [
-                    'current_version' => env('APP_VERSION', '1.0.0'),
+                    'current_version' => $currentVersion,
                 ]);
 
             if (!$response->successful()) {
@@ -47,7 +51,8 @@ class UpdateService
     {
         try {
             // 1. Get manifest from server
-            $manifestResponse = Http::withToken($token)
+            $manifestResponse = Http::withoutVerifying()
+                ->withToken($token)
                 ->timeout(30)
                 ->get($serverUrl . '/api/v1/update/manifest');
 
@@ -71,7 +76,8 @@ class UpdateService
                 }
 
                 // Download the changed file
-                $fileResponse = Http::withToken($token)
+                $fileResponse = Http::withoutVerifying()
+                    ->withToken($token)
                     ->timeout(30)
                     ->get($serverUrl . '/api/v1/update/download', ['path' => $relativePath]);
 
@@ -95,14 +101,19 @@ class UpdateService
             Artisan::call('cache:clear');
 
             // 5. Update local version
-            $envPath = base_path('.env');
-            $envContent = file_get_contents($envPath);
             if ($serverVersion) {
-                $envContent = preg_replace('/^APP_VERSION=.*/m', "APP_VERSION={$serverVersion}", $envContent);
-                if (!str_contains($envContent, 'APP_VERSION=')) {
-                    $envContent .= "\nAPP_VERSION={$serverVersion}";
+                $versionPath = base_path('VERSION');
+                file_put_contents($versionPath, $serverVersion);
+
+                $envPath = base_path('.env');
+                if (file_exists($envPath)) {
+                    $envContent = file_get_contents($envPath);
+                    $envContent = preg_replace('/^APP_VERSION=.*/m', "APP_VERSION={$serverVersion}", $envContent);
+                    if (!str_contains($envContent, 'APP_VERSION=')) {
+                        $envContent .= "\nAPP_VERSION={$serverVersion}";
+                    }
+                    file_put_contents($envPath, $envContent);
                 }
-                file_put_contents($envPath, $envContent);
             }
 
             Log::info("UpdateService: Applied update v{$serverVersion}, {$downloaded} files changed");
