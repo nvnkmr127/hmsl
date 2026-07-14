@@ -100,11 +100,16 @@
                         <div class="flex gap-2">
                             <livewire:ipd.transfer-bed :admission="$admission" />
                             @if($admission->finalBill)
-                                <a href="{{ route('billing.bills.print', $admission->finalBill->id) }}" target="_blank" class="btn btn-secondary w-full text-xs">
+                                <a href="{{ route('billing.bills.print', $admission->finalBill->id) }}" target="_blank" class="btn btn-secondary w-full text-xs flex items-center justify-center">
                                     Print Bill
                                 </a>
                             @endif
                         </div>
+                        @if($admission->finalBill)
+                            <button x-data @click="$dispatch('openPaymentModal', { billId: {{ $admission->finalBill->id }} })" class="btn btn-primary w-full text-xs flex items-center justify-center">
+                                Collect Bill
+                            </button>
+                        @endif
                     </div>
                 </x-card>
             @else
@@ -212,5 +217,7 @@
     @unless($admission->status === 'Discharged')
         <livewire:doctor.lab-order-composer />
     @endunless
+
+    <livewire:billing.payment-modal />
     </div>{{-- end x-data auto-open wrapper --}}
 @endsection
