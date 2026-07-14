@@ -150,7 +150,13 @@
             <td class="info-label">Age / Gender:</td>
             <td class="info-val">{{ $bill->patient->age }} / {{ $bill->patient->gender }}</td>
             <td class="info-label">Bill Date:</td>
-            <td class="info-val">{{ $bill->created_at->format('d/m/Y h:i A') }}</td>
+            <td class="info-val">
+                @if(!$bill->admission && $bill->consultation)
+                    {{ $bill->consultation->consultation_date->format('d/m/Y') }} {{ $bill->created_at->format('h:i A') }}
+                @else
+                    {{ $bill->created_at->format('d/m/Y h:i A') }}
+                @endif
+            </td>
         </tr>
         <tr>
             <td class="info-label">Doctor:</td>
