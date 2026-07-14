@@ -76,4 +76,18 @@ class IpdController extends Controller
 
         return view('pages.ipd.case-sheet-print', compact('admission'));
     }
+
+    public function printBill(Admission $admission)
+    {
+        if (!$admission->finalBill) {
+            app(\App\Services\IpdService::class)->ensureFinalBill($admission);
+            $admission->load('finalBill');
+        }
+
+        if ($admission->finalBill) {
+            return redirect()->route('billing.bills.print', $admission->finalBill->id);
+        }
+
+        abort(404, 'Bill not found');
+    }
 }
