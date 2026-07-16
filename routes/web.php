@@ -79,6 +79,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/download/{fileName}', [BackupController::class, 'download'])->name('download');
         Route::post('/manual', [BackupController::class, 'createManualBackup'])->name('manual');
         Route::post('/cleanup', [BackupController::class, 'cleanupBackups'])->name('cleanup');
+        Route::post('/upload', [BackupController::class, 'uploadBackup'])->name('upload');
         Route::put('/settings', [BackupController::class, 'updateSettings'])->name('settings');
         Route::post('/restore/database', [BackupController::class, 'restoreDatabase'])->name('restore.database');
         Route::post('/restore/settings', [BackupController::class, 'restoreSettings'])->name('restore.settings');

@@ -178,6 +178,23 @@ class BackupController extends Controller
         }
     }
 
+    public function uploadBackup(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file'
+        ]);
+
+        try {
+            $file = $request->file('file');
+            $filename = $file->getClientOriginalName();
+            $file->move(storage_path('app/backups'), $filename);
+
+            return response()->json(['success' => true, 'message' => 'Backup uploaded successfully.']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
     public function restoreDatabase(Request $request)
     {
         $request->validate([

@@ -177,6 +177,12 @@
 
                 <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Local Backups</h3>
+                    <div class="flex items-center space-x-2">
+                        <input type="file" x-ref="backupFile" @change="uploadBackup" class="hidden" accept=".sql,.zip,.json">
+                        <button @click="$refs.backupFile.click()" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Upload Backup
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="overflow-x-auto">
@@ -412,6 +418,39 @@ function backupManager() {
         async deleteBackup(id, source) {
             if(confirm('Are you sure you want to delete this backup?')) {
                 await this.ajaxRequest(`{{ url('admin/backups') }}/${id}`, 'POST', { source, _method: 'DELETE' }, 'isTableProcessing');
+            }
+        },
+
+        async uploadBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            this.isTableProcessing = true;
+            try {
+                const response = await fetch('{{ route("admin.backups.upload") }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+                
+                const result = await response.json();
+                this.isTableProcessing = false;
+                
+                if (result.success) {
+                    this.showToast(result.message, 'success');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    this.showToast(result.message || 'Upload failed', 'error');
+                }
+            } catch (e) {
+                this.isTableProcessing = false;
+                this.showToast('Upload failed', 'error');
             }
         },
 

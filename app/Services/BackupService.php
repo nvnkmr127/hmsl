@@ -26,6 +26,7 @@ class BackupService
 
     public function createDatabaseBackup(string $type = 'manual')
     {
+        set_time_limit(0);
         $freeSpace = disk_free_space($this->backupPath);
         if ($freeSpace !== false && $freeSpace < 104857600) { // 100MB
             throw new \Exception("Not enough disk space. Minimum 100MB required.");
@@ -154,6 +155,7 @@ class BackupService
 
     public function restoreDatabaseBackup(string $filename)
     {
+        set_time_limit(0);
         $filePath = $this->backupPath . '/' . $filename;
         if (!File::exists($filePath)) {
             throw new \Exception("Backup file not found.");
