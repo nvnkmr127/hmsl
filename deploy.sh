@@ -78,13 +78,7 @@ echo ""
 # Check if there are changes
 if [ "$CURRENT_COMMIT" = "$REMOTE_COMMIT" ]; then
     print_warning "No new changes to deploy. Production is up to date!"
-    echo ""
-    read -p "Continue anyway? (y/N): " -n 1 -r
-    echo ""
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        print_info "Deployment cancelled."
-        exit 0
-    fi
+    exit 0
 else
     echo ""
     print_header "📝 FILES THAT WILL CHANGE"
@@ -92,21 +86,6 @@ else
     
     # Show files that will change
     git diff --name-status HEAD..origin/main 2>/dev/null || git diff --name-status HEAD..origin/master 2>/dev/null | head -20
-    
-    echo ""
-    print_info "Commits to be deployed:"
-    git log --oneline HEAD..origin/main 2>/dev/null || git log --oneline HEAD..origin/master 2>/dev/null | head -10
-    
-    echo ""
-    echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    read -p "Deploy these changes? (Y/n): " -n 1 -r
-    echo ""
-    echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    
-    if [[ $REPLY =~ ^[Nn]$ ]]; then
-        print_info "Deployment cancelled by user."
-        exit 0
-    fi
 fi
 
 echo ""
@@ -191,29 +170,20 @@ php artisan migrate --force || {
 }
 print_success "Database migrations completed"
 
-# Step 8: Clear all caches
-echo "🧹 Clearing all caches..."
-php artisan config:clear || true
-php artisan cache:clear || true
-php artisan route:clear || true
-php artisan view:clear || true
-print_success "Cache cleared"
-
-# Step 9: Cache configuration for performance
-echo "💾 Caching configuration..."
-php artisan config:cache || print_warning "Config cache failed"
-php artisan route:cache || print_warning "Route cache failed"
-php artisan view:cache || print_warning "View cache failed"
-print_success "Configuration cached"
-
-# Step 10: Optimize application
-echo "⚡ Optimizing application..."
+# Step 8: Clear and optimize caches
+echo "🧹 Optimizing application caches..."
+php artisan optimize:clear || true
 php artisan optimize || print_warning "Optimization had warnings"
 print_success "Application optimized"
 
-# Step 11: Restart queue workers (if using queues)
+# Step 9: Restart queue workers (if using queues)
 echo "🔄 Restarting queue workers..."
 php artisan queue:restart 2>/dev/null || print_warning "Queue workers not running"
+
+# Step 10: Restart Web Server / PHP-FPM to clear OPcache
+echo "🔄 Restarting web server to clear OPcache..."
+sudo systemctl restart nginx 2>/dev/null || sudo systemctl restart apache2 2>/dev/null || true
+print_success "Web server restarted"
 
 # Step 12: Permissions
 echo "🔐 Setting permissions..."
