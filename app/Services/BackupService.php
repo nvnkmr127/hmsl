@@ -26,6 +26,7 @@ class BackupService
 
     public function createDatabaseBackup(string $type = 'manual')
     {
+        ini_set('memory_limit', '1024M');
         set_time_limit(0);
         $freeSpace = disk_free_space($this->backupPath);
         if ($freeSpace !== false && $freeSpace < 104857600) { // 100MB

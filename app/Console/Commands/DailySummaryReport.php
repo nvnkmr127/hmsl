@@ -27,8 +27,14 @@ class DailySummaryReport extends Command
      */
     public function handle()
     {
-        $date = $this->argument('date') ?: now()->format('Y-m-d');
+        $date = $this->argument('date');
         $shift = $this->option('shift');
+
+        if (!$date) {
+            $date = ($shift === 'Night')
+                ? now()->subDay()->format('Y-m-d')
+                : now()->format('Y-m-d');
+        }
         
         $label = $date . ($shift ? " ({$shift} summary)" : "");
         $this->info("Generating Daily Summary for: {$label}");
