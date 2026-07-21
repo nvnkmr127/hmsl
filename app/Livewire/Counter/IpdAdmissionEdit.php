@@ -32,6 +32,11 @@ class IpdAdmissionEdit extends Component
 
     public $weight;
     public $height;
+    public $pulse;
+    public $bp_systolic;
+    public $bp_diastolic;
+    public $resp_rate;
+    public $spo2;
 
     public $reason;
     public $notes;
@@ -50,7 +55,7 @@ class IpdAdmissionEdit extends Component
     #[\Livewire\Attributes\On('edit-admission')]
     public function loadAdmission($id)
     {
-        $this->admission = Admission::with(['patient', 'bed'])->findOrFail($id);
+        $this->admission = Admission::with(['patient', 'bed', 'ipdVitals'])->findOrFail($id);
 
         $this->doctorId = $this->admission->doctor_id;
         
@@ -63,6 +68,22 @@ class IpdAdmissionEdit extends Component
         
         $this->weight = $this->admission->weight;
         $this->height = $this->admission->height;
+
+        $firstVital = $this->admission->ipdVitals->first();
+        if ($firstVital) {
+            $this->pulse = $firstVital->pulse;
+            $this->bp_systolic = $firstVital->bp_systolic;
+            $this->bp_diastolic = $firstVital->bp_diastolic;
+            $this->resp_rate = $firstVital->resp_rate;
+            $this->spo2 = $firstVital->spo2;
+        } else {
+            $this->pulse = null;
+            $this->bp_systolic = null;
+            $this->bp_diastolic = null;
+            $this->resp_rate = null;
+            $this->spo2 = null;
+        }
+
         $this->reason = $this->admission->reason_for_admission;
         $this->notes = $this->admission->notes;
         $this->guardianName = $this->admission->guardian_name;
@@ -163,6 +184,31 @@ class IpdAdmissionEdit extends Component
             'emergency_contact' => $this->emergencyContact,
             'is_emergency' => $this->isEmergency,
         ]);
+
+        $hasVitals = !empty($this->pulse) || !empty($this->bp_systolic) || !empty($this->bp_diastolic) || !empty($this->resp_rate) || !empty($this->spo2) || !empty($this->weight) || !empty($this->height);
+
+        if ($hasVitals) {
+            $vitalData = [
+                'pulse' => $this->pulse,
+                'bp_systolic' => $this->bp_systolic,
+                'bp_diastolic' => $this->bp_diastolic,
+                'resp_rate' => $this->resp_rate,
+                'spo2' => $this->spo2,
+                'weight' => $this->weight,
+                'height' => $this->height,
+            ];
+
+            $firstVital = $this->admission->ipdVitals()->first();
+            if ($firstVital) {
+                $firstVital->update($vitalData);
+            } else {
+                $vitalData['patient_id'] = $this->admission->patient_id;
+                $vitalData['admission_id'] = $this->admission->id;
+                $vitalData['recorded_by'] = \Illuminate\Support\Facades\Auth::id();
+                $vitalData['recorded_at'] = now();
+                \App\Models\IpdVital::create($vitalData);
+            }
+        }
 
         $this->dispatch('notify', ['type' => 'success', 'message' => 'Admission updated successfully!']);
         $this->dispatch('close-modal', name: 'edit-admission-modal');
