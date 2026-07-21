@@ -32,6 +32,7 @@ Route::middleware(['auth'])->group(function () {
         Route::group(['middleware' => ['permission:view ipd']], function() {
             Route::get('/ipd', fn() => view('pages.ipd.index'))->name('ipd.index');
             Route::get('/ipd/create', fn() => view('pages.ipd.create'))->name('ipd.create');
+            Route::get('/ipd/{admission}/edit', [IpdController::class, 'edit'])->name('ipd.edit');
             Route::get('/ipd/{admission}', [IpdController::class, 'show'])->name('ipd.show');
             Route::get('/ipd/{admission}/discharge', [IpdController::class, 'dischargeSummary'])->name('ipd.discharge');
             Route::get('/ipd/{admission}/discharge/print', [IpdController::class, 'printSummary'])->name('discharge.summary.print');

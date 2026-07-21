@@ -30,6 +30,17 @@ class IpdController extends Controller
         return view('pages.ipd.show', compact('admission'));
     }
 
+    public function edit(Admission $admission)
+    {
+        $admission->load([
+            'patient',
+            'bed.ward',
+            'doctor.user',
+        ]);
+
+        return view('pages.ipd.edit', compact('admission'));
+    }
+
     public function dischargeSummary(Admission $admission)
     {
         $admission->load([

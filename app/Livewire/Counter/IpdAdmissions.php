@@ -13,6 +13,12 @@ class IpdAdmissions extends Component
 {
     use WithPagination;
 
+    #[\Livewire\Attributes\On('refresh-admissions')]
+    public function refreshList()
+    {
+        // Re-renders the component to fetch updated data
+    }
+
     public $search = '';
     public bool $showDischarged = false;
     public ?int $selectedAdmissionId = null;
