@@ -155,7 +155,7 @@ fi
 # Step 6: Install/Update NPM dependencies and build assets
 echo "🎨 Building frontend assets..."
 if command -v npm &> /dev/null; then
-    npm install --production --silent || print_warning "NPM install had warnings"
+    npm install --silent || print_warning "NPM install had warnings"
     npm run build || print_warning "Asset build had warnings"
     print_success "Frontend assets built"
 else
@@ -188,7 +188,7 @@ print_success "Web server restarted"
 # Step 12: Permissions
 echo "🔐 Setting permissions..."
 # On DigitalOcean/Ubuntu, the web server user is typically www-data
-sudo chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true
+sudo chown -R $USER:www-data storage bootstrap/cache 2>/dev/null || true
 sudo chmod -R 775 storage bootstrap/cache 2>/dev/null || \
 chmod -R 755 storage bootstrap/cache
 print_success "Permissions set"
