@@ -183,6 +183,9 @@ php artisan queue:restart 2>/dev/null || print_warning "Queue workers not runnin
 # Step 10: Restart Web Server / PHP-FPM to clear OPcache
 echo "🔄 Restarting web server to clear OPcache..."
 sudo systemctl restart nginx 2>/dev/null || sudo systemctl restart apache2 2>/dev/null || true
+sudo systemctl restart php8.1-fpm 2>/dev/null || true
+sudo systemctl restart php8.2-fpm 2>/dev/null || true
+sudo systemctl restart php8.3-fpm 2>/dev/null || true
 print_success "Web server restarted"
 
 # Step 12: Permissions
