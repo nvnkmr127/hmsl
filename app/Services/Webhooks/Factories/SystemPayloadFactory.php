@@ -10,16 +10,34 @@ class SystemPayloadFactory
     {
         $date = $date ?: now()->toDateString();
         
+        $start = null;
+        $end = null;
+        
+        if ($shift === 'Day') {
+            $start = $date . ' 10:00:00';
+            $end = $date . ' 21:00:00';
+        } elseif ($shift === 'Night') {
+            $start = $date . ' 21:00:00';
+            $end = \Carbon\Carbon::parse($date)->addDay()->format('Y-m-d') . ' 10:00:00';
+        }
+
+        $applyTimeFilter = function ($query, $column) use ($date, $start, $end) {
+            if ($start && $end) {
+                return $query->whereBetween($column, [$start, $end]);
+            }
+            return $query->whereDate($column, $date);
+        };
+        
         // Revenue Metrics
-        $totalPaid = (float) \App\Models\BillPayment::whereDate('received_at', $date)
+        $totalPaid = (float) $applyTimeFilter(\App\Models\BillPayment::query(), 'received_at')
             ->where('type', 'payment')
             ->sum('amount');
             
-        $totalRefunded = (float) \App\Models\BillPayment::whereDate('received_at', $date)
+        $totalRefunded = (float) $applyTimeFilter(\App\Models\BillPayment::query(), 'received_at')
             ->where('type', 'refund')
             ->sum('amount');
             
-        $methodSplit = \App\Models\BillPayment::whereDate('received_at', $date)
+        $methodSplit = $applyTimeFilter(\App\Models\BillPayment::query(), 'received_at')
             ->select('method', DB::raw('SUM(amount) as total'))
             ->groupBy('method')
             ->get()
@@ -27,10 +45,11 @@ class SystemPayloadFactory
             ->toArray();
 
         // Consultation Metrics
-        $consultsQuery = \App\Models\Consultation::whereDate('consultation_date', $date);
+        // Note: Using created_at instead of consultation_date so we can filter by exact time
+        $consultsQuery = $applyTimeFilter(\App\Models\Consultation::query(), 'created_at');
         $totalConsults = (int) $consultsQuery->count();
         
-        $visitSplitRaw = \App\Models\Consultation::whereDate('consultation_date', $date)
+        $visitSplitRaw = $applyTimeFilter(\App\Models\Consultation::query(), 'created_at')
             ->where('status', '!=', 'Cancelled')
             ->select('visit_type', DB::raw('COUNT(*) as count'))
             ->groupBy('visit_type')
@@ -44,7 +63,7 @@ class SystemPayloadFactory
         }
 
         // Clinical Performance
-        $doctorSplit = \App\Models\Consultation::whereDate('consultation_date', $date)
+        $doctorSplit = $applyTimeFilter(\App\Models\Consultation::query(), 'created_at')
             ->with('doctor')
             ->select('doctor_id', DB::raw('COUNT(*) as count'))
             ->groupBy('doctor_id')
@@ -57,7 +76,7 @@ class SystemPayloadFactory
 
         // IPD Metrics
         $activeAdmissions = (int) \App\Models\Admission::where('status', 'Admitted')->count();
-        $todayAdmissions = (int) \App\Models\Admission::whereDate('admission_date', $date)->count();
+        $todayAdmissions = (int) $applyTimeFilter(\App\Models\Admission::query(), 'admission_date')->count();
 
         $dateLabel = $shift ? "{$date} ({$shift} summary)" : $date;
 
