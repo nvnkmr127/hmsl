@@ -34,7 +34,7 @@ class RetryStuckOutbox extends Command
                   $sub->where('status', 'processing')
                        ->where('updated_at', '<', now()->subMinutes($minutes));
               });
-        })->get();
+        })->cursor();
 
         if ($stuckEntries->isEmpty()) {
             $this->info("No stuck outbox entries found.");
@@ -42,6 +42,7 @@ class RetryStuckOutbox extends Command
         }
 
         $service = app(\App\Services\WebhookService::class);
+        $count = 0;
 
         foreach ($stuckEntries as $entry) {
             $this->info("Retrying outbox entry #{$entry->id} ({$entry->event_type})");
@@ -65,8 +66,10 @@ class RetryStuckOutbox extends Command
                 'status' => 'dispatched',
                 'dispatched_at' => now(),
             ]);
+            
+            $count++;
         }
 
-        $this->info("Processed " . $stuckEntries->count() . " stuck entries.");
+        $this->info("Processed {$count} stuck entries.");
     }
 }

@@ -28,8 +28,8 @@ class BackfillSyncIds extends Command
                 continue;
             }
 
-            $records = DB::table($table)->whereNull('sync_id')->get();
-            $count = $records->count();
+            $query = DB::table($table)->whereNull('sync_id');
+            $count = (clone $query)->count();
 
             if ($count === 0) {
                 $this->info("Table '$table' is already fully populated.");
@@ -37,18 +37,20 @@ class BackfillSyncIds extends Command
             }
 
             $this->info("Updating $count records in '$table'...");
-
             $updated = 0;
-            foreach ($records as $record) {
-                $uuid = (string) Str::uuid();
-                DB::table($table)->where('id', $record->id)->update([
-                    'sync_id' => $uuid,
-                    'sync_version' => 1,
-                    'sync_status' => 'synced',
-                    'synced_at' => now(),
-                ]);
-                $updated++;
-            }
+
+            $query->orderBy('id')->chunk(1000, function ($records) use ($table, &$updated) {
+                foreach ($records as $record) {
+                    $uuid = (string) Str::uuid();
+                    DB::table($table)->where('id', $record->id)->update([
+                        'sync_id' => $uuid,
+                        'sync_version' => 1,
+                        'sync_status' => 'synced',
+                        'synced_at' => now(),
+                    ]);
+                    $updated++;
+                }
+            });
 
             $this->info("Successfully updated $updated records in '$table'.");
         }

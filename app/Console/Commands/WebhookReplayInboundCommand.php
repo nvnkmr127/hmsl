@@ -34,7 +34,7 @@ class WebhookReplayInboundCommand extends Command
             return;
         }
 
-        $webhooks = $query->get();
+        $webhooks = $query->cursor();
         $processed = 0;
 
         foreach ($webhooks as $webhook) {
