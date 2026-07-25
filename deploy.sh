@@ -170,31 +170,29 @@ php artisan migrate --force || {
 }
 print_success "Database migrations completed"
 
-# Step 8: Clear and optimize caches
+# Step 8: Permissions
+echo "🔐 Setting permissions..."
+sudo chown -R $USER:www-data storage bootstrap/cache 2>/dev/null || true
+sudo chmod -R 775 storage bootstrap/cache 2>/dev/null || chmod -R 777 storage bootstrap/cache
+print_success "Permissions set"
+
+# Step 9: Clear and optimize caches
 echo "🧹 Optimizing application caches..."
 php artisan optimize:clear || true
 php artisan optimize || print_warning "Optimization had warnings"
 print_success "Application optimized"
 
-# Step 9: Restart queue workers (if using queues)
+# Step 10: Restart queue workers (if using queues)
 echo "🔄 Restarting queue workers..."
 php artisan queue:restart 2>/dev/null || print_warning "Queue workers not running"
 
-# Step 10: Restart Web Server / PHP-FPM to clear OPcache
+# Step 11: Restart Web Server / PHP-FPM to clear OPcache
 echo "🔄 Restarting web server to clear OPcache..."
 sudo systemctl restart nginx 2>/dev/null || sudo systemctl restart apache2 2>/dev/null || true
 sudo systemctl restart php8.1-fpm 2>/dev/null || true
 sudo systemctl restart php8.2-fpm 2>/dev/null || true
 sudo systemctl restart php8.3-fpm 2>/dev/null || true
 print_success "Web server restarted"
-
-# Step 12: Permissions
-echo "🔐 Setting permissions..."
-# On DigitalOcean/Ubuntu, the web server user is typically www-data
-sudo chown -R $USER:www-data storage bootstrap/cache 2>/dev/null || true
-sudo chmod -R 775 storage bootstrap/cache 2>/dev/null || \
-chmod -R 755 storage bootstrap/cache
-print_success "Permissions set"
 
 # Step 12.5: Storage symlink
 echo "🔗 Creating storage symlink..."
