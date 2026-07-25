@@ -57,7 +57,7 @@
             <td class="info-label">Age/Gender:</td>
             <td class="info-val">{{ $bill->patient->age }} / {{ $bill->patient->gender }}</td>
             <td class="info-label">Bill Date:</td>
-            <td class="info-val">{{ $bill->created_at->format('d/m/Y h:i A') }}</td>
+            <td class="info-val">{{ $bill->updated_at->format('d/m/Y h:i A') }}</td>
         </tr>
         <tr>
             <td class="info-label">IP Number:</td>

@@ -61,7 +61,7 @@
         <div class="info-row"><span class="info-label">Consultant</span><span class="info-val">{{ $bill->admission?->doctor?->full_name ?? 'MEDICAL TEAM' }}</span></div>
     </div>
     <div>
-        <div class="info-row"><span class="info-label">Invoice Date</span><span class="info-val">{{ $bill->created_at->format('d M, Y h:i A') }}</span></div>
+        <div class="info-row"><span class="info-label">Invoice Date</span><span class="info-val">{{ $bill->updated_at->format('d M, Y h:i A') }}</span></div>
         <div class="info-row"><span class="info-label">IP Number</span><span class="info-val">{{ $bill->admission?->admission_number }}</span></div>
         <div class="info-row"><span class="info-label">Ward / Bed</span><span class="info-val">{{ $bill->admission?->ward_name }}</span></div>
         <div class="info-row"><span class="info-label">Contact</span><span class="info-val">{{ $bill->patient->phone ?? '—' }}</span></div>

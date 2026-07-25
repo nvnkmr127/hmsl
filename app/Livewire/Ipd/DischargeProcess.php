@@ -360,12 +360,13 @@ class DischargeProcess extends Component
             if ($charge['days'] > 0 && $charge['price'] >= 0) {
                 $name = $charge['name'] ?: 'Ward/Bed Charge';
                 
-                if (!str_contains($name, '[')) {
-                    $startDate = !empty($charge['start_date']) ? \Illuminate\Support\Carbon::parse($charge['start_date'])->format('d/m') : '';
-                    $endDate = !empty($charge['end_date']) ? \Illuminate\Support\Carbon::parse($charge['end_date'])->format('d/m') : '';
-                    if ($startDate && $endDate) {
-                        $name .= " [{$startDate} - {$endDate}]";
-                    }
+                // Remove existing date brackets if they exist so we can append updated ones
+                $name = trim(preg_replace('/\[\d{2}\/\d{2}\s*-\s*\d{2}\/\d{2}\]/', '', $name));
+
+                $startDate = !empty($charge['start_date']) ? \Illuminate\Support\Carbon::parse($charge['start_date'])->format('d/m') : '';
+                $endDate = !empty($charge['end_date']) ? \Illuminate\Support\Carbon::parse($charge['end_date'])->format('d/m') : '';
+                if ($startDate && $endDate) {
+                    $name .= " [{$startDate} - {$endDate}]";
                 }
 
                 $finalItems[] = [
