@@ -89,10 +89,19 @@
         <div class="p-5 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950/50">
             <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
                 <div class="md:col-span-3">
-                    <x-form.input
-                        placeholder="Quick search..."
-                        wire:model.live.debounce.300ms="search"
-                        icon="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    <div class="relative group h-full flex flex-col justify-end">
+                        <div class="relative">
+                            <div class="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-500 group-focus-within:scale-110 transition-transform">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                            </div>
+                            <input 
+                                type="text" 
+                                wire:model.live.debounce.300ms="search" 
+                                placeholder="SEARCH PATIENTS: NAME, UHID OR MOBILE..." 
+                                class="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl pl-12 pr-4 py-2.5 text-sm font-black tracking-widest text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none uppercase"
+                            />
+                        </div>
+                    </div>
                 </div>
                 <div class="md:col-span-2">
                     <x-form.select wire:model.live="genderFilter">

@@ -11,6 +11,29 @@
         </x-slot>
     </x-page-header>
     <div class="mt-10">
+        <div class="mb-6 flex flex-wrap items-center gap-4">
+            <div class="flex items-center gap-3 h-[42px]">
+                <div class="flex items-center bg-gray-50/80 dark:bg-gray-900/50 rounded-xl p-1 h-full shrink-0 border border-gray-100 dark:border-gray-800">
+                    <button wire:click="$set('dateFilterType', 'admission')" class="px-4 h-full rounded-lg text-xs font-bold uppercase tracking-wider transition-all {{ $dateFilterType === 'admission' ? 'bg-white dark:bg-gray-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-gray-300' }}">Admission Date</button>
+                    <button wire:click="$set('dateFilterType', 'discharge')" class="px-4 h-full rounded-lg text-xs font-bold uppercase tracking-wider transition-all {{ $dateFilterType === 'discharge' ? 'bg-white dark:bg-gray-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-gray-300' }}">Discharge Date</button>
+                    <button wire:click="$set('dateFilterType', 'billing')" class="px-4 h-full rounded-lg text-xs font-bold uppercase tracking-wider transition-all {{ $dateFilterType === 'billing' ? 'bg-white dark:bg-gray-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-gray-300' }}">Billing Date</button>
+                </div>
+                <div class="flex items-center gap-3 bg-gray-50/80 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-xl px-4 h-full">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">From</span>
+                    <input type="date" wire:model.live="dateFrom" class="bg-transparent border-none text-sm font-semibold text-slate-700 dark:text-gray-200 focus:ring-0 p-0 outline-none w-[110px]">
+                    <div class="w-1 h-1 rounded-full bg-slate-300 dark:bg-gray-600"></div>
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">To</span>
+                    <input type="date" wire:model.live="dateTo" class="bg-transparent border-none text-sm font-semibold text-slate-700 dark:text-gray-200 focus:ring-0 p-0 outline-none w-[110px]">
+                </div>
+                
+                @if($dateFrom || $dateTo)
+                <button wire:click="resetFilters" class="flex items-center gap-2 bg-gray-50/80 dark:bg-gray-900/50 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-100 dark:border-gray-800 rounded-xl px-4 h-full transition-colors">
+                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    <span class="text-sm font-bold text-slate-600 dark:text-gray-300">Reset</span>
+                </button>
+                @endif
+            </div>
+        </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
             <div class="p-6 bg-white dark:bg-gray-900 rounded-ultra border border-gray-100 dark:border-gray-800 shadow-sm">
                 <p class="text-tiny font-black text-gray-400 uppercase tracking-widest mb-1">Total Admissions</p>
@@ -52,7 +75,7 @@
                         <input 
                             type="text" 
                             wire:model.live.debounce.300ms="search" 
-                            placeholder="SEARCH PATIENTS: NAME, ID OR MOBILE..." 
+                            placeholder="SEARCH PATIENTS: NAME, UHID OR MOBILE..." 
                             class="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl pl-12 pr-4 py-2.5 text-sm font-black tracking-widest text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none uppercase"
                         />
                     </div>

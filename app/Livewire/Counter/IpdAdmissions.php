@@ -20,6 +20,9 @@ class IpdAdmissions extends Component
     }
 
     public $search = '';
+    public string $dateFilterType = 'admission';
+    public ?string $dateFrom = null;
+    public ?string $dateTo = null;
     public $admissionStatus = '';
     public $billingStatus = '';
     public $wardFilter = '';
@@ -133,9 +136,36 @@ class IpdAdmissions extends Component
         }
     }
 
+    public function resetFilters()
+    {
+        $this->reset(['dateFilterType', 'dateFrom', 'dateTo']);
+    }
+
     public function render()
     {
-        $admissions = Admission::with(['patient', 'bed', 'bed.ward', 'doctor.user', 'finalBill'])
+        $baseAdmissionQuery = Admission::query()
+            ->when($this->dateFrom, function ($q) {
+                if ($this->dateFilterType === 'billing') {
+                    $q->whereHas('finalBill', function ($bq) {
+                        $bq->whereDate('created_at', '>=', $this->dateFrom);
+                    });
+                } else {
+                    $field = $this->dateFilterType === 'discharge' ? 'discharge_date' : 'admission_date';
+                    $q->whereDate($field, '>=', $this->dateFrom);
+                }
+            })
+            ->when($this->dateTo, function ($q) {
+                if ($this->dateFilterType === 'billing') {
+                    $q->whereHas('finalBill', function ($bq) {
+                        $bq->whereDate('created_at', '<=', $this->dateTo);
+                    });
+                } else {
+                    $field = $this->dateFilterType === 'discharge' ? 'discharge_date' : 'admission_date';
+                    $q->whereDate($field, '<=', $this->dateTo);
+                }
+            });
+
+        $admissions = (clone $baseAdmissionQuery)->with(['patient', 'bed', 'bed.ward', 'doctor.user', 'finalBill'])
             ->when($this->admissionStatus, function ($q) {
                 $q->where('status', $this->admissionStatus);
             })
@@ -172,13 +202,35 @@ class IpdAdmissions extends Component
             ->latest('admission_date')
             ->paginate(10);
 
+        $baseBillQuery = \App\Models\Bill::whereNotNull('admission_id')
+            ->when($this->dateFrom, function ($q) {
+                if ($this->dateFilterType === 'billing') {
+                    $q->whereDate('created_at', '>=', $this->dateFrom);
+                } else {
+                    $field = $this->dateFilterType === 'discharge' ? 'discharge_date' : 'admission_date';
+                    $q->whereHas('admission', function ($aq) use ($field) {
+                        $aq->whereDate($field, '>=', $this->dateFrom);
+                    });
+                }
+            })
+            ->when($this->dateTo, function ($q) {
+                if ($this->dateFilterType === 'billing') {
+                    $q->whereDate('created_at', '<=', $this->dateTo);
+                } else {
+                    $field = $this->dateFilterType === 'discharge' ? 'discharge_date' : 'admission_date';
+                    $q->whereHas('admission', function ($aq) use ($field) {
+                        $aq->whereDate($field, '<=', $this->dateTo);
+                    });
+                }
+            });
+
         $stats = [
-            'total' => Admission::count(),
-            'admitted' => Admission::where('status', 'Admitted')->count(),
-            'discharged' => Admission::where('status', 'Discharged')->count(),
-            'total_billed' => \App\Models\Bill::whereNotNull('admission_id')->sum('total_amount'),
-            'collections' => \App\Models\Bill::whereNotNull('admission_id')->sum('paid_amount'),
-            'due' => \App\Models\Bill::whereNotNull('admission_id')->sum('balance_amount'),
+            'total' => (clone $baseAdmissionQuery)->count(),
+            'admitted' => (clone $baseAdmissionQuery)->where('status', 'Admitted')->count(),
+            'discharged' => (clone $baseAdmissionQuery)->where('status', 'Discharged')->count(),
+            'total_billed' => (clone $baseBillQuery)->sum('total_amount'),
+            'collections' => (clone $baseBillQuery)->sum('paid_amount'),
+            'due' => (clone $baseBillQuery)->sum('balance_amount'),
         ];
 
         return view('livewire.counter.ipd-admissions', [
