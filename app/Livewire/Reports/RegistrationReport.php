@@ -124,14 +124,18 @@ class RegistrationReport extends Component
         $patients = $query->latest('created_at')->paginate(10);
         $villages = Patient::select('city')->whereNotNull('city')->where('city', '!=', '')->distinct()->pluck('city');
 
-        // Area Map Intelligence computation with Geo Coordinates
+        // Grouped query to eliminate N+1 loop
+        $cityRevenues = \App\Models\Bill::selectRaw('patients.city, SUM(paid_amount) as total_paid')
+            ->join('patients', 'bills.patient_id', '=', 'patients.id')
+            ->whereBetween('bills.created_at', [$this->from . ' 00:00:00', $this->to . ' 23:59:59'])
+            ->groupBy('patients.city')
+            ->pluck('total_paid', 'patients.city');
+
         $totalRegs = max(1, $stats['summary']['total_registrations']);
         $areaMapData = [];
         $rank = 1;
         foreach ($stats['village_distribution'] as $cityName => $count) {
-            $cityRevenue = \App\Models\Bill::whereHas('patient', fn($pq) => $pq->where('city', $cityName))
-                ->whereBetween('created_at', [$this->from . ' 00:00:00', $this->to . ' 23:59:59'])
-                ->sum('paid_amount');
+            $cityRevenue = (float) ($cityRevenues[$cityName] ?? 0);
 
             [$lat, $lng] = $this->getCityCoordinates($cityName);
 
@@ -140,17 +144,18 @@ class RegistrationReport extends Component
                 'name' => $cityName,
                 'count' => $count,
                 'share' => round(($count / $totalRegs) * 100, 1),
-                'revenue' => (float) $cityRevenue,
+                'revenue' => $cityRevenue,
                 'avg_spend' => $count > 0 ? round($cityRevenue / $count, 2) : 0,
                 'lat' => $lat,
                 'lng' => $lng,
             ];
         }
 
-        // Update charts dynamically
+        // Update charts and map dynamically
         $this->dispatch('refreshChart-reg-trend-chart', data: $stats['daily_trend']);
         $this->dispatch('refreshChart-age-dist-chart', data: $stats['age_distribution']);
         $this->dispatch('refreshChart-village-dist-chart', data: $stats['village_distribution']);
+        $this->dispatch('update-map-data', areaMapData: $areaMapData);
 
         return view('livewire.reports.registration-report', [
             'stats' => $stats,
@@ -165,24 +170,39 @@ class RegistrationReport extends Component
         $coordsMap = [
             'nizamabad' => [18.6725, 78.0941],
             'nizamabad district' => [18.6750, 78.1000],
-            'hyderabad' => [17.3850, 78.4867],
-            'secunderabad' => [17.4399, 78.4983],
+            'nizamabad town' => [18.6725, 78.0941],
+            'nizamabad rural' => [18.6500, 78.1200],
             'bodhan' => [18.6653, 77.8978],
             'armoor' => [18.7889, 78.2869],
             'kamareddy' => [18.3183, 78.3375],
+            'dichpally' => [18.5772, 78.2045],
+            'varni' => [18.5342, 77.9015],
+            'banswada' => [18.3842, 77.8812],
+            'navipet' => [18.8000, 78.0333],
+            'renjal' => [18.8250, 77.8850],
+            'ranjal' => [18.8250, 77.8850],
+            'nandipet' => [18.8400, 78.1400],
+            'makloor' => [18.7500, 78.0800],
+            'sirikonda' => [18.4500, 78.2800],
+            'kotagiri' => [18.5500, 77.7800],
+            'balkonda' => [18.8682, 78.3412],
+            'velpur' => [18.8000, 78.3800],
+            'morthad' => [18.8500, 78.4300],
+            'yedapally' => [18.6500, 77.9500],
+            'yeda pally' => [18.6500, 77.9500],
+            'yellareddy' => [18.2104, 78.0163],
+            'indalwai' => [18.5000, 78.1800],
+            'dharpally' => [18.5300, 78.2500],
+            'jakranpally' => [18.7200, 78.2200],
+            'rudrur' => [18.5700, 77.8700],
+            'penta khurd' => [18.6400, 78.0500],
+            'mopul' => [18.6000, 78.1200],
+            'hyderabad' => [17.3850, 78.4867],
+            'secunderabad' => [17.4399, 78.4983],
             'karimnagar' => [18.4386, 79.1288],
             'warangal' => [17.9784, 79.5941],
             'siddipet' => [18.1018, 78.8520],
             'medak' => [18.0454, 78.2612],
-            'varni' => [18.5342, 77.9015],
-            'dichpally' => [18.5772, 78.2045],
-            'banswada' => [18.3842, 77.8812],
-            'yellareddy' => [18.2104, 78.0163],
-            'balkonda' => [18.8682, 78.3412],
-            'suryapet' => [17.1500, 79.6333],
-            'nalgonda' => [17.0500, 79.2667],
-            'khammam' => [17.2472, 80.1514],
-            'mahbubnagar' => [16.7488, 77.9856],
             'adilabad' => [19.6667, 78.5333],
         ];
 
@@ -193,9 +213,10 @@ class RegistrationReport extends Component
             }
         }
 
+        // Tight clustering for local villages around Nizamabad District (18.6725, 78.0941)
         $hash = abs(crc32($cityName));
-        $latOffset = (($hash % 100) - 50) * 0.003;
-        $lngOffset = ((int)($hash / 100 % 100) - 50) * 0.003;
+        $latOffset = (($hash % 100) - 50) * 0.0015;
+        $lngOffset = ((int)($hash / 100 % 100) - 50) * 0.0015;
 
         return [round(18.6725 + $latOffset, 4), round(78.0941 + $lngOffset, 4)];
     }

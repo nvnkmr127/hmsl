@@ -51,7 +51,7 @@
                 <div x-data="addressAutocomplete()" x-init="initAutocomplete()" class="relative">
                     <input x-ref="autocompleteInput"
                            type="text"
-                           placeholder="Google Address Search..."
+                           placeholder="Search City / Location..."
                            wire:model.live.debounce.300ms="city"
                            class="bg-slate-800/50 border border-slate-700/50 text-slate-300 text-xs font-bold rounded-xl focus:ring-1 focus:ring-indigo-500 py-2 px-3 pl-8 min-w-[200px]" />
                     <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -60,7 +60,7 @@
                 </div>
 
                 <select wire:model.live="city" class="bg-slate-800/50 border border-slate-700/50 text-slate-300 text-xs font-bold rounded-xl focus:ring-1 focus:ring-indigo-500 cursor-pointer py-2 px-3 max-w-[120px]">
-                    <option value="">All Villages</option>
+                    <option value="">All Cities</option>
                     @foreach($villages as $v)
                         <option value="{{ $v }}">{{ $v }}</option>
                     @endforeach
@@ -85,10 +85,10 @@
             <!-- Total -->
             <div class="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
                 <div class="absolute -right-6 -top-6 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Flow</p>
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Registrations</p>
                 <div class="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">{{ number_format($stats['summary']['total_registrations']) }}</div>
                 <div class="mt-4 flex items-center justify-between">
-                    <span class="text-xs font-semibold text-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-1 rounded-md">Registrations</span>
+                    <span class="text-xs font-semibold text-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-1 rounded-md">Total Patients</span>
                     <svg class="w-5 h-5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                 </div>
             </div>
@@ -96,11 +96,11 @@
             <!-- Gender -->
             <div class="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
                 <div class="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Gender Dist.</p>
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Gender Breakdown</p>
                 <div class="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-end gap-2">
-                    <span class="text-emerald-500" title="Male">{{ $stats['gender_distribution']['Male'] ?? 0 }} M</span>
+                    <span class="text-emerald-500" title="Male">{{ $stats['gender_distribution']['Male'] ?? 0 }} Male</span>
                     <span class="text-slate-300 font-light text-xl">/</span>
-                    <span class="text-rose-500" title="Female">{{ $stats['gender_distribution']['Female'] ?? 0 }} F</span>
+                    <span class="text-rose-500" title="Female">{{ $stats['gender_distribution']['Female'] ?? 0 }} Female</span>
                 </div>
                 <div class="mt-4 flex items-center justify-between">
                     <span class="text-xs font-semibold text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-md">Breakdown</span>
@@ -124,11 +124,11 @@
             <!-- Dominants -->
             <div class="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm col-span-1 sm:col-span-2 lg:col-span-1 grid grid-cols-2 gap-4">
                 <div>
-                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Top Age</p>
+                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Top Age Group</p>
                     <div class="text-xl font-black text-amber-500 tracking-tighter">{{ $topAgeGroup }}</div>
                 </div>
                 <div>
-                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Top Village</p>
+                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Top City/Village</p>
                     <div class="text-xl font-black text-blue-500 tracking-tighter truncate" title="{{ $topVillage }}">{{ $topVillage }}</div>
                 </div>
             </div>
@@ -138,7 +138,7 @@
         <div class="lg:col-span-3 space-y-6">
             <div class="bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider">Registration Trend</h3>
+                    <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider">Registration Trend Over Time</h3>
                 </div>
                 <div class="w-full">
                     <x-chart type="line" :data="$stats['daily_trend']" id="reg-trend-chart" label="Registrations" height="280px" />
@@ -148,7 +148,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider">Village Influx</h3>
+                        <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider">City/Village Distribution</h3>
                     </div>
                     <div class="w-full">
                         <x-chart type="bar" :data="$stats['village_distribution']" id="village-dist-chart" label="Patients" height="240px" />
@@ -156,7 +156,7 @@
                 </div>
                 <div class="bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider">Age Demographics</h3>
+                        <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider">Age Group Demographics</h3>
                     </div>
                     <div class="w-full">
                         <x-chart type="doughnut" :data="$stats['age_distribution']" id="age-dist-chart" label="Patients" height="240px" />
@@ -164,13 +164,15 @@
                 </div>
             </div>
         </div>
-    </div>    <!-- Shopify-Style Live Regional Map Section -->
+    </div>
+
+    <!-- Patient Location Map Section -->
     <div x-data="googleMapHandler(@js($areaMapData))" x-init="initMap()" class="bg-slate-900 text-white rounded-[2.5rem] p-6 lg:p-8 border border-slate-800 shadow-2xl space-y-6 relative overflow-hidden">
         <!-- Ambient Glowing Background Blurs -->
         <div class="absolute -top-40 -left-40 w-96 h-96 bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none"></div>
         <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none"></div>
 
-        <!-- Top Shopify Header -->
+        <!-- Top Header -->
         <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-800 pb-6">
             <div>
                 <div class="flex items-center gap-3">
@@ -179,10 +181,16 @@
                         <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
                     </span>
                     <h3 class="text-xl font-black text-white uppercase tracking-tight">
-                        Live Regional Map Monitor
+                        Patient Location Map
                     </h3>
+                    @if($city)
+                        <div class="flex items-center gap-2 bg-emerald-500/20 text-emerald-300 px-3 py-1 rounded-xl text-xs font-bold border border-emerald-500/30">
+                            <span>City: <strong>{{ $city }}</strong></span>
+                            <button wire:click="$set('city', '')" class="hover:text-white font-black text-sm ml-1" title="Clear City Filter">×</button>
+                        </div>
+                    @endif
                 </div>
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Shopify-style live spatial patient density & revenue streaming</p>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Patient locations and revenue distribution map</p>
             </div>
 
             <!-- View Switcher -->
@@ -191,7 +199,7 @@
                         :class="activeTab === 'map' ? 'bg-emerald-500 text-slate-950 font-black shadow-lg shadow-emerald-500/20' : 'text-slate-400 hover:text-white font-bold'"
                         class="px-4 py-2 text-xs uppercase rounded-xl transition-all flex items-center gap-1.5">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
-                    Live Globe Map
+                    Map View
                 </button>
                 <button type="button" @click="activeTab = 'embed'"
                         :class="activeTab === 'embed' ? 'bg-emerald-500 text-slate-950 font-black shadow-lg shadow-emerald-500/20' : 'text-slate-400 hover:text-white font-bold'"
@@ -203,71 +211,71 @@
                         :class="activeTab === 'table' ? 'bg-emerald-500 text-slate-950 font-black shadow-lg shadow-emerald-500/20' : 'text-slate-400 hover:text-white font-bold'"
                         class="px-4 py-2 text-xs uppercase rounded-xl transition-all flex items-center gap-1.5">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
-                    Area Ledger
+                    City List
                 </button>
             </div>
         </div>
 
-        <!-- Google Maps JS Container with Shopify Side Panel -->
+        <!-- Google Maps JS Container with Side Panel -->
         <div x-show="activeTab === 'map'" class="space-y-4 relative z-10">
             <!-- Heatmap Sub-Controls Bar -->
             <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-950/90 p-3.5 rounded-2xl border border-slate-800 backdrop-blur-md">
                 <!-- Layer Mode Switcher -->
                 <div class="flex items-center gap-2">
-                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Display Mode:</span>
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Map Style:</span>
                     <div class="flex items-center p-0.5 bg-slate-900 rounded-xl border border-slate-800">
                         <button type="button" @click="layerMode = 'hybrid'"
                                 :class="layerMode === 'hybrid' ? 'bg-emerald-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white font-bold'"
                                 class="px-3 py-1 text-[10px] uppercase rounded-lg transition-all">
-                            Hybrid Mode
+                            Both (Heatmap & Pins)
                         </button>
                         <button type="button" @click="layerMode = 'heatmap'"
                                 :class="layerMode === 'heatmap' ? 'bg-emerald-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white font-bold'"
                                 class="px-3 py-1 text-[10px] uppercase rounded-lg transition-all">
-                            Thermal Heatmap
+                            Heatmap
                         </button>
                         <button type="button" @click="layerMode = 'markers'"
                                 :class="layerMode === 'markers' ? 'bg-emerald-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white font-bold'"
                                 class="px-3 py-1 text-[10px] uppercase rounded-lg transition-all">
-                            Count Markers
+                            Count Pins
                         </button>
                     </div>
                 </div>
 
                 <!-- Weight Mode Switcher -->
                 <div class="flex items-center gap-2">
-                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Intensity Basis:</span>
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Focus On:</span>
                     <div class="flex items-center p-0.5 bg-slate-900 rounded-xl border border-slate-800">
                         <button type="button" @click="weightMode = 'count'"
                                 :class="weightMode === 'count' ? 'bg-indigo-500 text-white font-black' : 'text-slate-400 hover:text-white font-bold'"
                                 class="px-3 py-1 text-[10px] uppercase rounded-lg transition-all">
-                            Patient Volume
+                            Patient Count
                         </button>
                         <button type="button" @click="weightMode = 'revenue'"
                                 :class="weightMode === 'revenue' ? 'bg-indigo-500 text-white font-black' : 'text-slate-400 hover:text-white font-bold'"
                                 class="px-3 py-1 text-[10px] uppercase rounded-lg transition-all">
-                            Revenue (₹)
+                            Total Revenue (₹)
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Main Shopify Grid: 8 Cols Map Canvas + 4 Cols Live Stream Panel -->
+            <!-- Main Grid: 8 Cols Map Canvas + 4 Cols Live Stream Panel -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
                 <!-- Map Canvas -->
                 <div class="lg:col-span-8 w-full">
                     <div wire:ignore class="relative w-full h-[520px] min-h-[520px] rounded-3xl overflow-hidden border border-slate-800 shadow-2xl" id="google-geo-map"></div>
                 </div>
 
-                <!-- Shopify Live Stream Panel -->
+                <!-- Live Stream Panel -->
                 <div class="lg:col-span-4 w-full bg-slate-950/90 rounded-3xl p-5 border border-slate-800 flex flex-col justify-between space-y-4 max-h-[520px] overflow-y-auto">
                     <div>
                         <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
                             <h4 class="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
                                 <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-                                Top Active Regions
+                                Top Cities & Villages
                             </h4>
-                            <span class="text-[10px] font-mono text-emerald-400 font-bold">{{ count($areaMapData) }} Hubs</span>
+                            <span class="text-[10px] font-mono text-emerald-400 font-bold">{{ count($areaMapData) }} Cities</span>
                         </div>
 
                         <div class="space-y-3">
@@ -291,7 +299,7 @@
                                     <!-- Progress Density Bar -->
                                     <div class="space-y-1">
                                         <div class="flex justify-between text-[10px] font-bold">
-                                            <span class="text-slate-400">{{ $area['share'] }}% Market Share</span>
+                                            <span class="text-slate-400">{{ $area['share'] }}% Share</span>
                                             <span class="text-emerald-400 font-mono">₹{{ number_format($area['revenue'], 0) }}</span>
                                         </div>
                                         <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
@@ -301,14 +309,14 @@
                                 </div>
                             @empty
                                 <div class="py-8 text-center text-slate-500 text-xs font-semibold">
-                                    No live area data available.
+                                    No area data available.
                                 </div>
                             @endforelse
                         </div>
                     </div>
 
                     <div class="pt-3 border-t border-slate-800 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">
-                        Click any region item to focus map & filter records
+                        Click any location to zoom on map & view patients
                     </div>
                 </div>
             </div>
@@ -452,6 +460,13 @@
             },
 
             initMap() {
+                window.addEventListener('update-map-data', (e) => {
+                    if (e.detail && e.detail.areaMapData) {
+                        this.locations = e.detail.areaMapData;
+                        this.updateLayers();
+                    }
+                });
+
                 this.$watch('activeTab', (val) => {
                     if (val === 'map') {
                         setTimeout(() => {
@@ -471,8 +486,8 @@
                     const mapContainer = document.getElementById('google-geo-map');
                     if (!mapContainer) return;
 
-                    const centerLat = (this.locations && this.locations.length > 0) ? this.locations[0].lat : 18.6725;
-                    const centerLng = (this.locations && this.locations.length > 0) ? this.locations[0].lng : 78.0941;
+                    const centerLat = 18.6725; // Nizamabad District Center
+                    const centerLng = 78.0941;
 
                     // Google Maps Attempt
                     if (window.google && window.google.maps && !window.googleMapsFailed) {
@@ -480,7 +495,7 @@
                             this.isLeaflet = false;
                             this.map = new google.maps.Map(mapContainer, {
                                 center: { lat: centerLat, lng: centerLng },
-                                zoom: 10,
+                                zoom: 11,
                                 mapTypeId: google.maps.MapTypeId.ROADMAP,
                                 mapTypeControl: false,
                                 streetViewControl: false,
@@ -510,7 +525,7 @@
 
                         this.map = L.map('google-geo-map', {
                             center: [centerLat, centerLng],
-                            zoom: 10,
+                            zoom: 11,
                             zoomControl: true,
                         });
 
@@ -741,7 +756,7 @@
                                     {{ substr($patient->first_name, 0, 1) }}{{ substr($patient->last_name, 0, 1) }}
                                 </div>
                                 <div>
-                                    <a href="{{ route('patients.show', $patient->id) }}" class="text-sm font-black text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                    <a href="{{ route('counter.patients.history', $patient->id) }}" class="text-sm font-black text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                                         {{ $patient->full_name }}
                                     </a>
                                     <div class="text-[11px] font-medium text-indigo-500 font-mono mt-0.5">{{ $patient->uhid }}</div>
