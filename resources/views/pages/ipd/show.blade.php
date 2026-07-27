@@ -116,6 +116,8 @@
                 {{-- Embed discharge-process (hidden trigger) so modal is available for discharged patients too --}}
                 <livewire:ipd.discharge-process :admission="$admission" :hideTrigger="true" />
             @endif
+
+            <livewire:ipd.payment-history :admission="$admission" />
         </div>
 
         <div class="lg:col-span-3">

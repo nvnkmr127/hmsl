@@ -47,6 +47,11 @@ Route::middleware(['auth'])->group(function () {
                 $bill = \App\Models\Bill::with(['patient', 'items', 'consultation.doctor.department'])->findOrFail($id);
                 return view('pages.counter.bill-print', compact('bill'));
             })->name('bills.print');
+
+            Route::get('/payments/{id}/print', function($id) {
+                $payment = \App\Models\BillPayment::with(['bill.patient', 'bill.admission', 'receiver'])->findOrFail($id);
+                return view('pages.counter.payment-print', compact('payment'));
+            })->name('payments.print');
         });
 
         // Prescriptions (Counter can also print them)
