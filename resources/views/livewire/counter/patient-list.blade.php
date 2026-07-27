@@ -60,13 +60,17 @@
             </div>
             <p class="text-tiny font-bold text-gray-400 mt-2 uppercase">Current breakdown</p>
         </div>
-        <div class="p-6 bg-violet-600 rounded-ultra shadow-lg shadow-violet-500/20 text-white relative overflow-hidden">
-            <div class="relative z-10">
-                <p class="text-tiny font-black text-violet-200 uppercase tracking-widest mb-1">Quick Booking</p>
-                <h3 class="text-xl font-black leading-tight">Generate<br>OP Token</h3>
-                <p class="text-tiny font-black text-white/70 mt-2 uppercase">Search to begin</p>
+        <div class="p-6 bg-white dark:bg-gray-900 rounded-ultra border border-gray-100 dark:border-gray-800 shadow-sm">
+            <p class="text-tiny font-black text-gray-400 uppercase tracking-widest mb-1">Total Bookings</p>
+            <div class="flex items-center gap-4 mt-2 mb-1">
+                <div>
+                    <p class="text-sm font-black text-indigo-500 uppercase">OP: {{ number_format($stats['op_bookings']) }}</p>
+                </div>
+                <div>
+                    <p class="text-sm font-black text-emerald-500 uppercase">IP: {{ number_format($stats['ip_bookings']) }}</p>
+                </div>
             </div>
-            <svg class="absolute -right-4 -bottom-4 w-24 h-24 text-white/10" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            <p class="text-tiny font-bold text-gray-400 mt-2 uppercase">Based on selected dates</p>
         </div>
     </div>
     @else
@@ -84,7 +88,7 @@
     <x-card :noPad="true">
         <div class="p-5 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950/50">
             <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
-                <div class="md:col-span-5">
+                <div class="md:col-span-4">
                     <x-form.input
                         placeholder="Quick search..."
                         wire:model.live.debounce.300ms="search"
@@ -99,11 +103,21 @@
                     </x-form.select>
                 </div>
 
-                <div class="md:col-span-3">
+                <div class="md:col-span-2">
                     <x-form.select wire:model.live="sortBy">
                         <option value="latest">Recently Added</option>
                         <option value="alphabetic">A-Z Name</option>
                     </x-form.select>
+                </div>
+
+                <div class="md:col-span-4">
+                    <div class="flex items-center gap-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-3 h-full min-h-[42px] shadow-sm">
+                        <span class="text-xs font-bold text-gray-500 whitespace-nowrap">From:</span>
+                        <input type="date" wire:model.live="dateFrom" class="bg-transparent border-none text-xs font-bold text-gray-700 dark:text-gray-200 focus:ring-0 p-0 w-full outline-none">
+                        <span class="text-gray-300 dark:text-gray-600 font-black">-</span>
+                        <span class="text-xs font-bold text-gray-500 whitespace-nowrap">To:</span>
+                        <input type="date" wire:model.live="dateTo" class="bg-transparent border-none text-xs font-bold text-gray-700 dark:text-gray-200 focus:ring-0 p-0 w-full outline-none text-right">
+                    </div>
                 </div>
             </div>
         </div>
@@ -124,6 +138,10 @@
                                     <div class="flex items-center gap-2">
                                         <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                                         <span class="text-xs font-black text-gray-600 dark:text-gray-400 tracking-wider">{{ $patient->phone }}</span>
+                                    </div>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Reg: {{ $patient->created_at->format('d M, Y') }}</span>
                                     </div>
                                     <div class="flex items-center gap-2 mt-1">
                                         <svg class="w-3.5 h-3.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -158,6 +176,10 @@
                                     <div class="flex items-center gap-2">
                                         <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                                         <span class="text-xs font-black text-gray-600 dark:text-gray-400 tracking-wider">{{ $patient->phone }}</span>
+                                    </div>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Reg: {{ $patient->created_at->format('d M, Y h:i A') }}</span>
                                     </div>
                                     @if($patient->latestConsultation)
                                         <div class="flex items-center gap-2">
@@ -213,6 +235,7 @@
                     <tr class="bg-gray-50/50 dark:bg-gray-950/50 border-b border-gray-100 dark:border-gray-800">
                         <x-table.th class="py-5 pl-8">Patient Profile</x-table.th>
                         <x-table.th>Contact Information</x-table.th>
+                        <x-table.th>Registration Date</x-table.th>
                         @if($viewRecycleBin)
                             <x-table.th>Deleted At</x-table.th>
                         @else
@@ -256,6 +279,12 @@
                                     @if($patient->address)
                                         <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest truncate max-w-[150px] mt-0.5">{{ $patient->city ?: 'No Address' }}</span>
                                     @endif
+                                </div>
+                            </td>
+                            <td>
+                                <div class="flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                    <span class="font-black text-gray-700 dark:text-gray-300 text-xs tracking-tight">{{ $patient->created_at->format('d M, Y h:i A') }}</span>
                                 </div>
                             </td>
                             @if($viewRecycleBin)

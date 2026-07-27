@@ -59,20 +59,41 @@ class PatientService
             ->with(['latestConsultation.doctor'])
             ->when($search, fn($q) => $q->search($search))
             ->when($filters['gender'] ?? null, fn($q) => $q->where('gender', $filters['gender']))
-
+            ->when(!empty($filters['dateFrom']), fn($q) => $q->where('created_at', '>=', $filters['dateFrom'] . ' 00:00:00'))
+            ->when(!empty($filters['dateTo']), fn($q) => $q->where('created_at', '<=', $filters['dateTo'] . ' 23:59:59'))
             ->when($sortBy === 'alphabetic', fn($q) => $q->orderBy('first_name'))
             ->latest()
             ->paginate(10);
     }
 
-    public function getStats()
+    public function getStats(?string $dateFrom = null, ?string $dateTo = null)
     {
+        $query = Patient::query()
+            ->when(!empty($dateFrom), fn($q) => $q->where('created_at', '>=', $dateFrom . ' 00:00:00'))
+            ->when(!empty($dateTo), fn($q) => $q->where('created_at', '<=', $dateTo . ' 23:59:59'));
+
+        $trashedQuery = Patient::onlyTrashed()
+            ->when(!empty($dateFrom), fn($q) => $q->where('created_at', '>=', $dateFrom . ' 00:00:00'))
+            ->when(!empty($dateTo), fn($q) => $q->where('created_at', '<=', $dateTo . ' 23:59:59'));
+
+        $opBookings = \App\Models\Consultation::query()
+            ->when(!empty($dateFrom), fn($q) => $q->where('consultation_date', '>=', $dateFrom . ' 00:00:00'))
+            ->when(!empty($dateTo), fn($q) => $q->where('consultation_date', '<=', $dateTo . ' 23:59:59'))
+            ->count();
+
+        $ipBookings = \App\Models\Admission::query()
+            ->when(!empty($dateFrom), fn($q) => $q->where('admission_date', '>=', $dateFrom . ' 00:00:00'))
+            ->when(!empty($dateTo), fn($q) => $q->where('admission_date', '<=', $dateTo . ' 23:59:59'))
+            ->count();
+
         return [
-            'total' => Patient::count(),
-            'today' => Patient::whereDate('created_at', now())->count(),
-            'male'  => Patient::where('gender', 'Male')->count(),
-            'female'=> Patient::where('gender', 'Female')->count(),
-            'trashed'=> Patient::onlyTrashed()->count(),
+            'total' => (clone $query)->count(),
+            'today' => (clone $query)->whereDate('created_at', now())->count(),
+            'male'  => (clone $query)->where('gender', 'Male')->count(),
+            'female'=> (clone $query)->where('gender', 'Female')->count(),
+            'trashed'=> $trashedQuery->count(),
+            'op_bookings' => $opBookings,
+            'ip_bookings' => $ipBookings,
         ];
     }
 

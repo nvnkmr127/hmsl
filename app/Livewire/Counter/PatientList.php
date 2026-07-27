@@ -16,18 +16,24 @@ class PatientList extends Component
     public $genderFilter = '';
     public $sortBy = 'latest';
     public $viewRecycleBin = false;
+    public $dateFrom = '';
+    public $dateTo = '';
 
     protected $queryString = [
         'search' => ['except' => ''],
         'genderFilter' => ['except' => ''],
         'sortBy' => ['except' => 'latest'],
         'viewRecycleBin' => ['except' => false],
+        'dateFrom' => ['except' => ''],
+        'dateTo' => ['except' => ''],
     ];
 
     public function updatedSearch() { $this->resetPage(); }
     public function updatedGenderFilter() { $this->resetPage(); }
     public function updatedSortBy() { $this->resetPage(); }
     public function updatedViewRecycleBin() { $this->resetPage(); }
+    public function updatedDateFrom() { $this->resetPage(); }
+    public function updatedDateTo() { $this->resetPage(); }
 
     #[On('patient-saved'), On('booking-completed')]
     public function refreshList()
@@ -62,6 +68,8 @@ class PatientList extends Component
     {
         $patients = $service->getAll($this->search, [
             'gender' => $this->genderFilter,
+            'dateFrom' => $this->dateFrom,
+            'dateTo' => $this->dateTo,
         ], $this->sortBy, $this->viewRecycleBin);
 
         $filename = "hms-patients-" . now()->format('Y-m-d-His') . ".csv";
@@ -82,8 +90,10 @@ class PatientList extends Component
         return view('livewire.counter.patient-list', [
             'patients' => $service->getAll($this->search, [
                 'gender' => $this->genderFilter,
+                'dateFrom' => $this->dateFrom,
+                'dateTo' => $this->dateTo,
             ], $this->sortBy, $this->viewRecycleBin),
-            'stats' => $service->getStats(),
+            'stats' => $service->getStats($this->dateFrom, $this->dateTo),
         ]);
     }
 }
