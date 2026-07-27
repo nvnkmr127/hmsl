@@ -18,6 +18,7 @@ class PatientList extends Component
     public $viewRecycleBin = false;
     public $dateFrom = '';
     public $dateTo = '';
+    public $dateFilterType = 'registration';
 
     protected $queryString = [
         'search' => ['except' => ''],
@@ -26,6 +27,7 @@ class PatientList extends Component
         'viewRecycleBin' => ['except' => false],
         'dateFrom' => ['except' => ''],
         'dateTo' => ['except' => ''],
+        'dateFilterType' => ['except' => 'registration'],
     ];
 
     public function updatedSearch() { $this->resetPage(); }
@@ -34,6 +36,7 @@ class PatientList extends Component
     public function updatedViewRecycleBin() { $this->resetPage(); }
     public function updatedDateFrom() { $this->resetPage(); }
     public function updatedDateTo() { $this->resetPage(); }
+    public function updatedDateFilterType() { $this->resetPage(); }
 
     #[On('patient-saved'), On('booking-completed')]
     public function refreshList()
@@ -70,6 +73,7 @@ class PatientList extends Component
             'gender' => $this->genderFilter,
             'dateFrom' => $this->dateFrom,
             'dateTo' => $this->dateTo,
+            'dateFilterType' => $this->dateFilterType,
         ], $this->sortBy, $this->viewRecycleBin);
 
         $filename = "hms-patients-" . now()->format('Y-m-d-His') . ".csv";
@@ -92,8 +96,9 @@ class PatientList extends Component
                 'gender' => $this->genderFilter,
                 'dateFrom' => $this->dateFrom,
                 'dateTo' => $this->dateTo,
+                'dateFilterType' => $this->dateFilterType,
             ], $this->sortBy, $this->viewRecycleBin),
-            'stats' => $service->getStats($this->dateFrom, $this->dateTo),
+            'stats' => $service->getStats($this->dateFrom, $this->dateTo, $this->dateFilterType),
         ]);
     }
 }

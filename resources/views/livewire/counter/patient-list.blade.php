@@ -88,7 +88,7 @@
     <x-card :noPad="true">
         <div class="p-5 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950/50">
             <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
-                <div class="md:col-span-4">
+                <div class="md:col-span-3">
                     <x-form.input
                         placeholder="Quick search..."
                         wire:model.live.debounce.300ms="search"
@@ -110,12 +110,16 @@
                     </x-form.select>
                 </div>
 
-                <div class="md:col-span-4">
-                    <div class="flex items-center gap-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-3 h-full min-h-[42px] shadow-sm">
-                        <span class="text-xs font-bold text-gray-500 whitespace-nowrap">From:</span>
+                <div class="md:col-span-5 flex items-center gap-2 h-[42px]">
+                    <div class="flex items-center bg-gray-100 dark:bg-gray-800 rounded-xl p-1 h-full shrink-0 shadow-sm border border-gray-200 dark:border-gray-700">
+                        <button wire:click="$set('dateFilterType', 'registration')" class="px-2 h-full rounded-lg text-[10px] font-black uppercase tracking-wider transition-all {{ $dateFilterType === 'registration' ? 'bg-white dark:bg-gray-700 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300' }}">Reg</button>
+                        <button wire:click="$set('dateFilterType', 'visit')" class="px-2 h-full rounded-lg text-[10px] font-black uppercase tracking-wider transition-all {{ $dateFilterType === 'visit' ? 'bg-white dark:bg-gray-700 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300' }}">Visit</button>
+                    </div>
+                    <div class="flex items-center gap-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-3 h-full shadow-sm flex-1 min-w-0">
+                        <span class="text-xs font-bold text-gray-500 whitespace-nowrap hidden lg:block">From:</span>
                         <input type="date" wire:model.live="dateFrom" class="bg-transparent border-none text-xs font-bold text-gray-700 dark:text-gray-200 focus:ring-0 p-0 w-full outline-none">
                         <span class="text-gray-300 dark:text-gray-600 font-black">-</span>
-                        <span class="text-xs font-bold text-gray-500 whitespace-nowrap">To:</span>
+                        <span class="text-xs font-bold text-gray-500 whitespace-nowrap hidden lg:block">To:</span>
                         <input type="date" wire:model.live="dateTo" class="bg-transparent border-none text-xs font-bold text-gray-700 dark:text-gray-200 focus:ring-0 p-0 w-full outline-none text-right">
                     </div>
                 </div>

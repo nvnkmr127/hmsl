@@ -55,26 +55,55 @@ class PatientService
     public function getAll(?string $search = null, array $filters = [], string $sortBy = 'latest', bool $onlyTrashed = false)
     {
         $query = $onlyTrashed ? Patient::onlyTrashed() : Patient::query();
+        $dateFilterType = $filters['dateFilterType'] ?? 'registration';
+
         return $query
             ->with(['latestConsultation.doctor'])
             ->when($search, fn($q) => $q->search($search))
             ->when($filters['gender'] ?? null, fn($q) => $q->where('gender', $filters['gender']))
-            ->when(!empty($filters['dateFrom']), fn($q) => $q->where('created_at', '>=', $filters['dateFrom'] . ' 00:00:00'))
-            ->when(!empty($filters['dateTo']), fn($q) => $q->where('created_at', '<=', $filters['dateTo'] . ' 23:59:59'))
+            ->when(!empty($filters['dateFrom']), function($q) use ($filters, $dateFilterType) {
+                if ($dateFilterType === 'visit') {
+                    $q->whereHas('consultations', fn($q2) => $q2->where('consultation_date', '>=', $filters['dateFrom'] . ' 00:00:00'));
+                } else {
+                    $q->where('created_at', '>=', $filters['dateFrom'] . ' 00:00:00');
+                }
+            })
+            ->when(!empty($filters['dateTo']), function($q) use ($filters, $dateFilterType) {
+                if ($dateFilterType === 'visit') {
+                    $q->whereHas('consultations', fn($q2) => $q2->where('consultation_date', '<=', $filters['dateTo'] . ' 23:59:59'));
+                } else {
+                    $q->where('created_at', '<=', $filters['dateTo'] . ' 23:59:59');
+                }
+            })
             ->when($sortBy === 'alphabetic', fn($q) => $q->orderBy('first_name'))
             ->latest()
             ->paginate(10);
     }
 
-    public function getStats(?string $dateFrom = null, ?string $dateTo = null)
+    public function getStats(?string $dateFrom = null, ?string $dateTo = null, string $dateFilterType = 'registration')
     {
-        $query = Patient::query()
-            ->when(!empty($dateFrom), fn($q) => $q->where('created_at', '>=', $dateFrom . ' 00:00:00'))
-            ->when(!empty($dateTo), fn($q) => $q->where('created_at', '<=', $dateTo . ' 23:59:59'));
+        $applyDateFilters = function($q) use ($dateFrom, $dateTo, $dateFilterType) {
+            $q->when(!empty($dateFrom), function($q) use ($dateFrom, $dateFilterType) {
+                if ($dateFilterType === 'visit') {
+                    $q->whereHas('consultations', fn($q2) => $q2->where('consultation_date', '>=', $dateFrom . ' 00:00:00'));
+                } else {
+                    $q->where('created_at', '>=', $dateFrom . ' 00:00:00');
+                }
+            })
+            ->when(!empty($dateTo), function($q) use ($dateTo, $dateFilterType) {
+                if ($dateFilterType === 'visit') {
+                    $q->whereHas('consultations', fn($q2) => $q2->where('consultation_date', '<=', $dateTo . ' 23:59:59'));
+                } else {
+                    $q->where('created_at', '<=', $dateTo . ' 23:59:59');
+                }
+            });
+        };
 
-        $trashedQuery = Patient::onlyTrashed()
-            ->when(!empty($dateFrom), fn($q) => $q->where('created_at', '>=', $dateFrom . ' 00:00:00'))
-            ->when(!empty($dateTo), fn($q) => $q->where('created_at', '<=', $dateTo . ' 23:59:59'));
+        $query = Patient::query();
+        $applyDateFilters($query);
+
+        $trashedQuery = Patient::onlyTrashed();
+        $applyDateFilters($trashedQuery);
 
         $opBookings = \App\Models\Consultation::query()
             ->when(!empty($dateFrom), fn($q) => $q->where('consultation_date', '>=', $dateFrom . ' 00:00:00'))
