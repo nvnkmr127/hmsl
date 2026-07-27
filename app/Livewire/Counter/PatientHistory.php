@@ -426,6 +426,7 @@ class PatientHistory extends Component
             ];
         });
         $counts['treatments'] = $counts['visits'] + $counts['admissions'] + $counts['prescriptions'];
+        $counts['activity'] = $counts['visits'] + $counts['admissions'] + $counts['bills'] + $counts['prescriptions'] + $counts['labs'] + $counts['vitals'] + $counts['consents'] + 1;
 
         $latestVisits = Consultation::with(['doctor.department'])->where('patient_id', $id)->orderByDesc('consultation_date')->limit(5)->get();
         $latestBills = Bill::where('patient_id', $id)->orderByDesc('created_at')->limit(5)->get();
@@ -729,6 +730,379 @@ class PatientHistory extends Component
             }
 
             $datasets['consents'] = $query->paginate($this->perPage);
+        }
+
+        if ($this->tab === 'activity') {
+            $id = $this->patientId;
+            $uhid = $this->patient->uhid;
+
+            $activities = collect();
+
+            $fetchWithTrash = function($modelClass, $patientIdCol, $id) {
+                $query = $modelClass::query()->where($patientIdCol, $id);
+                if (in_array('Illuminate\Database\Eloquent\SoftDeletes', class_uses_recursive($modelClass))) {
+                    $query->withTrashed();
+                }
+                return $query->get();
+            };
+
+            // 1. Patient Profile Audit (Created, Edited, Soft-Deleted)
+            if ($this->patient->created_at) {
+                $activities->push((object)[
+                    'timestamp' => $this->patient->created_at,
+                    'category' => 'Patient Registry',
+                    'action' => 'Patient Account Registered',
+                    'details' => "Registered with UHID {$uhid}. Phone: " . ($this->patient->phone ?? 'N/A') . ", Address/City: " . ($this->patient->city ?? $this->patient->address ?? 'N/A'),
+                    'user' => 'Registration Staff',
+                    'color' => 'emerald',
+                    'ref' => $uhid
+                ]);
+            }
+
+            if ($this->patient->updated_at && $this->patient->created_at && $this->patient->updated_at->ne($this->patient->created_at)) {
+                $activities->push((object)[
+                    'timestamp' => $this->patient->updated_at,
+                    'category' => 'Patient Profile',
+                    'action' => 'Patient Profile Edited / Updated',
+                    'details' => "Patient demographics or contact info updated. Name: {$this->patient->full_name}, Phone: " . ($this->patient->phone ?? 'N/A') . ", City: " . ($this->patient->city ?? 'N/A'),
+                    'user' => 'Staff User',
+                    'color' => 'amber',
+                    'ref' => $uhid
+                ]);
+            }
+
+            if (isset($this->patient->deleted_at) && $this->patient->deleted_at) {
+                $activities->push((object)[
+                    'timestamp' => $this->patient->deleted_at,
+                    'category' => 'Patient Registry',
+                    'action' => 'Patient Account Soft-Deleted',
+                    'details' => "Patient account record was deleted/archived from active system registry.",
+                    'user' => 'Admin User',
+                    'color' => 'rose',
+                    'ref' => $uhid
+                ]);
+            }
+
+            // 2. OPD Consultations (Created, Updated/Edited, Deleted)
+            $consultations = $fetchWithTrash(Consultation::class, 'patient_id', $id);
+            foreach ($consultations as $c) {
+                $activities->push((object)[
+                    'timestamp' => $c->created_at ?: $c->consultation_date,
+                    'category' => 'OPD Consultation',
+                    'action' => "OP Token #{$c->token_number} Booked",
+                    'details' => "Doctor: " . ($c->doctor?->full_name ?? 'OPD Doctor') . " | Visit Type: {$c->visit_type} | Service: " . ($c->service?->name ?? 'OPD') . " | Fee: ₹" . number_format($c->fee, 0) . " | Status: {$c->status} | Payment: {$c->payment_status}",
+                    'user' => $c->doctor?->full_name ?? 'Counter Staff',
+                    'color' => 'blue',
+                    'ref' => "Token #{$c->token_number}"
+                ]);
+
+                if ($c->updated_at && $c->created_at && $c->updated_at->ne($c->created_at)) {
+                    $activities->push((object)[
+                        'timestamp' => $c->updated_at,
+                        'category' => 'OPD Consultation',
+                        'action' => "OP Token #{$c->token_number} Edited / Status Updated",
+                        'details' => "Consultation updated. Current Status: {$c->status} | Payment: {$c->payment_status} | Fee: ₹" . number_format($c->fee, 0),
+                        'user' => $c->doctor?->full_name ?? 'Duty Staff',
+                        'color' => 'amber',
+                        'ref' => "Token #{$c->token_number}"
+                    ]);
+                }
+
+                if (isset($c->deleted_at) && $c->deleted_at) {
+                    $activities->push((object)[
+                        'timestamp' => $c->deleted_at,
+                        'category' => 'OPD Consultation',
+                        'action' => "OP Token #{$c->token_number} Cancelled / Deleted",
+                        'details' => "Consultation token #{$c->token_number} was deleted or cancelled from patient record.",
+                        'user' => 'Duty Staff',
+                        'color' => 'rose',
+                        'ref' => "Token #{$c->token_number}"
+                    ]);
+                }
+            }
+
+            // 3. IPD Admissions & Discharges (Created, Updated/Edited, Deleted)
+            $admissions = $fetchWithTrash(Admission::class, 'patient_id', $id);
+            foreach ($admissions as $a) {
+                $activities->push((object)[
+                    'timestamp' => $a->admission_date ?: $a->created_at,
+                    'category' => 'IPD Admission',
+                    'action' => "Admitted to IPD - {$a->admission_number}",
+                    'details' => "Ward: " . ($a->bed?->ward?->name ?? 'N/A') . " (Bed #" . ($a->bed?->bed_number ?? 'N/A') . ") | Attending Doctor: " . ($a->doctor?->full_name ?? 'N/A') . " | Reason: " . ($a->reason_for_admission ?? 'General Admission') . " | Status: {$a->status}",
+                    'user' => $a->doctor?->full_name ?? 'IPD Staff',
+                    'color' => 'rose',
+                    'ref' => $a->admission_number
+                ]);
+
+                if ($a->updated_at && $a->created_at && $a->updated_at->ne($a->created_at) && !$a->discharge_date) {
+                    $activities->push((object)[
+                        'timestamp' => $a->updated_at,
+                        'category' => 'IPD Admission',
+                        'action' => "IPD Admission Record #{$a->admission_number} Edited / Updated",
+                        'details' => "Admission record modified. Current Status: {$a->status} | Bed: " . ($a->bed?->bed_number ?? 'N/A'),
+                        'user' => $a->doctor?->full_name ?? 'IPD Staff',
+                        'color' => 'amber',
+                        'ref' => $a->admission_number
+                    ]);
+                }
+
+                if ($a->discharge_date) {
+                    $activities->push((object)[
+                        'timestamp' => $a->discharge_date,
+                        'category' => 'IPD Discharge',
+                        'action' => "Discharged from IPD - {$a->admission_number}",
+                        'details' => "Admitted for {$a->days_admitted} days | Discharged by: " . ($a->doctor?->full_name ?? 'Duty Doctor') . " | Summary Status: " . ($a->status),
+                        'user' => $a->doctor?->full_name ?? 'Medical Officer',
+                        'color' => 'purple',
+                        'ref' => $a->admission_number
+                    ]);
+                }
+
+                if (isset($a->deleted_at) && $a->deleted_at) {
+                    $activities->push((object)[
+                        'timestamp' => $a->deleted_at,
+                        'category' => 'IPD Admission',
+                        'action' => "IPD Admission Record #{$a->admission_number} Soft-Deleted",
+                        'details' => "IPD Admission #{$a->admission_number} was soft-deleted from active system records.",
+                        'user' => 'IPD Admin',
+                        'color' => 'rose',
+                        'ref' => $a->admission_number
+                    ]);
+                }
+            }
+
+            // 4. Bills & Invoices (Created, Updated/Edited, Deleted)
+            $bills = $fetchWithTrash(Bill::class, 'patient_id', $id);
+            foreach ($bills as $b) {
+                $activities->push((object)[
+                    'timestamp' => $b->created_at,
+                    'category' => 'Billing & Invoice',
+                    'action' => "Bill #{$b->bill_number} Generated",
+                    'details' => "Total: ₹" . number_format($b->total_amount, 2) . " | Paid: ₹" . number_format($b->paid_amount, 2) . " | Balance: ₹" . number_format($b->balance_amount, 2) . " | Status: {$b->payment_status} | Method: " . ($b->payment_method ?? 'N/A'),
+                    'user' => 'Billing Desk',
+                    'color' => 'indigo',
+                    'ref' => $b->bill_number
+                ]);
+
+                if ($b->updated_at && $b->created_at && $b->updated_at->ne($b->created_at)) {
+                    $activities->push((object)[
+                        'timestamp' => $b->updated_at,
+                        'category' => 'Billing & Invoice',
+                        'action' => "Bill #{$b->bill_number} Edited / Payment Status Updated",
+                        'details' => "Updated Bill Details. Paid: ₹" . number_format($b->paid_amount, 2) . " | Balance: ₹" . number_format($b->balance_amount, 2) . " | Payment Status: {$b->payment_status}",
+                        'user' => 'Billing Desk',
+                        'color' => 'amber',
+                        'ref' => $b->bill_number
+                    ]);
+                }
+
+                if (isset($b->deleted_at) && $b->deleted_at) {
+                    $activities->push((object)[
+                        'timestamp' => $b->deleted_at,
+                        'category' => 'Billing & Invoice',
+                        'action' => "Bill #{$b->bill_number} Cancelled / Soft-Deleted",
+                        'details' => "Bill #{$b->bill_number} (Amount: ₹" . number_format($b->total_amount, 2) . ") was soft-deleted/cancelled.",
+                        'user' => 'Billing Admin',
+                        'color' => 'rose',
+                        'ref' => $b->bill_number
+                    ]);
+                }
+            }
+
+            // 5. Bill Payments & Money Receipts
+            $payments = BillPayment::with(['bill', 'receiver'])->whereHas('bill', fn($bq) => $bq->where('patient_id', $id))->get();
+            foreach ($payments as $p) {
+                $activities->push((object)[
+                    'timestamp' => $p->received_at ?: $p->created_at,
+                    'category' => 'Payment Receipt',
+                    'action' => "Payment Received - ₹" . number_format($p->amount, 2),
+                    'details' => "Bill Ref: " . ($p->bill?->bill_number ?? 'N/A') . " | Type: " . ucfirst($p->type) . " | Method: " . ($p->method ?? 'Cash') . " | Receipt/Txn: " . ($p->reference ?? 'Direct Cash') . " | Received By: " . ($p->receiver?->name ?? 'Cashier'),
+                    'user' => $p->receiver?->name ?? 'Cashier',
+                    'color' => 'emerald',
+                    'ref' => $p->bill?->bill_number ?? $uhid
+                ]);
+            }
+
+            // 6. Prescriptions Issued (Created, Updated, Deleted)
+            $prescriptions = $fetchWithTrash(Prescription::class, 'patient_id', $id);
+            foreach ($prescriptions as $p) {
+                $medCount = is_array($p->medicines) ? count($p->medicines) : 0;
+                $activities->push((object)[
+                    'timestamp' => $p->created_at,
+                    'category' => 'Prescription',
+                    'action' => "Prescription Issued by Dr. " . ($p->doctor?->full_name ?? 'Doctor'),
+                    'details' => "Diagnosis: " . ($p->diagnosis ?? 'General Consultation') . " | Medicines Prescribed: {$medCount} items | Chief Complaint: " . ($p->chief_complaint ?? 'N/A'),
+                    'user' => $p->doctor?->full_name ?? 'Prescribing Physician',
+                    'color' => 'teal',
+                    'ref' => "Rx #{$p->id}"
+                ]);
+
+                if ($p->updated_at && $p->created_at && $p->updated_at->ne($p->created_at)) {
+                    $activities->push((object)[
+                        'timestamp' => $p->updated_at,
+                        'category' => 'Prescription',
+                        'action' => "Prescription Rx #{$p->id} Edited / Modified",
+                        'details' => "Prescription details updated. Diagnosis: " . ($p->diagnosis ?? 'N/A'),
+                        'user' => $p->doctor?->full_name ?? 'Doctor',
+                        'color' => 'amber',
+                        'ref' => "Rx #{$p->id}"
+                    ]);
+                }
+
+                if (isset($p->deleted_at) && $p->deleted_at) {
+                    $activities->push((object)[
+                        'timestamp' => $p->deleted_at,
+                        'category' => 'Prescription',
+                        'action' => "Prescription Rx #{$p->id} Soft-Deleted",
+                        'details' => "Prescription Rx #{$p->id} was deleted from patient records.",
+                        'user' => 'Doctor / Staff',
+                        'color' => 'rose',
+                        'ref' => "Rx #{$p->id}"
+                    ]);
+                }
+            }
+
+            // 7. Lab Diagnostic Orders (Created, Updated, Deleted)
+            $labOrders = $fetchWithTrash(LabOrder::class, 'patient_id', $id);
+            foreach ($labOrders as $lo) {
+                $activities->push((object)[
+                    'timestamp' => $lo->created_at,
+                    'category' => 'Lab Diagnostics',
+                    'action' => "Lab Order: " . ($lo->labTest?->name ?? 'Diagnostic Test'),
+                    'details' => "Status: {$lo->status} | Prescribed by: " . ($lo->doctor?->full_name ?? 'Doctor') . " | Sample Collected: " . ($lo->collected_at ? \Illuminate\Support\Carbon::parse($lo->collected_at)->format('d M Y, h:i A') : 'Pending'),
+                    'user' => $lo->doctor?->full_name ?? 'Lab Technician',
+                    'color' => 'amber',
+                    'ref' => "Lab #{$lo->id}"
+                ]);
+
+                if ($lo->updated_at && $lo->created_at && $lo->updated_at->ne($lo->created_at)) {
+                    $activities->push((object)[
+                        'timestamp' => $lo->updated_at,
+                        'category' => 'Lab Diagnostics',
+                        'action' => "Lab Order #{$lo->id} Result / Status Updated",
+                        'details' => "Current Status: {$lo->status} | Test: " . ($lo->labTest?->name ?? 'Diagnostic Test'),
+                        'user' => 'Lab Technician',
+                        'color' => 'cyan',
+                        'ref' => "Lab #{$lo->id}"
+                    ]);
+                }
+
+                if (isset($lo->deleted_at) && $lo->deleted_at) {
+                    $activities->push((object)[
+                        'timestamp' => $lo->deleted_at,
+                        'category' => 'Lab Diagnostics',
+                        'action' => "Lab Order #{$lo->id} Cancelled / Soft-Deleted",
+                        'details' => "Lab order #{$lo->id} was soft-deleted or cancelled.",
+                        'user' => 'Lab Tech / Admin',
+                        'color' => 'rose',
+                        'ref' => "Lab #{$lo->id}"
+                    ]);
+                }
+            }
+
+            // 8. Patient Vitals Recordings
+            $vitals = PatientVital::with(['recorder'])->where('patient_id', $id)->get();
+            foreach ($vitals as $v) {
+                $activities->push((object)[
+                    'timestamp' => $v->created_at,
+                    'category' => 'Vitals Recording',
+                    'action' => "Vitals Recorded",
+                    'details' => "BP: " . ($v->bp_systolic ? "{$v->bp_systolic}/{$v->bp_diastolic}" : 'N/A') . " | Pulse: " . ($v->pulse ? "{$v->pulse} bpm" : 'N/A') . " | Temp: " . ($v->temperature ? "{$v->temperature}°F" : 'N/A') . " | SpO2: " . ($v->spo2 ? "{$v->spo2}%" : 'N/A') . " | Weight: " . ($v->weight ? "{$v->weight} kg" : 'N/A'),
+                    'user' => $v->recorder?->name ?? 'Triage Nurse',
+                    'color' => 'cyan',
+                    'ref' => "Vitals"
+                ]);
+            }
+
+            // 9. Consents & Legal Uploads (Created, Soft-Deleted)
+            $consents = $fetchWithTrash(PatientConsent::class, 'patient_id', $id);
+            foreach ($consents as $cs) {
+                $activities->push((object)[
+                    'timestamp' => $cs->created_at,
+                    'category' => 'Consent Form',
+                    'action' => "Consent Form Signed: " . ucfirst(str_replace('_', ' ', $cs->type)),
+                    'details' => "File: {$cs->original_name} | Signed At: " . ($cs->signed_at ? \Illuminate\Support\Carbon::parse($cs->signed_at)->format('d M Y') : 'N/A') . " | Notes: " . ($cs->notes ?? 'None'),
+                    'user' => $cs->creator?->name ?? 'Records Officer',
+                    'color' => 'rose',
+                    'ref' => "Consent #{$cs->id}"
+                ]);
+
+                if (isset($cs->deleted_at) && $cs->deleted_at) {
+                    $activities->push((object)[
+                        'timestamp' => $cs->deleted_at,
+                        'category' => 'Consent Form',
+                        'action' => "Consent Form #{$cs->id} Deleted",
+                        'details' => "Consent form '{$cs->original_name}' was soft-deleted from patient records.",
+                        'user' => 'Records Officer',
+                        'color' => 'rose',
+                        'ref' => "Consent #{$cs->id}"
+                    ]);
+                }
+            }
+
+            // 10. System Audit Logs (Created, Updated, Deleted, Restored)
+            $auditLogs = \App\Models\AuditLog::with('user')
+                ->where(function($aq) use ($id, $uhid) {
+                    $aq->where(function($sub) use ($id) {
+                        $sub->where('auditable_type', 'App\Models\Patient')
+                            ->where('auditable_id', $id);
+                    })
+                    ->orWhere('tags', 'like', "%{$uhid}%");
+                })->get();
+
+            foreach ($auditLogs as $al) {
+                $changeDiff = [];
+                if (is_array($al->old_values) && is_array($al->new_values)) {
+                    foreach ($al->new_values as $k => $v) {
+                        $oldV = $al->old_values[$k] ?? 'N/A';
+                        if ($oldV != $v) {
+                            $changeDiff[] = "{$k}: {$oldV} → {$v}";
+                        }
+                    }
+                }
+                $diffText = count($changeDiff) > 0 ? "Edited Fields: " . implode(' | ', array_slice($changeDiff, 0, 5)) : "System Action: " . ucfirst($al->event);
+
+                $activities->push((object)[
+                    'timestamp' => $al->created_at,
+                    'category' => 'System Audit Log',
+                    'action' => "Audit Log: " . ucfirst($al->event) . " (" . class_basename($al->auditable_type) . ")",
+                    'details' => "{$diffText} | URL: {$al->url} | IP: {$al->ip_address}",
+                    'user' => $al->user?->name ?? 'System Audit',
+                    'color' => $al->event === 'deleted' ? 'rose' : ($al->event === 'updated' ? 'amber' : 'gray'),
+                    'ref' => "Audit #{$al->id}"
+                ]);
+            }
+
+            // Filter system-wide activities by date range or search keyword
+            if ($this->dateFrom) {
+                $activities = $activities->filter(fn($a) => \Illuminate\Support\Carbon::parse($a->timestamp)->gte(\Illuminate\Support\Carbon::parse($this->dateFrom)));
+            }
+            if ($this->dateTo) {
+                $activities = $activities->filter(fn($a) => \Illuminate\Support\Carbon::parse($a->timestamp)->lte(\Illuminate\Support\Carbon::parse($this->dateTo)->endOfDay()));
+            }
+            if ($this->search) {
+                $term = strtolower($this->search);
+                $activities = $activities->filter(function($a) use ($term) {
+                    return str_contains(strtolower($a->action), $term) ||
+                           str_contains(strtolower($a->details), $term) ||
+                           str_contains(strtolower($a->category), $term) ||
+                           str_contains(strtolower($a->user), $term) ||
+                           str_contains(strtolower($a->ref), $term);
+                });
+            }
+
+            // Sort chronologically descending (newest first)
+            $sortedActivities = $activities->sortByDesc(fn($a) => \Illuminate\Support\Carbon::parse($a->timestamp)->timestamp)->values();
+
+            // Paginate manually
+            $currentPage = $this->getPage();
+            $datasets['activity'] = new \Illuminate\Pagination\LengthAwarePaginator(
+                $sortedActivities->forPage($currentPage, $this->perPage),
+                $sortedActivities->count(),
+                $this->perPage,
+                $currentPage,
+                ['path' => \Illuminate\Support\Facades\Request::url(), 'query' => \Illuminate\Support\Facades\Request::query()]
+            );
         }
 
         return view('livewire.counter.patient-history', [
