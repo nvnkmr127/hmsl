@@ -174,6 +174,14 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-3">
+                         <div class="px-4 py-2 rounded-2xl bg-white dark:bg-gray-950 border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-2">
+                             <input type="date" wire:model.live="filterDate" class="text-xs font-bold bg-transparent border-none focus:ring-0 text-gray-600 dark:text-gray-300 outline-none p-0 cursor-pointer">
+                             @if($filterDate)
+                                 <button wire:click="$set('filterDate', '')" class="text-gray-400 hover:text-rose-500 transition-colors">
+                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                 </button>
+                             @endif
+                         </div>
                          <div class="px-4 py-2 rounded-2xl bg-white dark:bg-gray-950 border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-3 group cursor-help">
                             <div class="flex -space-x-2">
                                 <div class="w-6 h-6 rounded-full border-2 border-white dark:border-gray-900 bg-emerald-500"></div>
