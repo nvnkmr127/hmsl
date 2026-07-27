@@ -1,7 +1,7 @@
 <div class="space-y-6">
     {{-- Filters Card --}}
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6 items-end">
             <div>
                 <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">From Date</label>
                 <input wire:model.live="dateFrom" type="date" class="block w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-sm focus:ring-2 focus:ring-primary-500 transition-all outline-none">
@@ -28,6 +28,13 @@
                     <option value="Emergency">Emergency Shift</option>
                     <option value="Newborn Followup">Newborn Privilege</option>
                 </select>
+            </div>
+            <div>
+                <button wire:click="resetFilters" 
+                        class="w-full h-[46px] px-4 flex items-center justify-center gap-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-xs font-bold transition-all border border-slate-200/60 dark:border-slate-700/60">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    <span>Reset Filters</span>
+                </button>
             </div>
         </div>
     </div>
