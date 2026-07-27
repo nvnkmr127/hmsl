@@ -41,6 +41,14 @@ class RegistrationReport extends Component
         }
     }
 
+    public function resetFilters()
+    {
+        $this->reset(['gender', 'ageGroup', 'city', 'search']);
+        $this->from = now()->subMonths(6)->toDateString();
+        $this->to = now()->toDateString();
+        $this->resetPage();
+    }
+
     protected function getFilteredQuery()
     {
         $query = Patient::query()

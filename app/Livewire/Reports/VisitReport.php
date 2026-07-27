@@ -22,6 +22,21 @@ class VisitReport extends Component
         $this->dateTo = now()->toDateString();
     }
 
+    public function updated($property)
+    {
+        if (in_array($property, ['dateFrom', 'dateTo', 'status', 'visitType'])) {
+            $this->resetPage();
+        }
+    }
+
+    public function resetFilters()
+    {
+        $this->reset(['status', 'visitType']);
+        $this->dateFrom = now()->startOfMonth()->toDateString();
+        $this->dateTo = now()->toDateString();
+        $this->resetPage();
+    }
+
     public function render()
     {
         $visits = Consultation::with(['patient', 'doctor', 'service'])
