@@ -50,7 +50,10 @@ class RegistrationReport extends Component
             $query->where('gender', $this->gender);
         }
         if ($this->city) {
-            $query->where('city', $this->city);
+            $query->where(function($q) {
+                $q->where('city', 'LIKE', '%' . $this->city . '%')
+                  ->orWhere('address', 'LIKE', '%' . $this->city . '%');
+            });
         }
         if ($this->ageGroup) {
             $now = \Carbon\Carbon::now();
@@ -163,6 +166,7 @@ class RegistrationReport extends Component
             'nizamabad' => [18.6725, 78.0941],
             'nizamabad district' => [18.6750, 78.1000],
             'hyderabad' => [17.3850, 78.4867],
+            'secunderabad' => [17.4399, 78.4983],
             'bodhan' => [18.6653, 77.8978],
             'armoor' => [18.7889, 78.2869],
             'kamareddy' => [18.3183, 78.3375],
@@ -170,6 +174,11 @@ class RegistrationReport extends Component
             'warangal' => [17.9784, 79.5941],
             'siddipet' => [18.1018, 78.8520],
             'medak' => [18.0454, 78.2612],
+            'varni' => [18.5342, 77.9015],
+            'dichpally' => [18.5772, 78.2045],
+            'banswada' => [18.3842, 77.8812],
+            'yellareddy' => [18.2104, 78.0163],
+            'balkonda' => [18.8682, 78.3412],
             'suryapet' => [17.1500, 79.6333],
             'nalgonda' => [17.0500, 79.2667],
             'khammam' => [17.2472, 80.1514],
@@ -178,8 +187,10 @@ class RegistrationReport extends Component
         ];
 
         $key = strtolower(trim($cityName));
-        if (isset($coordsMap[$key])) {
-            return $coordsMap[$key];
+        foreach ($coordsMap as $name => $coords) {
+            if (str_contains($key, $name) || str_contains($name, $key)) {
+                return $coords;
+            }
         }
 
         $hash = abs(crc32($cityName));
