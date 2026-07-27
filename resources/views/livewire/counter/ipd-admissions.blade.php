@@ -10,29 +10,94 @@
             </a>
         </x-slot>
     </x-page-header>
-
     <div class="mt-10">
-        <div class="mb-8 p-1 bg-white dark:bg-gray-900 rounded-[3rem] border border-gray-100 dark:border-gray-800 shadow-2xl shadow-indigo-500/5 transition-all focus-within:shadow-indigo-500/10">
-            <div class="flex flex-col lg:flex-row items-center gap-4 px-4 py-2">
-                <div class="flex-1 relative group w-full">
-                    <div class="absolute left-6 top-1/2 -translate-y-1/2 text-indigo-500 group-focus-within:scale-110 transition-transform">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+            <div class="p-6 bg-white dark:bg-gray-900 rounded-ultra border border-gray-100 dark:border-gray-800 shadow-sm">
+                <p class="text-tiny font-black text-gray-400 uppercase tracking-widest mb-1">Total Admissions</p>
+                <h3 class="text-3xl font-black text-gray-900 dark:text-white">{{ number_format($stats['total']) }}</h3>
+                <p class="text-tiny font-bold text-indigo-600 mt-2 uppercase">In Period</p>
+            </div>
+            
+            <div class="p-6 bg-white dark:bg-gray-900 rounded-ultra border border-gray-100 dark:border-gray-800 shadow-sm">
+                <p class="text-tiny font-black text-gray-400 uppercase tracking-widest mb-1">Currently Admitted</p>
+                <h3 class="text-3xl font-black text-emerald-600">{{ number_format($stats['admitted']) }}</h3>
+                <p class="text-tiny font-bold text-emerald-500 mt-2 uppercase">Active Patients</p>
+            </div>
+            
+            <div class="p-6 bg-white dark:bg-gray-900 rounded-ultra border border-gray-100 dark:border-gray-800 shadow-sm">
+                <p class="text-tiny font-black text-gray-400 uppercase tracking-widest mb-1">Discharges</p>
+                <h3 class="text-3xl font-black text-amber-500">{{ number_format($stats['discharged']) }}</h3>
+                <p class="text-tiny font-bold text-amber-500 mt-2 uppercase">Discharged</p>
+            </div>
+            
+            <div class="p-6 bg-white dark:bg-gray-900 rounded-ultra border border-gray-100 dark:border-gray-800 shadow-sm">
+                <p class="text-tiny font-black text-gray-400 uppercase tracking-widest mb-1">Total Billed</p>
+                <h3 class="text-3xl font-black text-gray-900 dark:text-white">₹{{ number_format($stats['total_billed']) }}</h3>
+                <p class="text-tiny font-bold text-blue-500 mt-2 uppercase">IP Invoiced</p>
+            </div>
+            
+            <div class="p-6 bg-white dark:bg-gray-900 rounded-ultra border border-gray-100 dark:border-gray-800 shadow-sm">
+                <p class="text-tiny font-black text-gray-400 uppercase tracking-widest mb-1">Collections</p>
+                <h3 class="text-3xl font-black text-emerald-600">₹{{ number_format($stats['collections']) }}</h3>
+                <p class="text-tiny font-bold text-rose-500 mt-2 uppercase">Due: ₹{{ number_format($stats['due']) }}</p>
+            </div>
+        </div>
+        <div class="mb-8 flex flex-col lg:flex-row lg:items-end gap-6">
+            <div class="flex-1 w-full lg:max-w-md">
+                <div class="relative group h-full flex flex-col justify-end">
+                    <div class="relative">
+                        <div class="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-500 group-focus-within:scale-110 transition-transform">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                        </div>
+                        <input 
+                            type="text" 
+                            wire:model.live.debounce.300ms="search" 
+                            placeholder="SEARCH PATIENTS: NAME, ID OR MOBILE..." 
+                            class="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl pl-12 pr-4 py-2.5 text-sm font-black tracking-widest text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none uppercase"
+                        />
                     </div>
-                    <input 
-                        type="text" 
-                        wire:model.live.debounce.300ms="search" 
-                        placeholder="SEARCH PATIENTS: NAME, ID OR MOBILE..." 
-                        class="w-full bg-transparent border-none pl-14 pr-6 py-4 text-sm font-black tracking-widest text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-700 focus:ring-0 uppercase"
-                    />
                 </div>
-                <div class="h-8 w-px bg-gray-100 dark:bg-gray-800 hidden lg:block"></div>
-                <label class="flex items-center gap-3 px-6 cursor-pointer group whitespace-nowrap">
-                    <div class="relative inline-flex items-center">
-                        <input type="checkbox" wire:model.live="showDischarged" class="sr-only peer">
-                        <div class="w-11 h-6 bg-gray-200 dark:bg-gray-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                    </div>
-                    <span class="text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">Show Discharged</span>
-                </label>
+            </div>
+
+            <div class="flex items-center gap-4 overflow-x-auto hide-scrollbar pb-1">
+                <div class="flex flex-col gap-1.5 min-w-[140px]">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-400">Admission Status</label>
+                    <select wire:model.live="admissionStatus" class="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm font-bold text-gray-700 dark:text-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none">
+                        <option value="">All Statuses</option>
+                        <option value="Admitted">Admitted</option>
+                        <option value="Discharged">Discharged</option>
+                    </select>
+                </div>
+                
+                <div class="flex flex-col gap-1.5 min-w-[140px]">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-400">Billing Status</label>
+                    <select wire:model.live="billingStatus" class="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm font-bold text-gray-700 dark:text-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none">
+                        <option value="">All Billing</option>
+                        <option value="Paid">Paid</option>
+                        <option value="Unpaid">Unpaid</option>
+                        <option value="Partially Paid">Partially Paid</option>
+                    </select>
+                </div>
+
+                <div class="flex flex-col gap-1.5 min-w-[140px]">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-400">Ward</label>
+                    <select wire:model.live="wardFilter" class="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm font-bold text-gray-700 dark:text-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none">
+                        <option value="">All Wards</option>
+                        @foreach($wards as $ward)
+                            <option value="{{ $ward->id }}">{{ $ward->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="flex flex-col gap-1.5 min-w-[140px]">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-400">Doctor</label>
+                    <select wire:model.live="doctorFilter" class="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm font-bold text-gray-700 dark:text-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none">
+                        <option value="">All Doctors</option>
+                        @foreach($doctors as $doctor)
+                            <option value="{{ $doctor->id }}">{{ $doctor->full_name }}</option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
         </div>
 

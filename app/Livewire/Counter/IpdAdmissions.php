@@ -20,7 +20,10 @@ class IpdAdmissions extends Component
     }
 
     public $search = '';
-    public bool $showDischarged = false;
+    public $admissionStatus = '';
+    public $billingStatus = '';
+    public $wardFilter = '';
+    public $doctorFilter = '';
     public ?int $selectedAdmissionId = null;
     public string $dischargeNotes = '';
     public string $dischargeError = '';
@@ -132,8 +135,29 @@ class IpdAdmissions extends Component
 
     public function render()
     {
-        $admissions = Admission::with(['patient', 'bed', 'bed.ward', 'doctor.user'])
-            ->where('status', $this->showDischarged ? 'Discharged' : 'Admitted')
+        $admissions = Admission::with(['patient', 'bed', 'bed.ward', 'doctor.user', 'finalBill'])
+            ->when($this->admissionStatus, function ($q) {
+                $q->where('status', $this->admissionStatus);
+            })
+            ->when($this->wardFilter, function ($q) {
+                $q->whereHas('bed', function ($bq) {
+                    $bq->where('ward_id', $this->wardFilter);
+                });
+            })
+            ->when($this->doctorFilter, function ($q) {
+                $q->where('doctor_id', $this->doctorFilter);
+            })
+            ->when($this->billingStatus, function ($q) {
+                if ($this->billingStatus === 'Unpaid') {
+                    $q->whereHas('finalBill', function ($bq) {
+                        $bq->where('payment_status', 'Unpaid');
+                    })->orWhereDoesntHave('finalBill');
+                } else {
+                    $q->whereHas('finalBill', function ($bq) {
+                        $bq->where('payment_status', $this->billingStatus);
+                    });
+                }
+            })
             ->when($this->search, function ($query) {
                 $term = "%{$this->search}%";
                 $query->where(function ($q) use ($term) {
@@ -148,13 +172,24 @@ class IpdAdmissions extends Component
             ->latest('admission_date')
             ->paginate(10);
 
+        $stats = [
+            'total' => Admission::count(),
+            'admitted' => Admission::where('status', 'Admitted')->count(),
+            'discharged' => Admission::where('status', 'Discharged')->count(),
+            'total_billed' => \App\Models\Bill::whereNotNull('admission_id')->sum('total_amount'),
+            'collections' => \App\Models\Bill::whereNotNull('admission_id')->sum('paid_amount'),
+            'due' => \App\Models\Bill::whereNotNull('admission_id')->sum('balance_amount'),
+        ];
+
         return view('livewire.counter.ipd-admissions', [
             'admissions' => $admissions,
+            'stats' => $stats,
             'dischargeTemplates' => \App\Models\ClinicalTemplate::where('type', 'discharge')->get(),
             'labTests' => LabTest::where('is_active', true)->orderBy('name')->get(['id', 'name', 'price']),
             'wards' => \App\Models\Ward::with(['beds' => function($q) {
                 $q->where('is_available', true)->orderBy('bed_number');
             }])->where('is_active', true)->orderBy('name')->get(),
+            'doctors' => \App\Models\Doctor::with('user')->where('is_active', true)->get(),
         ]);
     }
 }
