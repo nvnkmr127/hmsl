@@ -48,6 +48,17 @@
                     <option value="12+ Years">12+ Years</option>
                 </select>
 
+                <div x-data="addressAutocomplete()" x-init="initAutocomplete()" class="relative">
+                    <input x-ref="autocompleteInput"
+                           type="text"
+                           placeholder="Google Address Search..."
+                           wire:model.live.debounce.300ms="city"
+                           class="bg-slate-800/50 border border-slate-700/50 text-slate-300 text-xs font-bold rounded-xl focus:ring-1 focus:ring-indigo-500 py-2 px-3 pl-8 min-w-[200px]" />
+                    <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    </svg>
+                </div>
+
                 <select wire:model.live="city" class="bg-slate-800/50 border border-slate-700/50 text-slate-300 text-xs font-bold rounded-xl focus:ring-1 focus:ring-indigo-500 cursor-pointer py-2 px-3 max-w-[120px]">
                     <option value="">All Villages</option>
                     @foreach($villages as $v)
@@ -153,16 +164,14 @@
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- Shopify-Style Live Regional Map Section -->
-    <div x-data="googleMapHandler(@js($areaMapData))" x-init="initMap()" class="bg-slate-950 text-white rounded-[2.5rem] p-6 lg:p-8 border border-slate-800 shadow-2xl space-y-6 relative overflow-hidden">
+    </div>    <!-- Shopify-Style Live Regional Map Section -->
+    <div x-data="googleMapHandler(@js($areaMapData))" x-init="initMap()" class="bg-slate-900 text-white rounded-[2.5rem] p-6 lg:p-8 border border-slate-800 shadow-2xl space-y-6 relative overflow-hidden">
         <!-- Ambient Glowing Background Blurs -->
         <div class="absolute -top-40 -left-40 w-96 h-96 bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none"></div>
         <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none"></div>
 
         <!-- Top Shopify Header -->
-        <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-800/80 pb-6">
+        <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-800 pb-6">
             <div>
                 <div class="flex items-center gap-3">
                     <span class="relative flex h-3 w-3">
@@ -177,7 +186,7 @@
             </div>
 
             <!-- View Switcher -->
-            <div class="flex items-center p-1 bg-slate-900 rounded-2xl border border-slate-800">
+            <div class="flex items-center p-1 bg-slate-950 rounded-2xl border border-slate-800">
                 <button type="button" @click="activeTab = 'map'"
                         :class="activeTab === 'map' ? 'bg-emerald-500 text-slate-950 font-black shadow-lg shadow-emerald-500/20' : 'text-slate-400 hover:text-white font-bold'"
                         class="px-4 py-2 text-xs uppercase rounded-xl transition-all flex items-center gap-1.5">
@@ -202,11 +211,11 @@
         <!-- Google Maps JS Container with Shopify Side Panel -->
         <div x-show="activeTab === 'map'" class="space-y-4 relative z-10">
             <!-- Heatmap Sub-Controls Bar -->
-            <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900/90 p-3 rounded-2xl border border-slate-800 backdrop-blur-md">
+            <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-950/90 p-3.5 rounded-2xl border border-slate-800 backdrop-blur-md">
                 <!-- Layer Mode Switcher -->
                 <div class="flex items-center gap-2">
                     <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Display Mode:</span>
-                    <div class="flex items-center p-0.5 bg-slate-950 rounded-xl border border-slate-800">
+                    <div class="flex items-center p-0.5 bg-slate-900 rounded-xl border border-slate-800">
                         <button type="button" @click="layerMode = 'hybrid'"
                                 :class="layerMode === 'hybrid' ? 'bg-emerald-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white font-bold'"
                                 class="px-3 py-1 text-[10px] uppercase rounded-lg transition-all">
@@ -228,7 +237,7 @@
                 <!-- Weight Mode Switcher -->
                 <div class="flex items-center gap-2">
                     <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Intensity Basis:</span>
-                    <div class="flex items-center p-0.5 bg-slate-950 rounded-xl border border-slate-800">
+                    <div class="flex items-center p-0.5 bg-slate-900 rounded-xl border border-slate-800">
                         <button type="button" @click="weightMode = 'count'"
                                 :class="weightMode === 'count' ? 'bg-indigo-500 text-white font-black' : 'text-slate-400 hover:text-white font-bold'"
                                 class="px-3 py-1 text-[10px] uppercase rounded-lg transition-all">
@@ -244,14 +253,14 @@
             </div>
 
             <!-- Main Shopify Grid: 8 Cols Map Canvas + 4 Cols Live Stream Panel -->
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
                 <!-- Map Canvas -->
-                <div class="lg:col-span-8">
+                <div class="lg:col-span-8 w-full">
                     <div wire:ignore class="relative w-full h-[520px] min-h-[520px] rounded-3xl overflow-hidden border border-slate-800 shadow-2xl" id="google-geo-map"></div>
                 </div>
 
                 <!-- Shopify Live Stream Panel -->
-                <div class="lg:col-span-4 bg-slate-900/90 rounded-3xl p-5 border border-slate-800 flex flex-col justify-between space-y-4 max-h-[520px] overflow-y-auto">
+                <div class="lg:col-span-4 w-full bg-slate-950/90 rounded-3xl p-5 border border-slate-800 flex flex-col justify-between space-y-4 max-h-[520px] overflow-y-auto">
                     <div>
                         <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
                             <h4 class="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
@@ -264,7 +273,7 @@
                         <div class="space-y-3">
                             @forelse($areaMapData as $area)
                                 <div @click="panToCity({{ $area['lat'] }}, {{ $area['lng'] }}, '{{ $area['name'] }}')"
-                                     class="group cursor-pointer p-3.5 rounded-2xl bg-slate-950 hover:bg-slate-800/80 border border-slate-800 hover:border-emerald-500/60 transition-all duration-300 relative overflow-hidden hover:scale-[1.01]">
+                                     class="group cursor-pointer p-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/60 transition-all duration-300 relative overflow-hidden hover:scale-[1.01]">
                                     <div class="flex items-center justify-between mb-2">
                                         <div class="flex items-center gap-2.5">
                                             <span class="w-6 h-6 rounded-lg {{ $area['rank'] <= 2 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400' }} flex items-center justify-center text-[10px] font-black">
@@ -327,7 +336,7 @@
         <div x-show="activeTab === 'table'" class="overflow-x-auto relative z-10">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="bg-slate-900 border-b border-slate-800">
+                    <tr class="bg-slate-950 border-b border-slate-800">
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Rank & Region / City</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Patients Registered</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Market Share (%)</th>
@@ -337,7 +346,7 @@
                 </thead>
                 <tbody class="divide-y divide-slate-800">
                     @forelse($areaMapData as $area)
-                    <tr class="hover:bg-slate-900/60 transition-colors">
+                    <tr class="hover:bg-slate-950/60 transition-colors">
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
                                 <span class="font-mono text-xs font-black text-emerald-400">#{{ $area['rank'] }}</span>
@@ -370,6 +379,55 @@
     </div>
 
     <script>
+    function addressAutocomplete() {
+        return {
+            initAutocomplete() {
+                const input = this.$refs.autocompleteInput;
+                if (!input) return;
+
+                const setupPlaces = () => {
+                    if (typeof google === 'undefined' || typeof google.maps === 'undefined' || typeof google.maps.places === 'undefined') {
+                        setTimeout(setupPlaces, 300);
+                        return;
+                    }
+
+                    try {
+                        const autocomplete = new google.maps.places.Autocomplete(input, {
+                            types: ['(cities)'],
+                            componentRestrictions: { country: 'in' }
+                        });
+
+                        autocomplete.addListener('place_changed', () => {
+                            const place = autocomplete.getPlace();
+                            if (!place) return;
+
+                            let selectedCity = '';
+                            if (place.address_components) {
+                                for (const comp of place.address_components) {
+                                    if (comp.types.includes('locality') || comp.types.includes('administrative_area_level_2')) {
+                                        selectedCity = comp.long_name;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (!selectedCity) selectedCity = place.name || input.value;
+                            @this.set('city', selectedCity);
+                        });
+                    } catch (e) {
+                        console.warn('Google Places Autocomplete notice:', e);
+                    }
+                };
+
+                if (window.google && window.google.maps && window.google.maps.places) {
+                    setupPlaces();
+                } else {
+                    window.addEventListener('google-maps-loaded', setupPlaces);
+                    setTimeout(setupPlaces, 500);
+                }
+            }
+        }
+    }
+
     function googleMapHandler(locations) {
         return {
             activeTab: 'map',
@@ -379,164 +437,267 @@
             locations: locations,
             weightMode: 'count', // 'count' or 'revenue'
             layerMode: 'hybrid', // 'heatmap', 'markers', 'hybrid'
+            isLeaflet: false,
 
             panToCity(lat, lng, cityName) {
                 if (this.map) {
-                    this.map.panTo({ lat: lat, lng: lng });
-                    this.map.setZoom(12);
+                    if (this.isLeaflet && this.map.setView) {
+                        this.map.setView([lat, lng], 12);
+                    } else if (this.map.panTo) {
+                        this.map.panTo({ lat: lat, lng: lng });
+                        this.map.setZoom(12);
+                    }
                 }
                 this.$wire.set('city', cityName);
             },
 
             initMap() {
                 this.$watch('activeTab', (val) => {
-                    if (val === 'map' && this.map && window.google && window.google.maps) {
-                        setTimeout(() => google.maps.event.trigger(this.map, 'resize'), 250);
+                    if (val === 'map') {
+                        setTimeout(() => {
+                            if (this.isLeaflet && this.map && this.map.invalidateSize) {
+                                this.map.invalidateSize();
+                            } else if (this.map && window.google && window.google.maps) {
+                                google.maps.event.trigger(this.map, 'resize');
+                            }
+                        }, 250);
                     }
                 });
 
                 this.$watch('weightMode', () => this.updateLayers());
                 this.$watch('layerMode', () => this.updateLayers());
 
-                const renderGoogleMap = () => {
+                const renderMap = () => {
                     const mapContainer = document.getElementById('google-geo-map');
                     if (!mapContainer) return;
-
-                    if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
-                        setTimeout(renderGoogleMap, 300);
-                        return;
-                    }
 
                     const centerLat = (this.locations && this.locations.length > 0) ? this.locations[0].lat : 18.6725;
                     const centerLng = (this.locations && this.locations.length > 0) ? this.locations[0].lng : 78.0941;
 
-                    this.map = new google.maps.Map(mapContainer, {
-                        center: { lat: centerLat, lng: centerLng },
-                        zoom: 10,
-                        mapTypeId: google.maps.MapTypeId.ROADMAP,
-                        mapTypeControl: false,
-                        streetViewControl: false,
-                        fullscreenControl: true,
-                        styles: [
-                            { elementType: "geometry", stylers: [{ color: "#090d16" }] },
-                            { elementType: "labels.text.stroke", stylers: [{ color: "#090d16" }] },
-                            { elementType: "labels.text.fill", stylers: [{ color: "#64748b" }] },
-                            { featureType: "road", elementType: "geometry", stylers: [{ color: "#1e293b" }] },
-                            { featureType: "water", elementType: "geometry", stylers: [{ color: "#020617" }] }
-                        ]
-                    });
+                    // Google Maps Attempt
+                    if (window.google && window.google.maps && !window.googleMapsFailed) {
+                        try {
+                            this.isLeaflet = false;
+                            this.map = new google.maps.Map(mapContainer, {
+                                center: { lat: centerLat, lng: centerLng },
+                                zoom: 10,
+                                mapTypeId: google.maps.MapTypeId.ROADMAP,
+                                mapTypeControl: false,
+                                streetViewControl: false,
+                                fullscreenControl: true,
+                                styles: [
+                                    { elementType: "geometry", stylers: [{ color: "#090d16" }] },
+                                    { elementType: "labels.text.stroke", stylers: [{ color: "#090d16" }] },
+                                    { elementType: "labels.text.fill", stylers: [{ color: "#64748b" }] },
+                                    { featureType: "road", elementType: "geometry", stylers: [{ color: "#1e293b" }] },
+                                    { featureType: "water", elementType: "geometry", stylers: [{ color: "#020617" }] }
+                                ]
+                            });
+                            this.updateLayers();
+                            return;
+                        } catch (e) {
+                            console.warn('Google Maps init failed, switching to Leaflet:', e);
+                        }
+                    }
 
-                    this.updateLayers();
+                    // Leaflet OpenStreetMap Fallback
+                    if (typeof L !== 'undefined') {
+                        this.isLeaflet = true;
+                        if (mapContainer._leaflet_id) {
+                            mapContainer._leaflet_id = null;
+                            mapContainer.innerHTML = '';
+                        }
+
+                        this.map = L.map('google-geo-map', {
+                            center: [centerLat, centerLng],
+                            zoom: 10,
+                            zoomControl: true,
+                        });
+
+                        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                            maxZoom: 19,
+                            attribution: '&copy; CartoDB & OpenStreetMap'
+                        }).addTo(this.map);
+
+                        this.updateLayers();
+                    }
                 };
 
-                if (window.google && window.google.maps) {
-                    renderGoogleMap();
+                window.addEventListener('google-maps-failed', () => renderMap());
+
+                if (window.google && window.google.maps && !window.googleMapsFailed) {
+                    renderMap();
+                } else if (typeof L !== 'undefined') {
+                    renderMap();
                 } else {
-                    window.addEventListener('google-maps-loaded', renderGoogleMap);
-                    setTimeout(renderGoogleMap, 500);
+                    window.addEventListener('google-maps-loaded', renderMap);
+                    setTimeout(renderMap, 500);
                 }
             },
 
             updateLayers() {
-                if (!this.map || !window.google || !window.google.maps) return;
+                if (!this.map) return;
 
-                if (this.heatmapLayer) {
+                if (this.heatmapLayer && this.heatmapLayer.setMap) {
                     this.heatmapLayer.setMap(null);
                     this.heatmapLayer = null;
                 }
 
                 if (this.markers) {
-                    this.markers.forEach(m => m.setMap(null));
+                    this.markers.forEach(m => {
+                        if (m.setMap) m.setMap(null);
+                        else if (m.remove) m.remove();
+                    });
                     this.markers = [];
                 }
 
                 if (!Array.isArray(this.locations) || this.locations.length === 0) return;
 
-                const bounds = new google.maps.LatLngBounds();
-
-                // Shopify Heatmap Layer
-                if ((this.layerMode === 'heatmap' || this.layerMode === 'hybrid') && google.maps.visualization && google.maps.visualization.HeatmapLayer) {
-                    const heatmapPoints = this.locations.map(loc => {
-                        const weightVal = this.weightMode === 'count' ? loc.count : Math.max(1, loc.revenue / 500);
-                        return {
-                            location: new google.maps.LatLng(loc.lat, loc.lng),
-                            weight: Math.max(1, weightVal)
-                        };
-                    });
-
-                    this.heatmapLayer = new google.maps.visualization.HeatmapLayer({
-                        data: heatmapPoints,
-                        map: this.map,
-                        radius: 50,
-                        opacity: 0.85,
-                        gradient: [
-                            'rgba(16, 185, 129, 0)',
-                            'rgba(16, 185, 129, 0.4)',
-                            'rgba(52, 211, 153, 0.7)',
-                            'rgba(99, 102, 241, 0.85)',
-                            'rgba(244, 63, 94, 0.95)',
-                            'rgba(239, 68, 68, 1)'
-                        ]
-                    });
-                }
-
-                // Shopify Pulsing Count Markers with Badges
-                if (this.layerMode === 'markers' || this.layerMode === 'hybrid') {
+                if (this.isLeaflet) {
+                    const bounds = [];
                     this.locations.forEach(area => {
-                        const position = { lat: area.lat, lng: area.lng };
-                        bounds.extend(position);
+                        const color = area.rank <= 2 ? '#10b981' : '#6366f1';
 
-                        const displayVal = this.weightMode === 'count' 
-                            ? `${area.count}` 
-                            : `₹${(area.revenue/1000).toFixed(0)}k`;
+                        if (this.layerMode === 'heatmap' || this.layerMode === 'hybrid') {
+                            const radius = Math.max(18, Math.min(50, area.count * 2.5));
+                            L.circleMarker([area.lat, area.lng], {
+                                radius: radius,
+                                color: color,
+                                fillColor: color,
+                                fillOpacity: 0.4,
+                                weight: 2
+                            }).addTo(this.map);
+                        }
 
-                        const marker = new google.maps.Marker({
-                            position: position,
-                            map: this.map,
-                            title: `${area.name}: ${area.count} Patients (₹${area.revenue})`,
-                            label: {
-                                text: displayVal,
-                                color: '#ffffff',
-                                fontSize: '11px',
-                                fontWeight: '900'
-                            },
-                            icon: {
-                                path: google.maps.SymbolPath.CIRCLE,
-                                scale: Math.max(18, Math.min(34, area.count * 1.6)),
-                                fillColor: area.rank <= 2 ? '#10b981' : '#6366f1',
-                                fillOpacity: 0.95,
-                                strokeWeight: 3,
-                                strokeColor: '#ffffff'
-                            }
-                        });
+                        if (this.layerMode === 'markers' || this.layerMode === 'hybrid') {
+                            const displayVal = this.weightMode === 'count' 
+                                ? `${area.count}` 
+                                : `₹${(area.revenue/1000).toFixed(0)}k`;
 
-                        const infoWindow = new google.maps.InfoWindow({
-                            content: `
-                                <div style="font-family: sans-serif; padding: 6px; min-width: 160px; color: #0f172a;">
-                                    <h4 style="font-weight: 900; font-size: 14px; margin: 0 0 4px 0; color: #1e293b;">${area.name}</h4>
-                                    <div style="font-size: 11px; color: #64748b; margin-bottom: 6px;">Rank #${area.rank} • ${area.share}% Market Share</div>
+                            const countBadgeHtml = `
+                                <div style="background-color: ${color}; color: #ffffff; min-width: 34px; height: 34px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 11px; border: 2.5px solid #ffffff; box-shadow: 0 4px 14px rgba(0,0,0,0.5); font-family: sans-serif; text-align: center; padding: 0 6px;">
+                                    ${displayVal}
+                                </div>
+                            `;
+
+                            const customIcon = L.divIcon({
+                                html: countBadgeHtml,
+                                className: 'custom-leaflet-count-badge',
+                                iconSize: [36, 36],
+                                iconAnchor: [18, 18]
+                            });
+
+                            const marker = L.marker([area.lat, area.lng], { icon: customIcon }).addTo(this.map);
+                            
+                            const popupHtml = `
+                                <div style="font-family: sans-serif; padding: 6px; min-width: 150px; color: #0f172a;">
+                                    <h4 style="font-weight: 900; font-size: 13px; margin: 0 0 4px 0;">${area.name}</h4>
+                                    <div style="font-size: 10px; color: #64748b; margin-bottom: 6px;">Rank #${area.rank} • ${area.share}% Market Share</div>
                                     <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; margin-bottom: 4px;">
-                                        <span>Registered Patients:</span>
+                                        <span>Patients:</span>
                                         <span style="color: #4f46e5;">${area.count}</span>
                                     </div>
-                                    <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; margin-bottom: 6px;">
-                                        <span>Gross Revenue:</span>
+                                    <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: bold;">
+                                        <span>Revenue:</span>
                                         <span style="color: #059669;">₹${new Intl.NumberFormat('en-IN').format(area.revenue)}</span>
                                     </div>
                                 </div>
-                            `
-                        });
+                            `;
+                            marker.bindPopup(popupHtml);
+                            this.markers.push(marker);
+                        }
 
-                        marker.addListener('click', () => {
-                            infoWindow.open(this.map, marker);
-                            this.$wire.set('city', area.name);
-                        });
-
-                        this.markers.push(marker);
+                        bounds.push([area.lat, area.lng]);
                     });
 
-                    if (this.locations.length > 1) {
-                        this.map.fitBounds(bounds);
+                    if (bounds.length > 1) {
+                        this.map.fitBounds(bounds, { padding: [40, 40] });
+                    }
+                } else if (window.google && window.google.maps) {
+                    const bounds = new google.maps.LatLngBounds();
+
+                    if ((this.layerMode === 'heatmap' || this.layerMode === 'hybrid') && google.maps.visualization && google.maps.visualization.HeatmapLayer) {
+                        const heatmapPoints = this.locations.map(loc => {
+                            const weightVal = this.weightMode === 'count' ? loc.count : Math.max(1, loc.revenue / 500);
+                            return {
+                                location: new google.maps.LatLng(loc.lat, loc.lng),
+                                weight: Math.max(1, weightVal)
+                            };
+                        });
+
+                        this.heatmapLayer = new google.maps.visualization.HeatmapLayer({
+                            data: heatmapPoints,
+                            map: this.map,
+                            radius: 50,
+                            opacity: 0.85,
+                            gradient: [
+                                'rgba(16, 185, 129, 0)',
+                                'rgba(16, 185, 129, 0.4)',
+                                'rgba(52, 211, 153, 0.7)',
+                                'rgba(99, 102, 241, 0.85)',
+                                'rgba(244, 63, 94, 0.95)',
+                                'rgba(239, 68, 68, 1)'
+                            ]
+                        });
+                    }
+
+                    if (this.layerMode === 'markers' || this.layerMode === 'hybrid') {
+                        this.locations.forEach(area => {
+                            const position = { lat: area.lat, lng: area.lng };
+                            bounds.extend(position);
+
+                            const displayVal = this.weightMode === 'count' 
+                                ? `${area.count}` 
+                                : `₹${(area.revenue/1000).toFixed(0)}k`;
+
+                            const marker = new google.maps.Marker({
+                                position: position,
+                                map: this.map,
+                                title: `${area.name}: ${area.count} Patients (₹${area.revenue})`,
+                                label: {
+                                    text: displayVal,
+                                    color: '#ffffff',
+                                    fontSize: '11px',
+                                    fontWeight: '900'
+                                },
+                                icon: {
+                                    path: google.maps.SymbolPath.CIRCLE,
+                                    scale: Math.max(18, Math.min(34, area.count * 1.6)),
+                                    fillColor: area.rank <= 2 ? '#10b981' : '#6366f1',
+                                    fillOpacity: 0.95,
+                                    strokeWeight: 3,
+                                    strokeColor: '#ffffff'
+                                }
+                            });
+
+                            const infoWindow = new google.maps.InfoWindow({
+                                content: `
+                                    <div style="font-family: sans-serif; padding: 6px; min-width: 160px; color: #0f172a;">
+                                        <h4 style="font-weight: 900; font-size: 14px; margin: 0 0 4px 0; color: #1e293b;">${area.name}</h4>
+                                        <div style="font-size: 11px; color: #64748b; margin-bottom: 6px;">Rank #${area.rank} • ${area.share}% Market Share</div>
+                                        <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; margin-bottom: 4px;">
+                                            <span>Registered Patients:</span>
+                                            <span style="color: #4f46e5;">${area.count}</span>
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: bold;">
+                                            <span>Gross Revenue:</span>
+                                            <span style="color: #059669;">₹${new Intl.NumberFormat('en-IN').format(area.revenue)}</span>
+                                        </div>
+                                    </div>
+                                `
+                            });
+
+                            marker.addListener('click', () => {
+                                infoWindow.open(this.map, marker);
+                                this.$wire.set('city', area.name);
+                            });
+
+                            this.markers.push(marker);
+                        });
+
+                        if (this.locations.length > 1) {
+                            this.map.fitBounds(bounds);
+                        }
                     }
                 }
             }

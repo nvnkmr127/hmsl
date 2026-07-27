@@ -37,7 +37,7 @@
         window.dispatchEvent(new Event('google-maps-loaded'));
     };
 </script>
-<script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google.maps_api_key') }}&libraries=visualization&callback=initGoogleMap" async defer></script>
+<script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google.maps_api_key') }}&libraries=visualization,places&callback=initGoogleMap" async defer></script>
 @endpush
 
 @section('content')
