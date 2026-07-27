@@ -569,9 +569,9 @@ class OpdBooking extends Component
         $user = Auth::user();
         $isOwner = \App\Models\HospitalOwner::isOwner($user);
 
-        return Consultation::when($this->filterDate, function ($query) {
-                $query->whereDate('consultation_date', $this->filterDate);
-            })
+        $targetDate = $this->filterDate ?: now()->toDateString();
+
+        return Consultation::whereDate('consultation_date', $targetDate)
             ->when(
                 // Apply doctor filter only for non-owners when not in booking form
                 !$isOwner && $this->selectedDoctor && !$this->showBookingForm,
