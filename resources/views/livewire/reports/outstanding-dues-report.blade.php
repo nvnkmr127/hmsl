@@ -1,13 +1,35 @@
 <div class="space-y-6">
-    {{-- Search Card --}}
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm">
-        <div class="relative max-w-md">
-            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-            </span>
-            <input wire:model.live.debounce.300ms="search" type="text" class="block w-full pl-10 pr-3 py-3 border border-slate-200 dark:border-slate-700 rounded-xl leading-5 bg-slate-50 dark:bg-slate-800 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all sm:text-sm" placeholder="Search patient or bill number...">
+    {{-- Search & Summary Card --}}
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="flex-1 flex flex-col sm:flex-row items-center gap-3 w-full">
+            <div class="relative flex-1 w-full">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </span>
+                <input wire:model.live.debounce.300ms="search" type="text" class="block w-full pl-10 pr-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl leading-5 bg-slate-50 dark:bg-slate-800 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all text-xs font-semibold" placeholder="Search patient or bill number...">
+            </div>
+            <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-xl px-3 h-[42px] border border-slate-200 dark:border-slate-700">
+                <div class="flex items-center gap-1.5">
+                    <span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">From</span>
+                    <input type="date" wire:model.live="fromDate" class="bg-transparent border-none text-xs font-bold text-slate-700 dark:text-slate-200 focus:ring-0 p-0 h-4">
+                </div>
+                <div class="w-px h-5 bg-slate-300 dark:bg-slate-600"></div>
+                <div class="flex items-center gap-1.5">
+                    <span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">To</span>
+                    <input type="date" wire:model.live="toDate" class="bg-transparent border-none text-xs font-bold text-slate-700 dark:text-slate-200 focus:ring-0 p-0 h-4">
+                </div>
+            </div>
+            @if($search || $fromDate || $toDate)
+                <button wire:click="resetFilters" class="h-[42px] px-3 flex items-center gap-1 text-xs font-bold text-rose-500 hover:bg-rose-50 rounded-xl transition-all">
+                    Clear
+                </button>
+            @endif
+        </div>
+        <div class="bg-rose-50 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/50 rounded-2xl px-5 py-3 text-right flex-shrink-0">
+            <p class="text-[10px] font-bold text-rose-400 uppercase tracking-widest">Total Outstanding</p>
+            <p class="text-xl font-black text-rose-600 dark:text-rose-400">₹{{ number_format($totalOutstanding, 2) }}</p>
         </div>
     </div>
 

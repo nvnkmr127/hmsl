@@ -121,7 +121,30 @@ class RegistrationReport extends Component
         $patients = $query->latest('created_at')->paginate(10);
         $villages = Patient::select('city')->whereNotNull('city')->where('city', '!=', '')->distinct()->pluck('city');
 
-        // Update charts dynamically because they are inside wire:ignore
+        // Area Map Intelligence computation with Geo Coordinates
+        $totalRegs = max(1, $stats['summary']['total_registrations']);
+        $areaMapData = [];
+        $rank = 1;
+        foreach ($stats['village_distribution'] as $cityName => $count) {
+            $cityRevenue = \App\Models\Bill::whereHas('patient', fn($pq) => $pq->where('city', $cityName))
+                ->whereBetween('created_at', [$this->from . ' 00:00:00', $this->to . ' 23:59:59'])
+                ->sum('paid_amount');
+
+            [$lat, $lng] = $this->getCityCoordinates($cityName);
+
+            $areaMapData[] = [
+                'rank' => $rank++,
+                'name' => $cityName,
+                'count' => $count,
+                'share' => round(($count / $totalRegs) * 100, 1),
+                'revenue' => (float) $cityRevenue,
+                'avg_spend' => $count > 0 ? round($cityRevenue / $count, 2) : 0,
+                'lat' => $lat,
+                'lng' => $lng,
+            ];
+        }
+
+        // Update charts dynamically
         $this->dispatch('refreshChart-reg-trend-chart', data: $stats['daily_trend']);
         $this->dispatch('refreshChart-age-dist-chart', data: $stats['age_distribution']);
         $this->dispatch('refreshChart-village-dist-chart', data: $stats['village_distribution']);
@@ -130,6 +153,39 @@ class RegistrationReport extends Component
             'stats' => $stats,
             'patients' => $patients,
             'villages' => $villages,
+            'areaMapData' => $areaMapData,
         ]);
+    }
+
+    private function getCityCoordinates(string $cityName): array
+    {
+        $coordsMap = [
+            'nizamabad' => [18.6725, 78.0941],
+            'nizamabad district' => [18.6750, 78.1000],
+            'hyderabad' => [17.3850, 78.4867],
+            'bodhan' => [18.6653, 77.8978],
+            'armoor' => [18.7889, 78.2869],
+            'kamareddy' => [18.3183, 78.3375],
+            'karimnagar' => [18.4386, 79.1288],
+            'warangal' => [17.9784, 79.5941],
+            'siddipet' => [18.1018, 78.8520],
+            'medak' => [18.0454, 78.2612],
+            'suryapet' => [17.1500, 79.6333],
+            'nalgonda' => [17.0500, 79.2667],
+            'khammam' => [17.2472, 80.1514],
+            'mahbubnagar' => [16.7488, 77.9856],
+            'adilabad' => [19.6667, 78.5333],
+        ];
+
+        $key = strtolower(trim($cityName));
+        if (isset($coordsMap[$key])) {
+            return $coordsMap[$key];
+        }
+
+        $hash = abs(crc32($cityName));
+        $latOffset = (($hash % 100) - 50) * 0.003;
+        $lngOffset = ((int)($hash / 100 % 100) - 50) * 0.003;
+
+        return [round(18.6725 + $latOffset, 4), round(78.0941 + $lngOffset, 4)];
     }
 }

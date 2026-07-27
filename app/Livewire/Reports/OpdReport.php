@@ -6,6 +6,11 @@ use App\DTOs\ReportFilter;
 use App\Services\ReportService;
 use Livewire\Component;
 use Livewire\WithPagination;
+use App\Models\Consultation;
+use App\Models\Doctor;
+use App\Models\Department;
+use App\Models\Bill;
+use Illuminate\Support\Facades\DB;
 
 class OpdReport extends Component
 {
@@ -13,14 +18,24 @@ class OpdReport extends Component
 
     public $from;
     public $to;
+    public $search = '';
     public $doctorId = '';
     public $departmentId = '';
-    
+    public $visitType = '';
+    public $status = '';
+    public $billingStatus = '';
+    public $dateBasis = 'visit'; // 'visit' or 'billing'
+
     protected $queryString = [
         'from' => ['except' => ''],
         'to' => ['except' => ''],
+        'search' => ['except' => ''],
         'doctorId' => ['except' => ''],
         'departmentId' => ['except' => ''],
+        'visitType' => ['except' => ''],
+        'status' => ['except' => ''],
+        'billingStatus' => ['except' => ''],
+        'dateBasis' => ['except' => 'visit'],
     ];
 
     public function mount()
@@ -31,41 +46,153 @@ class OpdReport extends Component
 
     public function updated($property)
     {
-        if (in_array($property, ['from', 'to', 'doctorId', 'departmentId'])) {
+        if (in_array($property, ['from', 'to', 'search', 'doctorId', 'departmentId', 'visitType', 'status', 'billingStatus', 'dateBasis'])) {
             $this->resetPage();
         }
     }
 
+    public function resetFilters()
+    {
+        $this->reset(['search', 'doctorId', 'departmentId', 'visitType', 'status', 'billingStatus', 'dateBasis']);
+        $this->from = now()->startOfMonth()->toDateString();
+        $this->to = now()->toDateString();
+        $this->resetPage();
+    }
+
+    public function exportCsv()
+    {
+        $query = $this->getVisitsQuery();
+        $visits = $query->get();
+
+        return response()->streamDownload(function () use ($visits) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, [
+                'Token No', 'Date', 'Time', 'Patient Name', 'UHID', 'Phone',
+                'Doctor', 'Department', 'Visit Type', 'Fee (₹)', 'Discount (₹)',
+                'Bill No', 'Payment Status', 'Status'
+            ]);
+
+            foreach ($visits as $visit) {
+                $bill = $visit->bill;
+                fputcsv($handle, [
+                    $visit->token_number ?? 'N/A',
+                    $visit->consultation_date ? $visit->consultation_date->format('d M Y') : 'N/A',
+                    $visit->consultation_time ? $visit->consultation_time->format('h:i A') : 'N/A',
+                    $visit->patient ? $visit->patient->full_name : 'N/A',
+                    $visit->patient ? $visit->patient->uhid : 'N/A',
+                    $visit->patient ? $visit->patient->phone : 'N/A',
+                    $visit->doctor ? $visit->doctor->full_name : 'N/A',
+                    optional(optional($visit->doctor)->department)->name ?? 'N/A',
+                    $visit->visit_type,
+                    $visit->fee,
+                    $visit->discount_amount ?? 0,
+                    $bill ? $bill->bill_number : 'Not Billed',
+                    $bill ? ucfirst($bill->payment_status) : 'Not Billed',
+                    $visit->status,
+                ]);
+            }
+            fclose($handle);
+        }, 'opd_visits_report_' . now()->format('Ymd_His') . '.csv');
+    }
+
+    private function getVisitsQuery()
+    {
+        return Consultation::query()
+            ->with(['patient', 'doctor.department', 'bill.payments'])
+            ->when($this->search, function ($q) {
+                $q->where(function ($sub) {
+                    $sub->where('token_number', 'like', "%{$this->search}%")
+                       ->orWhereHas('patient', function ($pq) {
+                           $pq->where('first_name', 'like', "%{$this->search}%")
+                              ->orWhere('last_name', 'like', "%{$this->search}%")
+                              ->orWhere('uhid', 'like', "%{$this->search}%")
+                              ->orWhere('phone', 'like', "%{$this->search}%");
+                       });
+                });
+            })
+            ->when($this->doctorId, fn($q) => $q->where('doctor_id', $this->doctorId))
+            ->when($this->departmentId, fn($q) => $q->whereHas('doctor', fn($dq) => $dq->where('department_id', $this->departmentId)))
+            ->when($this->visitType, function ($q) {
+                if ($this->visitType === 'Follow-up') {
+                    $q->whereIn('visit_type', ['Follow-up', 'Review']);
+                } else {
+                    $q->where('visit_type', $this->visitType);
+                }
+            })
+            ->when($this->status, fn($q) => $q->where('status', $this->status))
+            ->when($this->billingStatus === 'Not Billed', fn($q) => $q->doesntHave('bill'))
+            ->when(in_array($this->billingStatus, ['Paid', 'Unpaid', 'Partially Paid']), function ($q) {
+                $q->whereHas('bill', fn($bq) => $bq->where('payment_status', $this->billingStatus));
+            })
+            ->when($this->from || $this->to, function ($q) {
+                if ($this->dateBasis === 'billing') {
+                    $q->whereHas('bill', function ($bq) {
+                        if ($this->from) $bq->whereDate('created_at', '>=', $this->from);
+                        if ($this->to) $bq->whereDate('created_at', '<=', $this->to);
+                    });
+                } else {
+                    if ($this->from) $q->whereDate('consultation_date', '>=', $this->from);
+                    if ($this->to) $q->whereDate('consultation_date', '<=', $this->to);
+                }
+            });
+    }
+
     public function render(ReportService $reportService)
     {
-        $filter = new ReportFilter(
-            from: $this->from,
-            to: $this->to,
-            doctorId: $this->doctorId ? (int) $this->doctorId : null,
-            departmentId: $this->departmentId ? (int) $this->departmentId : null
-        );
+        $baseQuery = $this->getVisitsQuery();
 
-        $stats = $reportService->getOpdStats($filter);
+        $totalVisits = (clone $baseQuery)->count();
+        $newVisits = (clone $baseQuery)->where('visit_type', 'New')->count();
+        $revisits = (clone $baseQuery)->whereIn('visit_type', ['Follow-up', 'Review'])->count();
+        $revisitRate = $totalVisits > 0 ? round(($revisits / $totalVisits) * 100, 1) : 0;
 
-        $query = \App\Models\Consultation::query()
-            ->with(['patient', 'doctor', 'doctor.department'])
-            ->whereBetween('consultation_date', [$filter->from, $filter->to]);
+        $totalFees = (float) (clone $baseQuery)->sum('fee');
+        $totalDiscounts = (float) (clone $baseQuery)->sum('discount_amount');
+        
+        // Fee Collected from Bills
+        $consultationIds = (clone $baseQuery)->pluck('id');
+        $totalCollected = (float) Bill::whereIn('consultation_id', $consultationIds)->sum('paid_amount');
 
-        if ($filter->doctorId) {
-            $query->where('doctor_id', $filter->doctorId);
-        }
+        // Doctor-wise share
+        $doctorWise = (clone $baseQuery)
+            ->with('doctor:id,full_name')
+            ->select('doctor_id', DB::raw('count(*) as count'))
+            ->groupBy('doctor_id')
+            ->get()
+            ->mapWithKeys(fn($item) => [$item->doctor->full_name ?? "Doc #{$item->doctor_id}" => $item->count])
+            ->toArray();
 
-        if ($filter->departmentId) {
-            $query->whereHas('doctor', fn($q) => $q->where('department_id', $filter->departmentId));
-        }
+        // Daily trend
+        $dailyTrend = (clone $baseQuery)
+            ->select(DB::raw('DATE(consultation_date) as date'), DB::raw('count(*) as count'))
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->pluck('count', 'date')
+            ->toArray();
 
-        $visits = $query->latest('consultation_date')->paginate(10);
+        $stats = [
+            'summary' => [
+                'total_visits' => $totalVisits,
+                'new_visits' => $newVisits,
+                'revisits' => $revisits,
+                'revisit_rate' => $revisitRate,
+                'total_fees' => $totalFees,
+                'total_discounts' => $totalDiscounts,
+                'total_collected' => $totalCollected,
+            ],
+            'doctor_wise' => $doctorWise,
+            'daily_trend' => $dailyTrend,
+        ];
+
+        $visits = (clone $baseQuery)->latest('consultation_date')->paginate(15);
 
         return view('livewire.reports.opd-report', [
             'stats' => $stats,
             'visits' => $visits,
-            'doctors' => \App\Models\Doctor::where('is_active', true)->get(),
-            'departments' => \App\Models\Department::where('is_active', true)->get(),
+            'doctors' => Doctor::where('is_active', true)->get(),
+            'departments' => Department::where('is_active', true)->get(),
         ]);
     }
 }
+

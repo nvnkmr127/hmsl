@@ -27,6 +27,9 @@ class BillingList extends Component
     public $search = '';
     public $statusFilter = '';
     public $methodFilter = '';
+    public $typeFilter = '';
+    public $doctorFilter = '';
+    public $dateType = 'payment';
     public $fromDate = '';
     public $toDate = '';
 
@@ -35,6 +38,7 @@ class BillingList extends Component
     public $opStatusFilter = '';
     public $opDoctorFilter = '';
     public $opVisitTypeFilter = '';
+    public $opPaymentStatusFilter = '';
     public $opFromDate = '';
     public $opToDate = '';
 
@@ -42,6 +46,8 @@ class BillingList extends Component
     public $ipSearch = '';
     public $ipStatusFilter = '';
     public $ipDoctorFilter = '';
+    public $ipWardFilter = '';
+    public $ipPaymentStatusFilter = '';
     public $ipFromDate = '';
     public $ipToDate = '';
 
@@ -72,6 +78,9 @@ class BillingList extends Component
         'search' => ['except' => ''],
         'statusFilter' => ['except' => ''],
         'methodFilter' => ['except' => ''],
+        'typeFilter' => ['except' => ''],
+        'doctorFilter' => ['except' => ''],
+        'dateType' => ['except' => 'payment'],
         'fromDate' => ['except' => ''],
         'toDate' => ['except' => ''],
         'activeTab' => ['except' => 'bills'],
@@ -79,11 +88,14 @@ class BillingList extends Component
         'opStatusFilter' => ['except' => ''],
         'opDoctorFilter' => ['except' => ''],
         'opVisitTypeFilter' => ['except' => ''],
+        'opPaymentStatusFilter' => ['except' => ''],
         'opFromDate' => ['except' => ''],
         'opToDate' => ['except' => ''],
         'ipSearch' => ['except' => ''],
         'ipStatusFilter' => ['except' => ''],
         'ipDoctorFilter' => ['except' => ''],
+        'ipWardFilter' => ['except' => ''],
+        'ipPaymentStatusFilter' => ['except' => ''],
         'ipFromDate' => ['except' => ''],
         'ipToDate' => ['except' => ''],
     ];
@@ -91,6 +103,9 @@ class BillingList extends Component
     public function updatedSearch()    { $this->resetPage('bills-page'); }
     public function updatedStatusFilter() { $this->resetPage('bills-page'); }
     public function updatedMethodFilter() { $this->resetPage('bills-page'); }
+    public function updatedTypeFilter() { $this->resetPage('bills-page'); }
+    public function updatedDoctorFilter() { $this->resetPage('bills-page'); }
+    public function updatedDateType() { $this->resetPage('bills-page'); }
     public function updatedFromDate() { $this->resetPage('bills-page'); }
     public function updatedToDate() { $this->resetPage('bills-page'); }
     
@@ -98,12 +113,15 @@ class BillingList extends Component
     public function updatedOpStatusFilter() { $this->resetPage('ops-page'); }
     public function updatedOpDoctorFilter() { $this->resetPage('ops-page'); }
     public function updatedOpVisitTypeFilter() { $this->resetPage('ops-page'); }
+    public function updatedOpPaymentStatusFilter() { $this->resetPage('ops-page'); }
     public function updatedOpFromDate() { $this->resetPage('ops-page'); }
     public function updatedOpToDate() { $this->resetPage('ops-page'); }
 
     public function updatedIpSearch() { $this->resetPage('ips-page'); }
     public function updatedIpStatusFilter() { $this->resetPage('ips-page'); }
     public function updatedIpDoctorFilter() { $this->resetPage('ips-page'); }
+    public function updatedIpWardFilter() { $this->resetPage('ips-page'); }
+    public function updatedIpPaymentStatusFilter() { $this->resetPage('ips-page'); }
     public function updatedIpFromDate() { $this->resetPage('ips-page'); }
     public function updatedIpToDate() { $this->resetPage('ips-page'); }
 
@@ -114,19 +132,19 @@ class BillingList extends Component
 
     public function resetBillsFilters()
     {
-        $this->reset(['search', 'statusFilter', 'methodFilter', 'fromDate', 'toDate']);
+        $this->reset(['search', 'statusFilter', 'methodFilter', 'typeFilter', 'doctorFilter', 'dateType', 'fromDate', 'toDate']);
         $this->resetPage('bills-page');
     }
 
     public function resetOpFilters()
     {
-        $this->reset(['opSearch', 'opStatusFilter', 'opDoctorFilter', 'opVisitTypeFilter', 'opFromDate', 'opToDate']);
+        $this->reset(['opSearch', 'opStatusFilter', 'opDoctorFilter', 'opVisitTypeFilter', 'opPaymentStatusFilter', 'opFromDate', 'opToDate']);
         $this->resetPage('ops-page');
     }
 
     public function resetIpFilters()
     {
-        $this->reset(['ipSearch', 'ipStatusFilter', 'ipDoctorFilter', 'ipFromDate', 'ipToDate']);
+        $this->reset(['ipSearch', 'ipStatusFilter', 'ipDoctorFilter', 'ipWardFilter', 'ipPaymentStatusFilter', 'ipFromDate', 'ipToDate']);
         $this->resetPage('ips-page');
     }
 
@@ -381,7 +399,7 @@ class BillingList extends Component
 
     private function getBillsQuery()
     {
-        return \App\Models\Bill::with(['patient', 'consultation.doctor', 'payments', 'discounts'])
+        return \App\Models\Bill::with(['patient', 'consultation.doctor', 'admission.doctor', 'payments', 'discounts'])
             ->when($this->search, function ($q) {
                 $q->where(function ($query) {
                     $query->where('bill_number', 'like', "%{$this->search}%")
@@ -397,8 +415,32 @@ class BillingList extends Component
             })
             ->when($this->statusFilter, fn($q) => $q->where('payment_status', $this->statusFilter))
             ->when($this->methodFilter, fn($q) => $q->where('payment_method', $this->methodFilter))
-            ->when($this->fromDate, fn($q) => $q->whereDate('created_at', '>=', $this->fromDate))
-            ->when($this->toDate, fn($q) => $q->whereDate('created_at', '<=', $this->toDate));
+            ->when($this->typeFilter === 'op', fn($q) => $q->whereNotNull('consultation_id'))
+            ->when($this->typeFilter === 'ip', fn($q) => $q->whereNotNull('admission_id'))
+            ->when($this->typeFilter === 'direct', fn($q) => $q->whereNull('consultation_id')->whereNull('admission_id'))
+            ->when($this->doctorFilter, function ($q) {
+                $q->where(function ($dq) {
+                    $dq->whereHas('consultation', fn($cq) => $cq->where('doctor_id', $this->doctorFilter))
+                       ->orWhereHas('admission', fn($aq) => $aq->where('doctor_id', $this->doctorFilter));
+                });
+            })
+            ->when($this->fromDate || $this->toDate, function ($q) {
+                if ($this->dateType === 'payment') {
+                    $q->where(function ($dq) {
+                        $dq->whereHas('payments', function ($pq) {
+                            if ($this->fromDate) $pq->whereDate('received_at', '>=', $this->fromDate);
+                            if ($this->toDate) $pq->whereDate('received_at', '<=', $this->toDate);
+                        })->orWhere(function ($uq) {
+                            $uq->whereDoesntHave('payments');
+                            if ($this->fromDate) $uq->whereDate('created_at', '>=', $this->fromDate);
+                            if ($this->toDate) $uq->whereDate('created_at', '<=', $this->toDate);
+                        });
+                    });
+                } else {
+                    if ($this->fromDate) $q->whereDate('created_at', '>=', $this->fromDate);
+                    if ($this->toDate) $q->whereDate('created_at', '<=', $this->toDate);
+                }
+            });
     }
 
     private function getOpQuery()
@@ -420,6 +462,10 @@ class BillingList extends Component
             ->when($this->opStatusFilter, fn($q) => $q->where('status', $this->opStatusFilter))
             ->when($this->opDoctorFilter, fn($q) => $q->where('doctor_id', $this->opDoctorFilter))
             ->when($this->opVisitTypeFilter, fn($q) => $q->where('visit_type', $this->opVisitTypeFilter))
+            ->when($this->opPaymentStatusFilter === 'Not Billed', fn($q) => $q->doesntHave('bill'))
+            ->when(in_array($this->opPaymentStatusFilter, ['Paid', 'Unpaid', 'Partially Paid']), function ($q) {
+                $q->whereHas('bill', fn($bq) => $bq->where('payment_status', $this->opPaymentStatusFilter));
+            })
             ->when($this->opFromDate, fn($q) => $q->whereDate('consultation_date', '>=', $this->opFromDate))
             ->when($this->opToDate, fn($q) => $q->whereDate('consultation_date', '<=', $this->opToDate));
     }
@@ -442,6 +488,13 @@ class BillingList extends Component
             })
             ->when($this->ipStatusFilter, fn($q) => $q->where('status', $this->ipStatusFilter))
             ->when($this->ipDoctorFilter, fn($q) => $q->where('doctor_id', $this->ipDoctorFilter))
+            ->when($this->ipWardFilter, function ($q) {
+                $q->whereHas('bed', fn($bq) => $bq->where('ward_id', $this->ipWardFilter));
+            })
+            ->when($this->ipPaymentStatusFilter === 'Not Billed', fn($q) => $q->doesntHave('finalBill'))
+            ->when(in_array($this->ipPaymentStatusFilter, ['Paid', 'Unpaid', 'Partially Paid']), function ($q) {
+                $q->whereHas('finalBill', fn($bq) => $bq->where('payment_status', $this->ipPaymentStatusFilter));
+            })
             ->when($this->ipFromDate, fn($q) => $q->whereDate('admission_date', '>=', $this->ipFromDate))
             ->when($this->ipToDate, fn($q) => $q->whereDate('admission_date', '<=', $this->ipToDate));
     }
@@ -461,14 +514,34 @@ class BillingList extends Component
         $statsRaw = (clone $billsBase)->selectRaw('
             COUNT(*) as total_count,
             SUM(CASE WHEN payment_status IN ("Unpaid", "Partially Paid") THEN 1 ELSE 0 END) as unpaid_count,
-            SUM(paid_amount) as total_paid
+            SUM(total_amount) as total_billed,
+            SUM(paid_amount) as total_paid,
+            SUM(balance_amount) as total_due,
+            SUM(discount_amount) as total_discount
         ')->first();
 
+        $totalPaidCollections = (float) ($statsRaw->total_paid ?? 0);
+        if ($this->dateType === 'payment' && ($this->fromDate || $this->toDate)) {
+            $periodReceived = BillPayment::query()
+                ->when($this->fromDate, fn($pq) => $pq->whereDate('received_at', '>=', $this->fromDate))
+                ->when($this->toDate, fn($pq) => $pq->whereDate('received_at', '<=', $this->toDate))
+                ->where('type', 'payment')
+                ->sum('amount');
+            $periodRefunded = BillPayment::query()
+                ->when($this->fromDate, fn($pq) => $pq->whereDate('received_at', '>=', $this->fromDate))
+                ->when($this->toDate, fn($pq) => $pq->whereDate('received_at', '<=', $this->toDate))
+                ->where('type', 'refund')
+                ->sum('amount');
+            $totalPaidCollections = (float) ($periodReceived - $periodRefunded);
+        }
+
         $stats = [
-            'total_paid'    => (float) ($statsRaw->total_paid ?? 0),
+            'total_count'   => (int) ($statsRaw->total_count ?? 0),
+            'total_billed'  => (float) ($statsRaw->total_billed ?? 0),
+            'total_paid'    => $totalPaidCollections,
+            'total_due'     => (float) ($statsRaw->total_due ?? 0),
+            'total_discount'=> (float) ($statsRaw->total_discount ?? 0),
             'total_unpaid'  => (int) ($statsRaw->unpaid_count ?? 0),
-            'op_count'      => \App\Models\Consultation::count(),
-            'op_today'      => \App\Models\Consultation::whereDate('consultation_date', today())->count(),
         ];
 
         // Specific OP Reports Stats
@@ -495,14 +568,18 @@ class BillingList extends Component
             SUM(CASE WHEN status = "Discharged" THEN 1 ELSE 0 END) as discharged
         ')->first();
 
+        $ipBilled = \App\Models\Bill::whereIn('admission_id', (clone $ipBase)->pluck('id'))->sum('total_amount');
+
         $ipStats = [
             'total' => (int) ($ipStatsRaw->total ?? 0),
             'admitted' => (int) ($ipStatsRaw->admitted ?? 0),
             'discharged' => (int) ($ipStatsRaw->discharged ?? 0),
+            'total_billed' => (float) ($ipBilled ?? 0),
         ];
 
         $doctors = \App\Models\Doctor::all();
+        $wards = \App\Models\Ward::all();
 
-        return view('livewire.counter.billing-list', compact('bills', 'ops', 'ips', 'stats', 'opStats', 'ipStats', 'doctors'));
+        return view('livewire.counter.billing-list', compact('bills', 'ops', 'ips', 'stats', 'opStats', 'ipStats', 'doctors', 'wards'));
     }
 }

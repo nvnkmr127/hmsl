@@ -2,50 +2,44 @@
     {{-- BILLING LIST --}}
     {{-- Stats Row --}}
     @if($activeTab === 'bills')
-    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
-        <div class="glass-card p-4 flex items-center gap-3">
-            <div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-            </div>
-            <div>
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Paid</p>
-                <p class="text-sm font-black text-gray-900 dark:text-white">₹{{ number_format($stats['total_paid'], 2) }}</p>
-            </div>
+    <div class="grid grid-cols-1 sm:grid-cols-5 gap-4 mb-6">
+        <div class="glass-card p-4 relative overflow-hidden group hover:scale-[1.02] transition-all duration-300">
+            <div class="absolute -right-4 -top-4 w-16 h-16 bg-blue-500/5 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Billed</p>
+            <p class="text-2xl font-black text-gray-900 dark:text-white">₹{{ number_format($stats['total_billed'], 2) }}</p>
+            <p class="text-[10px] font-bold text-blue-500 mt-1">Gross Invoiced</p>
         </div>
-        <div class="glass-card p-4 flex items-center gap-3">
-            <div class="w-8 h-8 rounded-lg bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center">
-                <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                </svg>
-            </div>
-            <div>
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Unpaid Bills</p>
-                <p class="text-sm font-black text-gray-900 dark:text-white">{{ $stats['total_unpaid'] }}</p>
-            </div>
+        <div class="glass-card p-4 relative overflow-hidden group hover:scale-[1.02] transition-all duration-300">
+            <div class="absolute -right-4 -top-4 w-16 h-16 bg-emerald-500/5 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Paid</p>
+            <p class="text-2xl font-black text-emerald-600">₹{{ number_format($stats['total_paid'], 2) }}</p>
+            <p class="text-[10px] font-bold text-emerald-500 mt-1">Collections</p>
         </div>
-        <div class="glass-card p-4 flex items-center gap-3">
-            <div class="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                </svg>
+        <div class="glass-card p-4 relative overflow-hidden group hover:scale-[1.02] transition-all duration-300">
+            <div class="absolute -right-4 -top-4 w-16 h-16 bg-rose-500/5 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Balance Due</p>
+            <div class="flex items-end gap-2">
+                <p class="text-2xl font-black text-rose-600">₹{{ number_format($stats['total_due'], 2) }}</p>
+                @if($stats['total_unpaid'] > 0)
+                    <span class="text-[10px] font-bold text-rose-500 mb-1">({{ $stats['total_unpaid'] }} Unpaid)</span>
+                @endif
             </div>
-            <div>
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Today OP</p>
-                <p class="text-sm font-black text-gray-900 dark:text-white">{{ $stats['op_today'] }}</p>
-            </div>
+            <p class="text-[10px] font-bold text-rose-500 mt-1">Outstanding</p>
         </div>
-        <div class="glass-card p-4 flex items-center gap-3">
-            <div class="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
-                <svg class="w-4 h-4 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                </svg>
+        <div class="glass-card p-4 relative overflow-hidden group hover:scale-[1.02] transition-all duration-300">
+            <div class="absolute -right-4 -top-4 w-16 h-16 bg-amber-500/5 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Discounts</p>
+            <p class="text-2xl font-black text-amber-600">₹{{ number_format($stats['total_discount'], 2) }}</p>
+            <p class="text-[10px] font-bold text-amber-500 mt-1">Total Deductions</p>
+        </div>
+        <div class="glass-card p-4 relative overflow-hidden group hover:scale-[1.02] transition-all duration-300">
+            <div class="absolute -right-4 -top-4 w-16 h-16 bg-indigo-500/5 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Bills</p>
+            <div class="flex items-end gap-2">
+                <p class="text-2xl font-black text-gray-900 dark:text-white">{{ $stats['total_count'] }}</p>
+                <span class="text-[10px] font-bold text-indigo-500 mb-1">Invoices</span>
             </div>
-            <div>
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total OP</p>
-                <p class="text-sm font-black text-gray-900 dark:text-white">{{ $stats['op_count'] }}</p>
-            </div>
+            <p class="text-[10px] font-bold text-indigo-500 mt-1">Count</p>
         </div>
     </div>
     @elseif($activeTab === 'op')
@@ -97,7 +91,7 @@
         </div>
     </div>
     @elseif($activeTab === 'ip')
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
         <div class="glass-card p-4 relative overflow-hidden group hover:scale-[1.02] transition-all duration-300">
             <div class="absolute -right-4 -top-4 w-16 h-16 bg-indigo-500/5 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total IP Admissions</p>
@@ -130,6 +124,12 @@
             <div class="mt-2 w-full h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                 <div class="h-full bg-emerald-500 rounded-full" style="width: {{ $ipStats['total'] > 0 ? ($ipStats['discharged'] / $ipStats['total']) * 100 : 0 }}%"></div>
             </div>
+        </div>
+        <div class="glass-card p-4 relative overflow-hidden group hover:scale-[1.02] transition-all duration-300">
+            <div class="absolute -right-4 -top-4 w-16 h-16 bg-blue-500/5 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">IP Invoiced Total</p>
+            <p class="text-2xl font-black text-gray-900 dark:text-white">₹{{ number_format($ipStats['total_billed'], 2) }}</p>
+            <p class="text-[10px] font-bold text-blue-500 mt-1">Inpatient Billings</p>
         </div>
     </div>
     @endif
@@ -166,30 +166,72 @@
 
     {{-- Filters --}}
     @if($activeTab === 'bills')
-    <div class="glass-card p-3 mb-6">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
-            <div class="lg:col-span-4">
-                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1 block">Search</label>
+    <div class="glass-card p-4 mb-6 space-y-3">
+        <!-- Top Row: Search + Date Range + Reset -->
+        <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+            <div class="flex-1 min-w-0">
                 <x-form.input
                     wire:model.live.debounce.350ms="search"
                     placeholder="Search bill number, patient name or UHID…"
                     id="billing-search"
                 />
             </div>
-            <div class="lg:col-span-2">
-                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1 block">Status</label>
+            <div class="flex items-center gap-2 flex-shrink-0">
+                <div class="flex items-center p-0.5 bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-200/50 dark:border-gray-700/50">
+                    <button type="button" wire:click="$set('dateType', 'payment')"
+                            class="px-2.5 py-1.5 text-[10px] font-bold rounded-lg transition-all {{ $dateType === 'payment' ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
+                        Payment Date
+                    </button>
+                    <button type="button" wire:click="$set('dateType', 'bill')"
+                            class="px-2.5 py-1.5 text-[10px] font-bold rounded-lg transition-all {{ $dateType === 'bill' ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
+                        Bill Date
+                    </button>
+                </div>
+                <div class="flex items-center gap-2 bg-gray-100/60 dark:bg-gray-800/60 rounded-xl px-3 h-[42px] border border-gray-200/50 dark:border-gray-700/50">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest">From</span>
+                        <input type="date" wire:model.live="fromDate" class="bg-transparent border-none text-xs font-bold text-gray-700 dark:text-gray-200 focus:ring-0 p-0 h-4">
+                    </div>
+                    <div class="w-px h-5 bg-gray-300 dark:bg-gray-600"></div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest">To</span>
+                        <input type="date" wire:model.live="toDate" class="bg-transparent border-none text-xs font-bold text-gray-700 dark:text-gray-200 focus:ring-0 p-0 h-4">
+                    </div>
+                </div>
+                <button wire:click="resetBillsFilters" 
+                        class="h-[42px] px-3.5 flex items-center gap-1.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-xs font-bold transition-all" title="Clear Filters">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    <span>Reset</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Bottom Row: Filter Dropdowns Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-gray-100 dark:border-gray-800/60">
+            <div>
+                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1 block">Bill Type</label>
+                <select wire:model.live="typeFilter"
+                        class="w-full px-3 py-2 rounded-xl border border-gray-200/60 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-800/50 text-xs font-semibold text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+                    <option value="">All Types</option>
+                    <option value="op">OP Bills</option>
+                    <option value="ip">IP Bills</option>
+                    <option value="direct">Direct Bills</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1 block">Payment Status</label>
                 <select wire:model.live="statusFilter"
-                        class="w-full px-4 py-2.5 rounded-xl border-transparent bg-gray-100/50 dark:bg-gray-700/50 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+                        class="w-full px-3 py-2 rounded-xl border border-gray-200/60 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-800/50 text-xs font-semibold text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
                     <option value="">All Statuses</option>
                     <option value="Paid">Paid</option>
                     <option value="Unpaid">Unpaid</option>
                     <option value="Partially Paid">Partially Paid</option>
                 </select>
             </div>
-            <div class="lg:col-span-2">
-                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1 block">Method</label>
+            <div>
+                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1 block">Payment Method</label>
                 <select wire:model.live="methodFilter"
-                        class="w-full px-4 py-2.5 rounded-xl border-transparent bg-gray-100/50 dark:bg-gray-700/50 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+                        class="w-full px-3 py-2 rounded-xl border border-gray-200/60 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-800/50 text-xs font-semibold text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
                     <option value="">All Methods</option>
                     <option value="Cash">Cash</option>
                     <option value="Card">Card / POS</option>
@@ -197,122 +239,165 @@
                     <option value="Insurance">Insurance</option>
                 </select>
             </div>
-            <div class="lg:col-span-3 flex items-center gap-2 bg-gray-100/50 dark:bg-gray-700/50 rounded-xl px-4 h-[42px]">
-                <div class="flex-1 flex flex-col justify-center">
-                    <span class="text-[9px] font-bold text-gray-400 uppercase leading-none mb-1">From</span>
-                    <input type="date" wire:model.live="fromDate" class="bg-transparent border-none text-xs font-bold text-gray-700 dark:text-gray-200 focus:ring-0 p-0 h-4">
-                </div>
-                <div class="w-px h-6 bg-gray-200 dark:bg-gray-600"></div>
-                <div class="flex-1 flex flex-col justify-center text-right">
-                    <span class="text-[9px] font-bold text-gray-400 uppercase leading-none mb-1">To</span>
-                    <input type="date" wire:model.live="toDate" class="bg-transparent border-none text-xs font-bold text-gray-700 dark:text-gray-200 focus:ring-0 p-0 h-4 text-right">
-                </div>
-            </div>
-            <div class="lg:col-span-1 flex justify-end">
-                <button wire:click="resetBillsFilters" 
-                        class="w-[42px] h-[42px] flex items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-rose-500 transition-all hover:rotate-90" title="Clear Filters">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
+            <div>
+                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1 block">Doctor</label>
+                <select wire:model.live="doctorFilter"
+                        class="w-full px-3 py-2 rounded-xl border border-gray-200/60 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-800/50 text-xs font-semibold text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+                    <option value="">All Doctors</option>
+                    @foreach($doctors as $doctor)
+                        <option value="{{ $doctor->id }}">{{ $doctor->full_name }}</option>
+                    @endforeach
+                </select>
             </div>
         </div>
     </div>
     @elseif($activeTab === 'op')
-    <div class="glass-card p-3 mb-6">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
-            <div class="lg:col-span-3">
-                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1 block">Search Patient</label>
+    <div class="glass-card p-4 mb-6 space-y-3">
+        <!-- Top Row: Search + Date Range + Reset -->
+        <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+            <div class="flex-1 min-w-0">
                 <x-form.input
                     wire:model.live.debounce.350ms="opSearch"
-                    placeholder="Name, UHID, Phone..."
+                    placeholder="Search patient name, UHID, phone..."
                     id="op-search"
                 />
             </div>
-            <div class="lg:col-span-2">
-                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1 block">Status</label>
+            <div class="flex items-center gap-2 flex-shrink-0">
+                <div class="flex items-center gap-2 bg-gray-100/60 dark:bg-gray-800/60 rounded-xl px-3 h-[42px] border border-gray-200/50 dark:border-gray-700/50">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest">From</span>
+                        <input type="date" wire:model.live="opFromDate" class="bg-transparent border-none text-xs font-bold text-gray-700 dark:text-gray-200 focus:ring-0 p-0 h-4">
+                    </div>
+                    <div class="w-px h-5 bg-gray-300 dark:bg-gray-600"></div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest">To</span>
+                        <input type="date" wire:model.live="opToDate" class="bg-transparent border-none text-xs font-bold text-gray-700 dark:text-gray-200 focus:ring-0 p-0 h-4">
+                    </div>
+                </div>
+                <button wire:click="resetOpFilters" 
+                        class="h-[42px] px-3.5 flex items-center gap-1.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-xs font-bold transition-all" title="Clear Filters">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    <span>Reset</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Bottom Row: Filter Dropdowns Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-gray-100 dark:border-gray-800/60">
+            <div>
+                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1 block">Booking Status</label>
                 <select wire:model.live="opStatusFilter"
-                        class="w-full px-4 py-2.5 rounded-xl border-transparent bg-gray-100/50 dark:bg-gray-700/50 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+                        class="w-full px-3 py-2 rounded-xl border border-gray-200/60 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-800/50 text-xs font-semibold text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
                     <option value="">All Statuses</option>
                     <option value="Pending">Pending</option>
                     <option value="Completed">Completed</option>
                     <option value="Cancelled">Cancelled</option>
                 </select>
             </div>
-            <div class="lg:col-span-2">
+            <div>
+                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1 block">Visit Type</label>
+                <select wire:model.live="opVisitTypeFilter"
+                        class="w-full px-3 py-2 rounded-xl border border-gray-200/60 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-800/50 text-xs font-semibold text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+                    <option value="">All Visit Types</option>
+                    <option value="New Consultation">New Consultation</option>
+                    <option value="Review">Review</option>
+                    <option value="Follow-up">Follow-up</option>
+                </select>
+            </div>
+            <div>
                 <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1 block">Doctor</label>
                 <select wire:model.live="opDoctorFilter"
-                        class="w-full px-4 py-2.5 rounded-xl border-transparent bg-gray-100/50 dark:bg-gray-700/50 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+                        class="w-full px-3 py-2 rounded-xl border border-gray-200/60 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-800/50 text-xs font-semibold text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
                     <option value="">All Doctors</option>
                     @foreach($doctors as $doctor)
                         <option value="{{ $doctor->id }}">{{ $doctor->full_name }}</option>
                     @endforeach
                 </select>
             </div>
-            <div class="lg:col-span-4 flex items-center gap-2 bg-gray-100/50 dark:bg-gray-700/50 rounded-xl px-4 h-[42px]">
-                <div class="flex-1 flex flex-col justify-center">
-                    <span class="text-[9px] font-bold text-gray-400 uppercase leading-none mb-1">From</span>
-                    <input type="date" wire:model.live="opFromDate" class="bg-transparent border-none text-xs font-bold text-gray-700 dark:text-gray-200 focus:ring-0 p-0 h-4">
-                </div>
-                <div class="w-px h-6 bg-gray-200 dark:bg-gray-600"></div>
-                <div class="flex-1 flex flex-col justify-center text-right">
-                    <span class="text-[9px] font-bold text-gray-400 uppercase leading-none mb-1">To</span>
-                    <input type="date" wire:model.live="opToDate" class="bg-transparent border-none text-xs font-bold text-gray-700 dark:text-gray-200 focus:ring-0 p-0 h-4 text-right">
-                </div>
-            </div>
-            <div class="lg:col-span-1 flex justify-end">
-                <button wire:click="resetOpFilters" 
-                        class="w-[42px] h-[42px] flex items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-rose-500 transition-all hover:rotate-90" title="Clear Filters">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
+            <div>
+                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1 block">Billing Status</label>
+                <select wire:model.live="opPaymentStatusFilter"
+                        class="w-full px-3 py-2 rounded-xl border border-gray-200/60 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-800/50 text-xs font-semibold text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+                    <option value="">All Billing</option>
+                    <option value="Paid">Paid</option>
+                    <option value="Unpaid">Unpaid</option>
+                    <option value="Not Billed">Not Billed</option>
+                </select>
             </div>
         </div>
     </div>
     @elseif($activeTab === 'ip')
-    <div class="glass-card p-3 mb-6">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
-            <div class="lg:col-span-3">
-                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1 block">Search Patient</label>
+    <div class="glass-card p-4 mb-6 space-y-3">
+        <!-- Top Row: Search + Date Range + Reset -->
+        <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+            <div class="flex-1 min-w-0">
                 <x-form.input
                     wire:model.live.debounce.350ms="ipSearch"
-                    placeholder="Name, UHID..."
+                    placeholder="Search patient name, UHID..."
                     id="ip-search"
                 />
             </div>
-            <div class="lg:col-span-2">
-                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1 block">Status</label>
+            <div class="flex items-center gap-2 flex-shrink-0">
+                <div class="flex items-center gap-2 bg-gray-100/60 dark:bg-gray-800/60 rounded-xl px-3 h-[42px] border border-gray-200/50 dark:border-gray-700/50">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest">From</span>
+                        <input type="date" wire:model.live="ipFromDate" class="bg-transparent border-none text-xs font-bold text-gray-700 dark:text-gray-200 focus:ring-0 p-0 h-4">
+                    </div>
+                    <div class="w-px h-5 bg-gray-300 dark:bg-gray-600"></div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest">To</span>
+                        <input type="date" wire:model.live="ipToDate" class="bg-transparent border-none text-xs font-bold text-gray-700 dark:text-gray-200 focus:ring-0 p-0 h-4">
+                    </div>
+                </div>
+                <button wire:click="resetIpFilters" 
+                        class="h-[42px] px-3.5 flex items-center gap-1.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-xs font-bold transition-all" title="Clear Filters">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    <span>Reset</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Bottom Row: Filter Dropdowns Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-gray-100 dark:border-gray-800/60">
+            <div>
+                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1 block">Admission Status</label>
                 <select wire:model.live="ipStatusFilter"
-                        class="w-full px-4 py-2.5 rounded-xl border-transparent bg-gray-100/50 dark:bg-gray-700/50 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+                        class="w-full px-3 py-2 rounded-xl border border-gray-200/60 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-800/50 text-xs font-semibold text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
                     <option value="">All Statuses</option>
                     <option value="Admitted">Admitted</option>
                     <option value="Discharged">Discharged</option>
                     <option value="Cancelled">Cancelled</option>
                 </select>
             </div>
-            <div class="lg:col-span-2">
+            <div>
+                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1 block">Ward</label>
+                <select wire:model.live="ipWardFilter"
+                        class="w-full px-3 py-2 rounded-xl border border-gray-200/60 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-800/50 text-xs font-semibold text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+                    <option value="">All Wards</option>
+                    @foreach($wards as $ward)
+                        <option value="{{ $ward->id }}">{{ $ward->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
                 <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1 block">Doctor</label>
                 <select wire:model.live="ipDoctorFilter"
-                        class="w-full px-4 py-2.5 rounded-xl border-transparent bg-gray-100/50 dark:bg-gray-700/50 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+                        class="w-full px-3 py-2 rounded-xl border border-gray-200/60 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-800/50 text-xs font-semibold text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
                     <option value="">All Doctors</option>
                     @foreach($doctors as $doctor)
                         <option value="{{ $doctor->id }}">{{ $doctor->full_name }}</option>
                     @endforeach
                 </select>
             </div>
-            <div class="lg:col-span-4 flex items-center gap-2 bg-gray-100/50 dark:bg-gray-700/50 rounded-xl px-4 h-[42px]">
-                <div class="flex-1 flex flex-col justify-center">
-                    <span class="text-[9px] font-bold text-gray-400 uppercase leading-none mb-1">From</span>
-                    <input type="date" wire:model.live="ipFromDate" class="bg-transparent border-none text-xs font-bold text-gray-700 dark:text-gray-200 focus:ring-0 p-0 h-4">
-                </div>
-                <div class="w-px h-6 bg-gray-200 dark:bg-gray-600"></div>
-                <div class="flex-1 flex flex-col justify-center text-right">
-                    <span class="text-[9px] font-bold text-gray-400 uppercase leading-none mb-1">To</span>
-                    <input type="date" wire:model.live="ipToDate" class="bg-transparent border-none text-xs font-bold text-gray-700 dark:text-gray-200 focus:ring-0 p-0 h-4 text-right">
-                </div>
-            </div>
-            <div class="lg:col-span-1 flex justify-end">
-                <button wire:click="resetIpFilters" 
-                        class="w-[42px] h-[42px] flex items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-rose-500 transition-all hover:rotate-90" title="Clear Filters">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
+            <div>
+                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1 block">Billing Status</label>
+                <select wire:model.live="ipPaymentStatusFilter"
+                        class="w-full px-3 py-2 rounded-xl border border-gray-200/60 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-800/50 text-xs font-semibold text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+                    <option value="">All Billing</option>
+                    <option value="Paid">Paid</option>
+                    <option value="Unpaid">Unpaid</option>
+                    <option value="Not Billed">Not Billed</option>
+                </select>
             </div>
         </div>
     </div>

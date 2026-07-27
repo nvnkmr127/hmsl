@@ -11,20 +11,44 @@ class OutstandingDuesReport extends Component
     use WithPagination;
 
     public $search = '';
+    public $fromDate = '';
+    public $toDate = '';
+
+    protected $queryString = [
+        'search' => ['except' => ''],
+        'fromDate' => ['except' => ''],
+        'toDate' => ['except' => ''],
+    ];
+
+    public function updatedSearch() { $this->resetPage(); }
+    public function updatedFromDate() { $this->resetPage(); }
+    public function updatedToDate() { $this->resetPage(); }
+
+    public function resetFilters()
+    {
+        $this->reset(['search', 'fromDate', 'toDate']);
+        $this->resetPage();
+    }
 
     public function render()
     {
-        $dues = Bill::with(['patient', 'consultation.doctor'])
+        $duesQuery = Bill::with(['patient', 'consultation.doctor', 'admission.doctor'])
             ->whereIn('payment_status', ['Unpaid', 'Partially Paid'])
             ->when($this->search, function($q) {
-                $q->whereHas('patient', fn($p) => $p->search($this->search))
-                  ->orWhere('bill_number', 'like', "%{$this->search}%");
+                $q->where(function ($sub) {
+                    $sub->whereHas('patient', fn($p) => $p->search($this->search))
+                        ->orWhere('bill_number', 'like', "%{$this->search}%");
+                });
             })
-            ->latest()
-            ->paginate(15);
+            ->when($this->fromDate, fn($q) => $q->whereDate('created_at', '>=', $this->fromDate))
+            ->when($this->toDate, fn($q) => $q->whereDate('created_at', '<=', $this->toDate));
+
+        $totalOutstanding = (clone $duesQuery)->sum('balance_amount');
+        $dues = (clone $duesQuery)->latest()->paginate(15);
 
         return view('livewire.reports.outstanding-dues-report', [
-            'dues' => $dues
+            'dues' => $dues,
+            'totalOutstanding' => $totalOutstanding,
         ]);
     }
 }

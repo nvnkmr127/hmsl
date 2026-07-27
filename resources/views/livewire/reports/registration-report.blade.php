@@ -155,6 +155,395 @@
         </div>
     </div>
 
+    <!-- Shopify-Style Live Regional Map Section -->
+    <div x-data="googleMapHandler(@js($areaMapData))" x-init="initMap()" class="bg-slate-950 text-white rounded-[2.5rem] p-6 lg:p-8 border border-slate-800 shadow-2xl space-y-6 relative overflow-hidden">
+        <!-- Ambient Glowing Background Blurs -->
+        <div class="absolute -top-40 -left-40 w-96 h-96 bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none"></div>
+        <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none"></div>
+
+        <!-- Top Shopify Header -->
+        <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-800/80 pb-6">
+            <div>
+                <div class="flex items-center gap-3">
+                    <span class="relative flex h-3 w-3">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                    </span>
+                    <h3 class="text-xl font-black text-white uppercase tracking-tight">
+                        Live Regional Map Monitor
+                    </h3>
+                </div>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Shopify-style live spatial patient density & revenue streaming</p>
+            </div>
+
+            <!-- View Switcher -->
+            <div class="flex items-center p-1 bg-slate-900 rounded-2xl border border-slate-800">
+                <button type="button" @click="activeTab = 'map'"
+                        :class="activeTab === 'map' ? 'bg-emerald-500 text-slate-950 font-black shadow-lg shadow-emerald-500/20' : 'text-slate-400 hover:text-white font-bold'"
+                        class="px-4 py-2 text-xs uppercase rounded-xl transition-all flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                    Live Globe Map
+                </button>
+                <button type="button" @click="activeTab = 'embed'"
+                        :class="activeTab === 'embed' ? 'bg-emerald-500 text-slate-950 font-black shadow-lg shadow-emerald-500/20' : 'text-slate-400 hover:text-white font-bold'"
+                        class="px-4 py-2 text-xs uppercase rounded-xl transition-all flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                    Satellite View
+                </button>
+                <button type="button" @click="activeTab = 'table'"
+                        :class="activeTab === 'table' ? 'bg-emerald-500 text-slate-950 font-black shadow-lg shadow-emerald-500/20' : 'text-slate-400 hover:text-white font-bold'"
+                        class="px-4 py-2 text-xs uppercase rounded-xl transition-all flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+                    Area Ledger
+                </button>
+            </div>
+        </div>
+
+        <!-- Google Maps JS Container with Shopify Side Panel -->
+        <div x-show="activeTab === 'map'" class="space-y-4 relative z-10">
+            <!-- Heatmap Sub-Controls Bar -->
+            <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900/90 p-3 rounded-2xl border border-slate-800 backdrop-blur-md">
+                <!-- Layer Mode Switcher -->
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Display Mode:</span>
+                    <div class="flex items-center p-0.5 bg-slate-950 rounded-xl border border-slate-800">
+                        <button type="button" @click="layerMode = 'hybrid'"
+                                :class="layerMode === 'hybrid' ? 'bg-emerald-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white font-bold'"
+                                class="px-3 py-1 text-[10px] uppercase rounded-lg transition-all">
+                            Hybrid Mode
+                        </button>
+                        <button type="button" @click="layerMode = 'heatmap'"
+                                :class="layerMode === 'heatmap' ? 'bg-emerald-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white font-bold'"
+                                class="px-3 py-1 text-[10px] uppercase rounded-lg transition-all">
+                            Thermal Heatmap
+                        </button>
+                        <button type="button" @click="layerMode = 'markers'"
+                                :class="layerMode === 'markers' ? 'bg-emerald-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white font-bold'"
+                                class="px-3 py-1 text-[10px] uppercase rounded-lg transition-all">
+                            Count Markers
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Weight Mode Switcher -->
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Intensity Basis:</span>
+                    <div class="flex items-center p-0.5 bg-slate-950 rounded-xl border border-slate-800">
+                        <button type="button" @click="weightMode = 'count'"
+                                :class="weightMode === 'count' ? 'bg-indigo-500 text-white font-black' : 'text-slate-400 hover:text-white font-bold'"
+                                class="px-3 py-1 text-[10px] uppercase rounded-lg transition-all">
+                            Patient Volume
+                        </button>
+                        <button type="button" @click="weightMode = 'revenue'"
+                                :class="weightMode === 'revenue' ? 'bg-indigo-500 text-white font-black' : 'text-slate-400 hover:text-white font-bold'"
+                                class="px-3 py-1 text-[10px] uppercase rounded-lg transition-all">
+                            Revenue (₹)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Shopify Grid: 8 Cols Map Canvas + 4 Cols Live Stream Panel -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Map Canvas -->
+                <div class="lg:col-span-8">
+                    <div wire:ignore class="relative w-full h-[520px] min-h-[520px] rounded-3xl overflow-hidden border border-slate-800 shadow-2xl" id="google-geo-map"></div>
+                </div>
+
+                <!-- Shopify Live Stream Panel -->
+                <div class="lg:col-span-4 bg-slate-900/90 rounded-3xl p-5 border border-slate-800 flex flex-col justify-between space-y-4 max-h-[520px] overflow-y-auto">
+                    <div>
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+                            <h4 class="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                                Top Active Regions
+                            </h4>
+                            <span class="text-[10px] font-mono text-emerald-400 font-bold">{{ count($areaMapData) }} Hubs</span>
+                        </div>
+
+                        <div class="space-y-3">
+                            @forelse($areaMapData as $area)
+                                <div @click="panToCity({{ $area['lat'] }}, {{ $area['lng'] }}, '{{ $area['name'] }}')"
+                                     class="group cursor-pointer p-3.5 rounded-2xl bg-slate-950 hover:bg-slate-800/80 border border-slate-800 hover:border-emerald-500/60 transition-all duration-300 relative overflow-hidden hover:scale-[1.01]">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <div class="flex items-center gap-2.5">
+                                            <span class="w-6 h-6 rounded-lg {{ $area['rank'] <= 2 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400' }} flex items-center justify-center text-[10px] font-black">
+                                                #{{ $area['rank'] }}
+                                            </span>
+                                            <span class="text-xs font-black text-white group-hover:text-emerald-400 transition-colors">
+                                                {{ $area['name'] }}
+                                            </span>
+                                        </div>
+                                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-950 text-emerald-400 border border-emerald-800/60">
+                                            {{ number_format($area['count']) }} Patients
+                                        </span>
+                                    </div>
+
+                                    <!-- Progress Density Bar -->
+                                    <div class="space-y-1">
+                                        <div class="flex justify-between text-[10px] font-bold">
+                                            <span class="text-slate-400">{{ $area['share'] }}% Market Share</span>
+                                            <span class="text-emerald-400 font-mono">₹{{ number_format($area['revenue'], 0) }}</span>
+                                        </div>
+                                        <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                                            <div class="bg-emerald-500 h-1.5 rounded-full transition-all duration-500" style="width: {{ min(100, max(8, $area['share'] * 3)) }}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="py-8 text-center text-slate-500 text-xs font-semibold">
+                                    No live area data available.
+                                </div>
+                            @endforelse
+                        </div>
+                    </div>
+
+                    <div class="pt-3 border-t border-slate-800 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">
+                        Click any region item to focus map & filter records
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Google Maps Satellite / Embed Iframe View -->
+        <div x-show="activeTab === 'embed'" class="space-y-3 relative z-10">
+            <div class="relative w-full h-[520px] rounded-3xl overflow-hidden border border-slate-800 shadow-xl">
+                @php
+                    $primaryCity = count($areaMapData) > 0 ? $areaMapData[0]['name'] : 'Nizamabad,Telangana';
+                @endphp
+                <iframe class="w-full h-full border-0"
+                        loading="lazy"
+                        allowfullscreen
+                        src="https://maps.google.com/maps?q={{ urlencode($primaryCity) }}&t=&z=10&ie=UTF8&iwloc=&output=embed">
+                </iframe>
+            </div>
+            <div class="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2">
+                <span>Google Maps Satellite View</span>
+                <span>Centered on {{ $primaryCity }}</span>
+            </div>
+        </div>
+
+        <!-- Area Data Table View -->
+        <div x-show="activeTab === 'table'" class="overflow-x-auto relative z-10">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-900 border-b border-slate-800">
+                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Rank & Region / City</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Patients Registered</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Market Share (%)</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Gross Revenue (₹)</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Avg Spend / Patient</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800">
+                    @forelse($areaMapData as $area)
+                    <tr class="hover:bg-slate-900/60 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <span class="font-mono text-xs font-black text-emerald-400">#{{ $area['rank'] }}</span>
+                                <button wire:click="$set('city', '{{ $area['name'] }}')" class="text-xs font-black text-white hover:text-emerald-400">
+                                    {{ $area['name'] }}
+                                </button>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-xs font-black text-center text-white">
+                            {{ number_format($area['count']) }}
+                        </td>
+                        <td class="px-6 py-4 text-xs font-bold text-center text-emerald-400">
+                            {{ $area['share'] }}%
+                        </td>
+                        <td class="px-6 py-4 text-xs font-black text-right text-emerald-400 font-mono">
+                            ₹{{ number_format($area['revenue'], 2) }}
+                        </td>
+                        <td class="px-6 py-4 text-xs font-bold text-right text-slate-300 font-mono">
+                            ₹{{ number_format($area['avg_spend'], 2) }}
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="5" class="px-6 py-8 text-center text-sm font-semibold text-slate-500">No geographic area data found.</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+    function googleMapHandler(locations) {
+        return {
+            activeTab: 'map',
+            map: null,
+            heatmapLayer: null,
+            markers: [],
+            locations: locations,
+            weightMode: 'count', // 'count' or 'revenue'
+            layerMode: 'hybrid', // 'heatmap', 'markers', 'hybrid'
+
+            panToCity(lat, lng, cityName) {
+                if (this.map) {
+                    this.map.panTo({ lat: lat, lng: lng });
+                    this.map.setZoom(12);
+                }
+                this.$wire.set('city', cityName);
+            },
+
+            initMap() {
+                this.$watch('activeTab', (val) => {
+                    if (val === 'map' && this.map && window.google && window.google.maps) {
+                        setTimeout(() => google.maps.event.trigger(this.map, 'resize'), 250);
+                    }
+                });
+
+                this.$watch('weightMode', () => this.updateLayers());
+                this.$watch('layerMode', () => this.updateLayers());
+
+                const renderGoogleMap = () => {
+                    const mapContainer = document.getElementById('google-geo-map');
+                    if (!mapContainer) return;
+
+                    if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
+                        setTimeout(renderGoogleMap, 300);
+                        return;
+                    }
+
+                    const centerLat = (this.locations && this.locations.length > 0) ? this.locations[0].lat : 18.6725;
+                    const centerLng = (this.locations && this.locations.length > 0) ? this.locations[0].lng : 78.0941;
+
+                    this.map = new google.maps.Map(mapContainer, {
+                        center: { lat: centerLat, lng: centerLng },
+                        zoom: 10,
+                        mapTypeId: google.maps.MapTypeId.ROADMAP,
+                        mapTypeControl: false,
+                        streetViewControl: false,
+                        fullscreenControl: true,
+                        styles: [
+                            { elementType: "geometry", stylers: [{ color: "#090d16" }] },
+                            { elementType: "labels.text.stroke", stylers: [{ color: "#090d16" }] },
+                            { elementType: "labels.text.fill", stylers: [{ color: "#64748b" }] },
+                            { featureType: "road", elementType: "geometry", stylers: [{ color: "#1e293b" }] },
+                            { featureType: "water", elementType: "geometry", stylers: [{ color: "#020617" }] }
+                        ]
+                    });
+
+                    this.updateLayers();
+                };
+
+                if (window.google && window.google.maps) {
+                    renderGoogleMap();
+                } else {
+                    window.addEventListener('google-maps-loaded', renderGoogleMap);
+                    setTimeout(renderGoogleMap, 500);
+                }
+            },
+
+            updateLayers() {
+                if (!this.map || !window.google || !window.google.maps) return;
+
+                if (this.heatmapLayer) {
+                    this.heatmapLayer.setMap(null);
+                    this.heatmapLayer = null;
+                }
+
+                if (this.markers) {
+                    this.markers.forEach(m => m.setMap(null));
+                    this.markers = [];
+                }
+
+                if (!Array.isArray(this.locations) || this.locations.length === 0) return;
+
+                const bounds = new google.maps.LatLngBounds();
+
+                // Shopify Heatmap Layer
+                if ((this.layerMode === 'heatmap' || this.layerMode === 'hybrid') && google.maps.visualization && google.maps.visualization.HeatmapLayer) {
+                    const heatmapPoints = this.locations.map(loc => {
+                        const weightVal = this.weightMode === 'count' ? loc.count : Math.max(1, loc.revenue / 500);
+                        return {
+                            location: new google.maps.LatLng(loc.lat, loc.lng),
+                            weight: Math.max(1, weightVal)
+                        };
+                    });
+
+                    this.heatmapLayer = new google.maps.visualization.HeatmapLayer({
+                        data: heatmapPoints,
+                        map: this.map,
+                        radius: 50,
+                        opacity: 0.85,
+                        gradient: [
+                            'rgba(16, 185, 129, 0)',
+                            'rgba(16, 185, 129, 0.4)',
+                            'rgba(52, 211, 153, 0.7)',
+                            'rgba(99, 102, 241, 0.85)',
+                            'rgba(244, 63, 94, 0.95)',
+                            'rgba(239, 68, 68, 1)'
+                        ]
+                    });
+                }
+
+                // Shopify Pulsing Count Markers with Badges
+                if (this.layerMode === 'markers' || this.layerMode === 'hybrid') {
+                    this.locations.forEach(area => {
+                        const position = { lat: area.lat, lng: area.lng };
+                        bounds.extend(position);
+
+                        const displayVal = this.weightMode === 'count' 
+                            ? `${area.count}` 
+                            : `₹${(area.revenue/1000).toFixed(0)}k`;
+
+                        const marker = new google.maps.Marker({
+                            position: position,
+                            map: this.map,
+                            title: `${area.name}: ${area.count} Patients (₹${area.revenue})`,
+                            label: {
+                                text: displayVal,
+                                color: '#ffffff',
+                                fontSize: '11px',
+                                fontWeight: '900'
+                            },
+                            icon: {
+                                path: google.maps.SymbolPath.CIRCLE,
+                                scale: Math.max(18, Math.min(34, area.count * 1.6)),
+                                fillColor: area.rank <= 2 ? '#10b981' : '#6366f1',
+                                fillOpacity: 0.95,
+                                strokeWeight: 3,
+                                strokeColor: '#ffffff'
+                            }
+                        });
+
+                        const infoWindow = new google.maps.InfoWindow({
+                            content: `
+                                <div style="font-family: sans-serif; padding: 6px; min-width: 160px; color: #0f172a;">
+                                    <h4 style="font-weight: 900; font-size: 14px; margin: 0 0 4px 0; color: #1e293b;">${area.name}</h4>
+                                    <div style="font-size: 11px; color: #64748b; margin-bottom: 6px;">Rank #${area.rank} • ${area.share}% Market Share</div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; margin-bottom: 4px;">
+                                        <span>Registered Patients:</span>
+                                        <span style="color: #4f46e5;">${area.count}</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; margin-bottom: 6px;">
+                                        <span>Gross Revenue:</span>
+                                        <span style="color: #059669;">₹${new Intl.NumberFormat('en-IN').format(area.revenue)}</span>
+                                    </div>
+                                </div>
+                            `
+                        });
+
+                        marker.addListener('click', () => {
+                            infoWindow.open(this.map, marker);
+                            this.$wire.set('city', area.name);
+                        });
+
+                        this.markers.push(marker);
+                    });
+
+                    if (this.locations.length > 1) {
+                        this.map.fitBounds(bounds);
+                    }
+                }
+            }
+        }
+    }
+    </script>
+
     <!-- Advanced Data Table -->
     <div class="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden relative">
         <div wire:loading class="absolute inset-0 z-50 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm flex items-center justify-center">

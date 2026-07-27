@@ -73,9 +73,9 @@ class RevenueDashboard extends Component
             ->groupBy('item_type')
             ->get();
 
-        // Daily trend for the current range (max 30 days)
-        $dailyTrend = (clone $billQuery)
-            ->select(DB::raw('DATE(created_at) as date'), DB::raw('SUM(total_amount) as total'))
+        // Daily trend for the current range (based on payment collection dates)
+        $dailyTrend = (clone $baseQuery)
+            ->select(DB::raw('DATE(received_at) as date'), DB::raw('SUM(CASE WHEN type = "payment" THEN amount ELSE -amount END) as total'))
             ->groupBy('date')
             ->orderBy('date')
             ->get();
