@@ -130,14 +130,27 @@ class RegistrationReport extends Component
         $query = $this->getFilteredQuery();
 
         $patients = $query->latest('created_at')->paginate(10);
-        $villages = Patient::select('city')->whereNotNull('city')->where('city', '!=', '')->distinct()->pluck('city');
+        $cities = Patient::select('city')->whereNotNull('city')->where('city', '!=', '')->distinct()->pluck('city')->toArray();
+        $addresses = Patient::select('address')->whereNotNull('address')->where('address', '!=', '')->distinct()->pluck('address')->toArray();
+        
+        $villageList = [];
+        foreach (array_merge($cities, $addresses) as $rawLoc) {
+            $parts = array_map('trim', explode(',', $rawLoc));
+            foreach ($parts as $p) {
+                if (!empty($p) && strlen($p) > 2 && !is_numeric($p)) {
+                    $villageList[ucwords(strtolower($p))] = true;
+                }
+            }
+        }
+        ksort($villageList);
+        $villages = array_keys($villageList);
 
-        // Grouped query to eliminate N+1 loop
-        $cityRevenues = \App\Models\Bill::selectRaw('patients.city, SUM(paid_amount) as total_paid')
+        // Grouped query to calculate revenues per city/village
+        $cityRevenues = \App\Models\Bill::selectRaw('COALESCE(NULLIF(patients.city, ""), patients.address) as loc, SUM(paid_amount) as total_paid')
             ->join('patients', 'bills.patient_id', '=', 'patients.id')
             ->whereBetween('bills.created_at', [$this->from . ' 00:00:00', $this->to . ' 23:59:59'])
-            ->groupBy('patients.city')
-            ->pluck('total_paid', 'patients.city');
+            ->groupBy('loc')
+            ->pluck('total_paid', 'loc');
 
         $totalRegs = max(1, $stats['summary']['total_registrations']);
         $areaMapData = [];

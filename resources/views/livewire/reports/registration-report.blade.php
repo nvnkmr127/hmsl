@@ -59,8 +59,8 @@
                     </svg>
                 </div>
 
-                <select wire:model.live="city" class="bg-slate-800/50 border border-slate-700/50 text-slate-300 text-xs font-bold rounded-xl focus:ring-1 focus:ring-indigo-500 cursor-pointer py-2 px-3 max-w-[120px]">
-                    <option value="">All Cities</option>
+                <select wire:model.live="city" class="bg-slate-800/50 border border-slate-700/50 text-slate-300 text-xs font-bold rounded-xl focus:ring-1 focus:ring-indigo-500 cursor-pointer py-2 px-3 min-w-[150px]">
+                    <option value="">All Villages & Cities</option>
                     @foreach($villages as $v)
                         <option value="{{ $v }}">{{ $v }}</option>
                     @endforeach
@@ -506,10 +506,12 @@
                                 streetViewControl: false,
                                 fullscreenControl: true,
                                 styles: [
-                                    { elementType: "geometry", stylers: [{ color: "#090d16" }] },
-                                    { elementType: "labels.text.stroke", stylers: [{ color: "#090d16" }] },
-                                    { elementType: "labels.text.fill", stylers: [{ color: "#64748b" }] },
+                                    { elementType: "geometry", stylers: [{ color: "#060913" }] },
+                                    { elementType: "labels.text.stroke", stylers: [{ color: "#060913" }] },
+                                    { elementType: "labels.text.fill", stylers: [{ color: "#94a3b8" }] },
+                                    { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#38bdf8" }] },
                                     { featureType: "road", elementType: "geometry", stylers: [{ color: "#1e293b" }] },
+                                    { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#334155" }] },
                                     { featureType: "water", elementType: "geometry", stylers: [{ color: "#020617" }] }
                                 ]
                             });
@@ -576,7 +578,7 @@
                 if (this.isLeaflet) {
                     const bounds = [];
                     this.locations.forEach(area => {
-                        const color = area.rank <= 2 ? '#10b981' : '#6366f1';
+                        const color = area.rank <= 3 ? '#06b6d4' : (area.rank <= 8 ? '#6366f1' : '#f59e0b');
 
                         if (this.layerMode === 'heatmap' || this.layerMode === 'hybrid') {
                             const radius = Math.max(18, Math.min(50, area.count * 2.5));
@@ -584,8 +586,8 @@
                                 radius: radius,
                                 color: color,
                                 fillColor: color,
-                                fillOpacity: 0.4,
-                                weight: 2
+                                fillOpacity: 0.45,
+                                weight: 2.5
                             }).addTo(this.map);
                         }
 
@@ -595,7 +597,7 @@
                                 : `₹${(area.revenue/1000).toFixed(0)}k`;
 
                             const countBadgeHtml = `
-                                <div style="background-color: ${color}; color: #ffffff; min-width: 34px; height: 34px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 11px; border: 2.5px solid #ffffff; box-shadow: 0 4px 14px rgba(0,0,0,0.5); font-family: sans-serif; text-align: center; padding: 0 6px;">
+                                <div style="background: linear-gradient(135deg, ${color}, #090d16); color: #ffffff; min-width: 36px; height: 36px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 11px; border: 2.5px solid #ffffff; box-shadow: 0 4px 16px rgba(0,0,0,0.6); font-family: sans-serif; text-align: center; padding: 0 6px;">
                                     ${displayVal}
                                 </div>
                             `;
@@ -649,14 +651,14 @@
                             data: heatmapPoints,
                             map: this.map,
                             radius: 50,
-                            opacity: 0.85,
+                            opacity: 0.9,
                             gradient: [
-                                'rgba(16, 185, 129, 0)',
-                                'rgba(16, 185, 129, 0.4)',
-                                'rgba(52, 211, 153, 0.7)',
-                                'rgba(99, 102, 241, 0.85)',
-                                'rgba(244, 63, 94, 0.95)',
-                                'rgba(239, 68, 68, 1)'
+                                'rgba(0, 242, 254, 0)',
+                                'rgba(6, 182, 212, 0.5)',
+                                'rgba(16, 185, 129, 0.8)',
+                                'rgba(245, 158, 11, 0.9)',
+                                'rgba(249, 115, 22, 0.95)',
+                                'rgba(225, 29, 72, 1)'
                             ]
                         });
                     }
@@ -669,6 +671,8 @@
                             const displayVal = this.weightMode === 'count' 
                                 ? `${area.count}` 
                                 : `₹${(area.revenue/1000).toFixed(0)}k`;
+
+                            const color = area.rank <= 3 ? '#06b6d4' : (area.rank <= 8 ? '#6366f1' : '#f59e0b');
 
                             const marker = new google.maps.Marker({
                                 position: position,
@@ -683,7 +687,7 @@
                                 icon: {
                                     path: google.maps.SymbolPath.CIRCLE,
                                     scale: Math.max(18, Math.min(34, area.count * 1.6)),
-                                    fillColor: area.rank <= 2 ? '#10b981' : '#6366f1',
+                                    fillColor: color,
                                     fillOpacity: 0.95,
                                     strokeWeight: 3,
                                     strokeColor: '#ffffff'

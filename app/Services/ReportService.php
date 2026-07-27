@@ -274,16 +274,25 @@ class ReportService
             ->pluck('count', 'date')
             ->toArray();
 
-        $villageDistribution = (clone $query)
-            ->whereNotNull('city')
-            ->where('city', '!=', '')
-            ->select('city', DB::raw('count(*) as count'))
-            ->groupBy('city')
-            ->orderByDesc('count')
-            ->limit(10)
-            ->get()
-            ->pluck('count', 'city')
-            ->toArray();
+        $villageCounts = [];
+        $patientLocations = (clone $query)->select('city', 'address')->get();
+        foreach ($patientLocations as $p) {
+            $loc = trim($p->city ?: '');
+            if (empty($loc) || strtolower($loc) === 'nizamabad') {
+                if (!empty($p->address)) {
+                    $addrParts = array_map('trim', explode(',', $p->address));
+                    $loc = !empty($addrParts[0]) ? $addrParts[0] : $loc;
+                }
+            }
+            if (empty($loc)) {
+                $loc = 'Nizamabad Town';
+            }
+            $locName = ucwords(strtolower($loc));
+            $villageCounts[$locName] = ($villageCounts[$locName] ?? 0) + 1;
+        }
+
+        arsort($villageCounts);
+        $villageDistribution = array_slice($villageCounts, 0, 25, true);
 
         return [
             'summary' => [
