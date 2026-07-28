@@ -214,7 +214,10 @@ class ReportService
         }
 
         if ($filter->city) {
-            $query->where('city', $filter->city);
+            $query->where(function ($q) use ($filter) {
+                $q->where('city', 'LIKE', '%' . $filter->city . '%')
+                  ->orWhere('address', 'LIKE', '%' . $filter->city . '%');
+            });
         }
 
         if ($filter->ageGroup) {
@@ -277,17 +280,7 @@ class ReportService
         $villageCounts = [];
         $patientLocations = (clone $query)->select('city', 'address')->get();
         foreach ($patientLocations as $p) {
-            $loc = trim($p->city ?: '');
-            if (empty($loc) || strtolower($loc) === 'nizamabad') {
-                if (!empty($p->address)) {
-                    $addrParts = array_map('trim', explode(',', $p->address));
-                    $loc = !empty($addrParts[0]) ? $addrParts[0] : $loc;
-                }
-            }
-            if (empty($loc)) {
-                $loc = 'Nizamabad Town';
-            }
-            $locName = ucwords(strtolower($loc));
+            $locName = \App\Livewire\Reports\RegistrationReport::extractVillage($p->city, $p->address);
             $villageCounts[$locName] = ($villageCounts[$locName] ?? 0) + 1;
         }
 

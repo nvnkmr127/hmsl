@@ -1,8 +1,10 @@
 <div class="space-y-8">
     <!-- Advanced Top Control Bar -->
-    <div class="bg-slate-900 rounded-[2rem] p-6 shadow-2xl relative overflow-hidden">
-        <div class="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-transparent"></div>
-        <div class="absolute -top-24 -right-24 w-48 h-48 bg-white/5 rounded-full blur-3xl"></div>
+    <div class="bg-slate-900 rounded-[2rem] p-6 shadow-2xl relative">
+        <div class="absolute inset-0 overflow-hidden rounded-[2rem] pointer-events-none">
+            <div class="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-transparent"></div>
+            <div class="absolute -top-24 -right-24 w-48 h-48 bg-white/5 rounded-full blur-3xl"></div>
+        </div>
         
         <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div>
@@ -48,23 +50,48 @@
                     <option value="12+ Years">12+ Years</option>
                 </select>
 
-                <div x-data="addressAutocomplete()" x-init="initAutocomplete()" class="relative">
-                    <input x-ref="autocompleteInput"
-                           type="text"
-                           placeholder="Search City / Location..."
-                           wire:model.live.debounce.300ms="city"
-                           class="bg-slate-800/50 border border-slate-700/50 text-slate-300 text-xs font-bold rounded-xl focus:ring-1 focus:ring-indigo-500 py-2 px-3 pl-8 min-w-[200px]" />
-                    <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    </svg>
-                </div>
+                <!-- Searchable Village Dropdown -->
+                <div x-data="{ open: false, search: '' }" @keydown.escape.window="open = false" class="relative min-w-[200px]">
+                    <button @click.stop="open = !open" type="button" 
+                            class="w-full flex items-center justify-between gap-2 bg-slate-800/50 border border-slate-700/50 text-slate-300 text-xs font-bold rounded-xl py-2.5 px-3 hover:bg-slate-800 transition-colors">
+                        <span class="truncate">{{ $city ? $city : 'All Villages & Cities' }}</span>
+                        <div class="flex items-center gap-1">
+                            @if($city)
+                                <span @click.stop="$wire.set('city', ''); open = false;" 
+                                      class="text-slate-400 hover:text-rose-400 font-black text-sm px-1" title="Clear Village">×</span>
+                            @endif
+                            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </div>
+                    </button>
 
-                <select wire:model.live="city" class="bg-slate-800/50 border border-slate-700/50 text-slate-300 text-xs font-bold rounded-xl focus:ring-1 focus:ring-indigo-500 cursor-pointer py-2 px-3 min-w-[150px]">
-                    <option value="">All Villages & Cities</option>
-                    @foreach($villages as $v)
-                        <option value="{{ $v }}">{{ $v }}</option>
-                    @endforeach
-                </select>
+                    <div x-show="open" @click.outside="open = false" 
+                         x-transition:enter="transition ease-out duration-100" 
+                         x-transition:enter-start="transform opacity-0 scale-95" 
+                         x-transition:enter-end="transform opacity-100 scale-100" 
+                         x-transition:leave="transition ease-in duration-75" 
+                         x-transition:leave-start="transform opacity-100 scale-100" 
+                         x-transition:leave-end="transform opacity-0 scale-95" 
+                         class="absolute z-[100] top-full right-0 lg:left-0 mt-1.5 w-64 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden py-1" style="display: none;">
+                        <div class="p-2 border-b border-slate-800">
+                            <input type="text" x-model="search" @click.stop @keydown.escape="open = false" placeholder="Search village..." 
+                                   class="w-full bg-slate-800 border border-slate-700 text-white text-xs font-semibold rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div class="max-h-60 overflow-y-auto divide-y divide-slate-800/40">
+                            <button type="button" @click.stop="$wire.set('city', ''); open = false; search = '';" 
+                                    class="w-full text-left px-3 py-2 text-xs font-bold hover:bg-indigo-600/20 text-slate-300 hover:text-white transition-colors">
+                                All Villages & Cities
+                            </button>
+                            @foreach($villages as $v)
+                                <button type="button" 
+                                        x-show="!search || '{{ strtolower(addslashes($v)) }}'.includes(search.toLowerCase())" 
+                                        @click.stop="$wire.set('city', '{{ addslashes($v) }}'); open = false; search = '';" 
+                                        class="w-full text-left px-3 py-2 text-xs font-semibold hover:bg-indigo-600/20 text-slate-300 hover:text-white transition-colors truncate">
+                                    {{ $v }}
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
 
                 <div class="h-8 w-px bg-slate-800 hidden sm:block"></div>
 
@@ -350,7 +377,7 @@
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-slate-950 border-b border-slate-800">
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Rank & Region / City</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Rank & Village / Region</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Patients Registered</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Market Share (%)</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Gross Revenue (₹)</th>
@@ -392,55 +419,6 @@
     </div>
 
     <script>
-    function addressAutocomplete() {
-        return {
-            initAutocomplete() {
-                const input = this.$refs.autocompleteInput;
-                if (!input) return;
-
-                const setupPlaces = () => {
-                    if (typeof google === 'undefined' || typeof google.maps === 'undefined' || typeof google.maps.places === 'undefined') {
-                        setTimeout(setupPlaces, 300);
-                        return;
-                    }
-
-                    try {
-                        const autocomplete = new google.maps.places.Autocomplete(input, {
-                            types: ['(cities)'],
-                            componentRestrictions: { country: 'in' }
-                        });
-
-                        autocomplete.addListener('place_changed', () => {
-                            const place = autocomplete.getPlace();
-                            if (!place) return;
-
-                            let selectedCity = '';
-                            if (place.address_components) {
-                                for (const comp of place.address_components) {
-                                    if (comp.types.includes('locality') || comp.types.includes('administrative_area_level_2')) {
-                                        selectedCity = comp.long_name;
-                                        break;
-                                    }
-                                }
-                            }
-                            if (!selectedCity) selectedCity = place.name || input.value;
-                            @this.set('city', selectedCity);
-                        });
-                    } catch (e) {
-                        console.warn('Google Places Autocomplete notice:', e);
-                    }
-                };
-
-                if (window.google && window.google.maps && window.google.maps.places) {
-                    setupPlaces();
-                } else {
-                    window.addEventListener('google-maps-loaded', setupPlaces);
-                    setTimeout(setupPlaces, 500);
-                }
-            }
-        }
-    }
-
     function googleMapHandler(locations) {
         return {
             activeTab: 'map',
@@ -762,7 +740,7 @@
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
                                 <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-500">
-                                    {{ substr($patient->first_name, 0, 1) }}{{ substr($patient->last_name, 0, 1) }}
+                                    {{ substr($patient->first_name ?? 'U', 0, 1) }}{{ substr($patient->last_name ?? '', 0, 1) }}
                                 </div>
                                 <div>
                                     <a href="{{ route('counter.patients.history', $patient->id) }}" class="text-sm font-black text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
@@ -783,7 +761,7 @@
                         <td class="px-6 py-4">
                             <div class="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                                 <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                {{ $patient->city ?? '--' }}
+                                {{ \App\Livewire\Reports\RegistrationReport::extractVillage($patient->city, $patient->address) }}
                             </div>
                         </td>
                         <td class="px-6 py-4">

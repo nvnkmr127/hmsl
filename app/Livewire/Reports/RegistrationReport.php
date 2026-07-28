@@ -87,6 +87,40 @@ class RegistrationReport extends Component
         return $query;
     }
 
+    public static function extractVillage(?string $city, ?string $address): string
+    {
+        $ignoreWords = ['telangana', 'andhra pradesh', 'india', 'in', 'ts', 'ap', 'maharashtra', 'karnataka'];
+
+        if (!empty($address)) {
+            $parts = array_map('trim', explode(',', $address));
+            foreach ($parts as $part) {
+                $clean = trim($part);
+                if (empty($clean)) continue;
+                if (preg_match('/^(\d+|[hHDd]\.?[nN]o|#|flat|plot|room|shop|ward|street|st\.|road|rd\.)/i', $clean) && count($parts) > 1) {
+                    continue;
+                }
+                if (in_array(strtolower($clean), $ignoreWords) && count($parts) > 1) {
+                    continue;
+                }
+                if (strlen($clean) > 2 && !is_numeric($clean)) {
+                    return ucwords(strtolower($clean));
+                }
+            }
+        }
+
+        if (!empty($city)) {
+            $parts = array_map('trim', explode(',', $city));
+            foreach ($parts as $part) {
+                $clean = trim($part);
+                if (!empty($clean) && strlen($clean) > 2 && !is_numeric($clean)) {
+                    return ucwords(strtolower($clean));
+                }
+            }
+        }
+
+        return 'Nizamabad';
+    }
+
     public function exportCSV()
     {
         $patients = $this->getFilteredQuery()->latest('created_at')->get();
@@ -96,6 +130,7 @@ class RegistrationReport extends Component
         $csvData[] = implode(',', $csvHeader);
 
         foreach ($patients as $patient) {
+            $village = self::extractVillage($patient->city, $patient->address);
             $row = [
                 $patient->created_at->format('Y-m-d'),
                 $patient->created_at->format('H:i:s'),
@@ -103,7 +138,7 @@ class RegistrationReport extends Component
                 '"' . addslashes($patient->full_name) . '"',
                 $patient->gender ?? 'N/A',
                 $patient->age,
-                '"' . addslashes($patient->city ?? '') . '"',
+                '"' . addslashes($village) . '"',
                 $patient->phone ?? 'N/A',
             ];
             $csvData[] = implode(',', $row);
@@ -130,33 +165,31 @@ class RegistrationReport extends Component
         $query = $this->getFilteredQuery();
 
         $patients = $query->latest('created_at')->paginate(10);
-        $cities = Patient::select('city')->whereNotNull('city')->where('city', '!=', '')->distinct()->pluck('city')->toArray();
-        $addresses = Patient::select('address')->whereNotNull('address')->where('address', '!=', '')->distinct()->pluck('address')->toArray();
         
         $villageList = [];
-        foreach (array_merge($cities, $addresses) as $rawLoc) {
-            $parts = array_map('trim', explode(',', $rawLoc));
-            foreach ($parts as $p) {
-                if (!empty($p) && strlen($p) > 2 && !is_numeric($p)) {
-                    $villageList[ucwords(strtolower($p))] = true;
-                }
-            }
+        foreach (Patient::select('city', 'address')->distinct()->get() as $p) {
+            $v = self::extractVillage($p->city, $p->address);
+            $villageList[$v] = true;
         }
         ksort($villageList);
         $villages = array_keys($villageList);
 
-        // Grouped query to calculate revenues per city/village
-        $cityRevenues = \App\Models\Bill::selectRaw('COALESCE(NULLIF(patients.city, ""), patients.address) as loc, SUM(paid_amount) as total_paid')
-            ->join('patients', 'bills.patient_id', '=', 'patients.id')
-            ->whereBetween('bills.created_at', [$this->from . ' 00:00:00', $this->to . ' 23:59:59'])
-            ->groupBy('loc')
-            ->pluck('total_paid', 'loc');
+        $villageRevenues = [];
+        $bills = \App\Models\Bill::with('patient:id,city,address')
+            ->whereBetween('created_at', [$this->from . ' 00:00:00', $this->to . ' 23:59:59'])
+            ->get();
+        foreach ($bills as $bill) {
+            if ($bill->patient) {
+                $v = self::extractVillage($bill->patient->city, $bill->patient->address);
+                $villageRevenues[$v] = ($villageRevenues[$v] ?? 0) + (float) $bill->paid_amount;
+            }
+        }
 
         $totalRegs = max(1, $stats['summary']['total_registrations']);
         $areaMapData = [];
         $rank = 1;
         foreach ($stats['village_distribution'] as $cityName => $count) {
-            $cityRevenue = (float) ($cityRevenues[$cityName] ?? 0);
+            $cityRevenue = (float) ($villageRevenues[$cityName] ?? 0);
 
             [$lat, $lng] = $this->getCityCoordinates($cityName);
 
@@ -237,7 +270,7 @@ class RegistrationReport extends Component
         // Tight clustering for local villages around Nizamabad District (18.6725, 78.0941)
         $hash = abs(crc32($cityName));
         $latOffset = (($hash % 100) - 50) * 0.0015;
-        $lngOffset = ((int)($hash / 100 % 100) - 50) * 0.0015;
+        $lngOffset = (((int)($hash / 100) % 100) - 50) * 0.0015;
 
         return [round(18.6725 + $latOffset, 4), round(78.0941 + $lngOffset, 4)];
     }
