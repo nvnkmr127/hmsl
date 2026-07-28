@@ -121,7 +121,34 @@
         </div>
     </div>
 
-    <!-- Charts Row -->
+    <!-- Advanced Operational Insights -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group hover:scale-[1.02] transition-all">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Peak Traffic Day</p>
+            <p class="text-2xl font-black text-indigo-600 dark:text-indigo-400">{{ $stats['summary']['busiest_day'] }}</p>
+            <p class="text-[10px] font-bold text-indigo-500 mt-1 uppercase">Busiest day of week</p>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group hover:scale-[1.02] transition-all">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Peak Rush Hour</p>
+            <p class="text-2xl font-black text-rose-600 dark:text-rose-400">{{ $stats['summary']['peak_hour'] }}</p>
+            <p class="text-[10px] font-bold text-rose-500 mt-1 uppercase">Highest consultation density</p>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group hover:scale-[1.02] transition-all">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Avg. Daily Footfall</p>
+            <p class="text-2xl font-black text-amber-600 dark:text-amber-400">{{ $stats['summary']['avg_daily_visits'] }}</p>
+            <p class="text-[10px] font-bold text-amber-500 mt-1 uppercase">Visits per active day</p>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group hover:scale-[1.02] transition-all">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Top Department</p>
+            <p class="text-2xl font-black text-emerald-600 dark:text-emerald-400 truncate">{{ $stats['summary']['top_department'] }}</p>
+            <p class="text-[10px] font-bold text-emerald-500 mt-1 uppercase">Highest volume specialty</p>
+        </div>
+    </div>
+
+    <!-- Charts Row 1 -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm">
             <div class="mb-4">
@@ -137,6 +164,25 @@
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Visits distributed by physician</p>
             </div>
             <x-chart type="bar" :data="$stats['doctor_wise']" id="doctor-share-chart" label="Patients Seen" />
+        </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm">
+            <div class="mb-4">
+                <h3 class="text-base font-black text-slate-800 dark:text-white uppercase tracking-tight">Day-Wise Volume</h3>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Outpatient traffic distributed by day of the week</p>
+            </div>
+            <x-chart type="bar" :data="$stats['day_wise']" id="day-wise-chart" label="Visits" />
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm">
+            <div class="mb-4">
+                <h3 class="text-base font-black text-slate-800 dark:text-white uppercase tracking-tight">Peak Consultation Hours</h3>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Patient check-in density by hour of day</p>
+            </div>
+            <x-chart type="line" :data="$stats['peak_hours']" id="peak-hours-chart" label="Visits" />
         </div>
     </div>
 
