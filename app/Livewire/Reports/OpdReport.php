@@ -171,6 +171,37 @@ class OpdReport extends Component
             ->pluck('count', 'date')
             ->toArray();
 
+        // Day-wise distribution
+        $daysOrder = ['Mon' => 0, 'Tue' => 0, 'Wed' => 0, 'Thu' => 0, 'Fri' => 0, 'Sat' => 0, 'Sun' => 0];
+        $dayWiseRaw = (clone $baseQuery)
+            ->select(DB::raw('DATE_FORMAT(consultation_date, "%a") as day'), DB::raw('count(*) as count'))
+            ->groupBy('day')
+            ->pluck('count', 'day')
+            ->toArray();
+        $dayWise = array_merge($daysOrder, array_intersect_key($dayWiseRaw, $daysOrder));
+
+        // Peak hours
+        $peakHours = (clone $baseQuery)
+            ->select(DB::raw('DATE_FORMAT(created_at, "%h %p") as hour_label'), DB::raw('HOUR(created_at) as h'), DB::raw('count(*) as count'))
+            ->groupBy('hour_label', 'h')
+            ->orderBy('h')
+            ->pluck('count', 'hour_label')
+            ->toArray();
+
+        // Department-wise share
+        $departmentWise = (clone $baseQuery)
+            ->join('doctors', 'consultations.doctor_id', '=', 'doctors.id')
+            ->join('departments', 'doctors.department_id', '=', 'departments.id')
+            ->select('departments.name as department', DB::raw('count(consultations.id) as count'))
+            ->groupBy('departments.name')
+            ->pluck('count', 'department')
+            ->toArray();
+
+        $busiestDay = !empty(array_filter($dayWise)) ? array_search(max($dayWise), $dayWise) : 'N/A';
+        $peakHour = !empty($peakHours) ? array_search(max($peakHours), $peakHours) : 'N/A';
+        $avgDailyVisits = count($dailyTrend) > 0 ? round($totalVisits / count($dailyTrend), 1) : $totalVisits;
+        $topDepartment = !empty($departmentWise) ? array_search(max($departmentWise), $departmentWise) : 'N/A';
+
         $stats = [
             'summary' => [
                 'total_visits' => $totalVisits,
@@ -180,9 +211,16 @@ class OpdReport extends Component
                 'total_fees' => $totalFees,
                 'total_discounts' => $totalDiscounts,
                 'total_collected' => $totalCollected,
+                'busiest_day' => $busiestDay,
+                'peak_hour' => $peakHour,
+                'avg_daily_visits' => $avgDailyVisits,
+                'top_department' => $topDepartment,
             ],
             'doctor_wise' => $doctorWise,
             'daily_trend' => $dailyTrend,
+            'day_wise' => $dayWise,
+            'peak_hours' => $peakHours,
+            'department_wise' => $departmentWise,
         ];
 
         $visits = (clone $baseQuery)->latest('consultation_date')->paginate(15);

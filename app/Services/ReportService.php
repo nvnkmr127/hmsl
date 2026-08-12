@@ -214,7 +214,10 @@ class ReportService
         }
 
         if ($filter->city) {
-            $query->where('city', $filter->city);
+            $query->where(function ($q) use ($filter) {
+                $q->where('city', 'LIKE', '%' . $filter->city . '%')
+                  ->orWhere('address', 'LIKE', '%' . $filter->city . '%');
+            });
         }
 
         if ($filter->ageGroup) {
@@ -274,16 +277,15 @@ class ReportService
             ->pluck('count', 'date')
             ->toArray();
 
-        $villageDistribution = (clone $query)
-            ->whereNotNull('city')
-            ->where('city', '!=', '')
-            ->select('city', DB::raw('count(*) as count'))
-            ->groupBy('city')
-            ->orderByDesc('count')
-            ->limit(10)
-            ->get()
-            ->pluck('count', 'city')
-            ->toArray();
+        $villageCounts = [];
+        $patientLocations = (clone $query)->select('city', 'address')->get();
+        foreach ($patientLocations as $p) {
+            $locName = \App\Livewire\Reports\RegistrationReport::extractVillage($p->city, $p->address);
+            $villageCounts[$locName] = ($villageCounts[$locName] ?? 0) + 1;
+        }
+
+        arsort($villageCounts);
+        $villageDistribution = array_slice($villageCounts, 0, 25, true);
 
         return [
             'summary' => [

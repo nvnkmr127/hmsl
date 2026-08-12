@@ -30,8 +30,8 @@ class QueueMonitor extends Component
 
             $doctorStats[] = [
                 'doctor' => $doctor,
-                'ongoing_token' => $ongoing ? $ongoing->token_number : '--',
-                'ongoing_patient' => $ongoing ? $ongoing->patient->full_name : 'Waiting...',
+                'ongoing_token' => $ongoing?->token_number ?? '--',
+                'ongoing_patient' => $ongoing?->patient?->full_name ?? 'Waiting...',
                 'next_token' => $next ?: '--'
             ];
         }

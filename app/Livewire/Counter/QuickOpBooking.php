@@ -131,7 +131,7 @@ class QuickOpBooking extends Component
     private function autoSelectDoctor()
     {
         $user = auth()->user();
-        if ($user->hasRole('doctor')) {
+        if ($user && $user->hasRole('doctor')) {
             $doctor = Doctor::where('user_id', $user->id)->first();
             if ($doctor) {
                 $this->selectedDoctor = $doctor->id;

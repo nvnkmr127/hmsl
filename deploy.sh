@@ -170,10 +170,13 @@ php artisan migrate --force || {
 }
 print_success "Database migrations completed"
 
-# Step 8: Permissions
+# Step 8: Permissions (Permanent SGID + ACL setup)
 echo "🔐 Setting permissions..."
 sudo chown -R $USER:www-data storage bootstrap/cache 2>/dev/null || true
 sudo chmod -R 775 storage bootstrap/cache 2>/dev/null || chmod -R 777 storage bootstrap/cache
+sudo chmod -R g+s storage bootstrap/cache 2>/dev/null || true
+sudo setfacl -d -m g::rwx,u::rwx storage bootstrap/cache 2>/dev/null || true
+sudo setfacl -m g::rwx,u::rwx storage bootstrap/cache 2>/dev/null || true
 print_success "Permissions set"
 
 # Step 9: Clear and optimize caches

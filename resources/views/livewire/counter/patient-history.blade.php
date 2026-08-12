@@ -51,6 +51,14 @@
                     <p class="text-tiny font-black text-gray-400 uppercase tracking-widest">Date of Birth</p>
                     <p class="font-bold text-gray-900 dark:text-white">{{ $patient->date_of_birth ? \Illuminate\Support\Carbon::parse($patient->date_of_birth)->format('d M Y') : '—' }}</p>
                 </div>
+                <div>
+                    <p class="text-tiny font-black text-gray-400 uppercase tracking-widest">Father Name</p>
+                    <p class="font-bold text-gray-900 dark:text-white">{{ $patient->father_name ?: '—' }}</p>
+                </div>
+                <div>
+                    <p class="text-tiny font-black text-gray-400 uppercase tracking-widest">Mother Name</p>
+                    <p class="font-bold text-gray-900 dark:text-white">{{ $patient->mother_name ?: '—' }}</p>
+                </div>
                 <div class="sm:col-span-2">
                     <p class="text-tiny font-black text-gray-400 uppercase tracking-widest">Residential Address</p>
                     <p class="font-bold text-gray-900 dark:text-white">{{ $patient->address ?? '—' }}</p>
@@ -122,6 +130,7 @@
     <div class="overflow-x-auto mb-4 scrollbar-hide">
         <div class="inline-flex gap-2 p-1.5 rounded-[1.5rem] bg-gray-100/60 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-800">
             <button wire:click="$set('tab','overview')" wire:loading.attr="disabled" wire:target="$set('tab','overview')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'overview' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Overview</button>
+            <button wire:click="$set('tab','activity')" wire:loading.attr="disabled" wire:target="$set('tab','activity')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'activity' ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/20' : 'text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 font-extrabold' }}">Activity Log ({{ $counts['activity'] ?? 0 }})</button>
             <button wire:click="$set('tab','treatment')" wire:loading.attr="disabled" wire:target="$set('tab','treatment')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'treatment' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">History ({{ $counts['treatments'] }})</button>
             <button wire:click="$set('tab','visits')" wire:loading.attr="disabled" wire:target="$set('tab','visits')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'visits' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">OPD Visits ({{ $counts['visits'] }})</button>
             <button wire:click="$set('tab','admissions')" wire:loading.attr="disabled" wire:target="$set('tab','admissions')" class="px-5 py-2.5 rounded-2xl text-tiny font-black uppercase tracking-widest transition-all {{ $tab === 'admissions' ? 'bg-white dark:bg-gray-950 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Admissions ({{ $counts['admissions'] }})</button>
@@ -1036,6 +1045,90 @@
                     </tbody>
                 </table>
             </div>
+        </x-card>
+    @endif
+
+    @if($tab === 'activity' && isset($datasets['activity']))
+        <x-card>
+            <div class="mb-6 p-5 rounded-3xl bg-slate-900 text-white border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+                <div class="flex items-center gap-3">
+                    <span class="relative flex h-3 w-3">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                    </span>
+                    <div>
+                        <h4 class="text-sm font-black uppercase tracking-wider text-white">System-Wide Audit Log for {{ $patient->full_name }}</h4>
+                        <p class="text-[11px] font-mono text-emerald-400 mt-0.5">UHID: {{ $patient->uhid }} | Complete Cross-System Activity Timeline</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-xs font-black bg-emerald-950 text-emerald-300 px-3.5 py-1.5 rounded-xl border border-emerald-800">
+                        {{ number_format($datasets['activity']->total()) }} System Log Entries
+                    </span>
+                </div>
+            </div>
+
+            <div class="relative border-l-2 border-slate-200 dark:border-slate-800 ml-4 space-y-6 py-2">
+                @forelse($datasets['activity'] as $act)
+                    <div class="relative pl-6 group">
+                        <!-- Timeline Dot Indicator -->
+                        <div class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 border-white dark:border-slate-900 
+                            @if($act->color === 'emerald') bg-emerald-500
+                            @elseif($act->color === 'blue') bg-blue-500
+                            @elseif($act->color === 'rose') bg-rose-500
+                            @elseif($act->color === 'purple') bg-purple-500
+                            @elseif($act->color === 'indigo') bg-indigo-500
+                            @elseif($act->color === 'teal') bg-teal-500
+                            @elseif($act->color === 'amber') bg-amber-500
+                            @elseif($act->color === 'cyan') bg-cyan-500
+                            @else bg-slate-500 @endif group-hover:scale-125 transition-transform shadow-md"></div>
+
+                        <div class="bg-slate-50/70 dark:bg-slate-900/60 p-4.5 rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm hover:border-indigo-500/40 transition-colors">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider
+                                        @if($act->color === 'emerald') bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800
+                                        @elseif($act->color === 'blue') bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-400 border border-blue-300 dark:border-blue-800
+                                        @elseif($act->color === 'rose') bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-400 border border-rose-300 dark:border-rose-800
+                                        @elseif($act->color === 'purple') bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-400 border border-purple-300 dark:border-purple-800
+                                        @elseif($act->color === 'indigo') bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-400 border border-indigo-300 dark:border-indigo-800
+                                        @elseif($act->color === 'teal') bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-400 border border-teal-300 dark:border-teal-800
+                                        @elseif($act->color === 'amber') bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-400 border border-amber-300 dark:border-amber-800
+                                        @elseif($act->color === 'cyan') bg-cyan-100 text-cyan-800 dark:bg-cyan-950 dark:text-cyan-400 border border-cyan-300 dark:border-cyan-800
+                                        @else bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-400 border border-slate-300 dark:border-slate-700 @endif">
+                                        {{ $act->category }}
+                                    </span>
+                                    <h4 class="text-sm font-black text-slate-900 dark:text-white">{{ $act->action }}</h4>
+                                </div>
+                                <div class="text-[11px] font-bold text-slate-500 font-mono flex items-center gap-2">
+                                    <span>{{ \Illuminate\Support\Carbon::parse($act->timestamp)->format('d M Y, h:i A') }}</span>
+                                    <span class="text-slate-300">•</span>
+                                    <span class="text-indigo-600 dark:text-indigo-400 font-bold">By: {{ $act->user }}</span>
+                                </div>
+                            </div>
+                            <p class="text-xs text-slate-700 dark:text-slate-200 font-medium leading-relaxed bg-white dark:bg-slate-950/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800/80">
+                                {{ $act->details }}
+                            </p>
+                            @if(isset($act->ref))
+                                <div class="mt-2 flex items-center justify-between text-[10px] font-mono text-slate-400">
+                                    <span>Reference: <strong>{{ $act->ref }}</strong></span>
+                                    <span>Patient UHID: <strong>{{ $patient->uhid }}</strong></span>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                @empty
+                    <div class="py-12 text-center text-slate-400 text-xs font-semibold">
+                        No activity log records found for this patient matching your filter criteria.
+                    </div>
+                @endforelse
+            </div>
+
+            @if($datasets['activity']->hasPages())
+                <div class="mt-4">
+                    {{ $datasets['activity']->links() }}
+                </div>
+            @endif
         </x-card>
     @endif
 </div>
