@@ -196,9 +196,16 @@
                                 </div>
                             @endif
 
-                            <a href="{{ route('billing.bills.print', $admission->finalBill->id) }}" target="_blank" class="btn btn-primary mt-4 text-xs">
-                                Print Bill
-                            </a>
+                            <div class="flex flex-wrap gap-2 mt-4">
+                                <a href="{{ route('billing.bills.print', $admission->finalBill->id) }}" target="_blank" class="btn btn-primary text-xs">
+                                    Print Bill
+                                </a>
+                                @if($admission->finalBill->payments->count() > 0)
+                                    <a href="{{ route('counter.payments.print-all', $admission->id) }}" target="_blank" class="btn btn-outline text-xs">
+                                        Receipt Print
+                                    </a>
+                                @endif
+                            </div>
                         </div>
                     @else
                         <div class="text-center py-8">

@@ -24,6 +24,7 @@ class IpdController extends Controller
             'ipdMedications' => fn($q) => $q->where('status', 'Active'),
             'labOrders.labTest',
             'finalBill.items',
+            'finalBill.payments',
             'diagnoses',
         ]);
 

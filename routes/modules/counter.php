@@ -52,6 +52,12 @@ Route::middleware(['auth'])->group(function () {
                 $payment = \App\Models\BillPayment::with(['bill.patient', 'bill.admission', 'receiver'])->findOrFail($id);
                 return view('pages.counter.payment-print', compact('payment'));
             })->name('payments.print');
+
+            Route::get('/admissions/{admission}/payments/print-all', function(\App\Models\Admission $admission) {
+                $admission->load(['finalBill.payments.bill.patient', 'finalBill.payments.bill.admission', 'finalBill.payments.receiver']);
+                $payments = $admission->finalBill?->payments ?? collect();
+                return view('pages.counter.payments-print-all', compact('payments', 'admission'));
+            })->name('payments.print-all');
         });
 
         // Prescriptions (Counter can also print them)
