@@ -224,14 +224,51 @@ class IpdAdmissions extends Component
                 }
             });
 
-        $stats = [
-            'total' => (clone $baseAdmissionQuery)->count(),
-            'admitted' => (clone $baseAdmissionQuery)->where('status', 'Admitted')->count(),
-            'discharged' => (clone $baseAdmissionQuery)->where('status', 'Discharged')->count(),
-            'total_billed' => (clone $baseBillQuery)->sum('total_amount'),
-            'collections' => (clone $baseBillQuery)->sum('paid_amount'),
-            'due' => (clone $baseBillQuery)->sum('balance_amount'),
-        ];
+        $isReceptionist = auth()->check() && (auth()->user()->hasRole('receptionist') || auth()->user()->hasRole('reception'));
+
+        if ($isReceptionist) {
+            $today = now()->toDateString();
+            $todayAdmissions = Admission::whereDate('admission_date', $today)->count();
+            $activeAdmitted = Admission::where('status', 'Admitted')->count();
+            $todayDischarges = Admission::whereDate('discharge_date', $today)->count();
+
+            $todayIpBills = \App\Models\Bill::whereNotNull('admission_id')
+                ->whereDate('created_at', $today);
+
+            $todayBilled = (float) (clone $todayIpBills)->sum('total_amount');
+            $todayDue = (float) (clone $todayIpBills)->sum('balance_amount');
+
+            $todayIpPayments = \App\Models\BillPayment::whereHas('bill', fn($bq) => $bq->whereNotNull('admission_id'))
+                ->whereDate('received_at', $today)
+                ->where('type', 'payment')
+                ->sum('amount');
+            $todayIpRefunds = \App\Models\BillPayment::whereHas('bill', fn($bq) => $bq->whereNotNull('admission_id'))
+                ->whereDate('received_at', $today)
+                ->where('type', 'refund')
+                ->sum('amount');
+            $todayCollections = (float) ($todayIpPayments - $todayIpRefunds);
+            if ($todayCollections == 0) {
+                $todayCollections = (float) (clone $todayIpBills)->sum('paid_amount');
+            }
+
+            $stats = [
+                'total' => $todayAdmissions,
+                'admitted' => $activeAdmitted,
+                'discharged' => $todayDischarges,
+                'total_billed' => $todayBilled,
+                'collections' => $todayCollections,
+                'due' => $todayDue,
+            ];
+        } else {
+            $stats = [
+                'total' => (clone $baseAdmissionQuery)->count(),
+                'admitted' => (clone $baseAdmissionQuery)->where('status', 'Admitted')->count(),
+                'discharged' => (clone $baseAdmissionQuery)->where('status', 'Discharged')->count(),
+                'total_billed' => (clone $baseBillQuery)->sum('total_amount'),
+                'collections' => (clone $baseBillQuery)->sum('paid_amount'),
+                'due' => (clone $baseBillQuery)->sum('balance_amount'),
+            ];
+        }
 
         return view('livewire.counter.ipd-admissions', [
             'admissions' => $admissions,

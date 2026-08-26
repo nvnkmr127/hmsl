@@ -510,72 +510,143 @@ class BillingList extends Component
         $ipBase = $this->getIpQuery();
         $ips = (clone $ipBase)->with(['patient', 'doctor', 'finalBill', 'bed.ward'])->latest()->paginate(15, pageName: 'ips-page');
 
-        // Dynamic stats for Bills
-        $statsRaw = (clone $billsBase)->selectRaw('
-            COUNT(*) as total_count,
-            SUM(CASE WHEN payment_status IN ("Unpaid", "Partially Paid") THEN 1 ELSE 0 END) as unpaid_count,
-            SUM(total_amount) as total_billed,
-            SUM(paid_amount) as total_paid,
-            SUM(balance_amount) as total_due,
-            SUM(discount_amount) as total_discount
-        ')->first();
+        $isReceptionist = auth()->check() && (auth()->user()->hasRole('receptionist') || auth()->user()->hasRole('reception'));
 
-        $totalPaidCollections = (float) ($statsRaw->total_paid ?? 0);
-        if ($this->dateType === 'payment' && ($this->fromDate || $this->toDate)) {
-            $periodReceived = BillPayment::query()
-                ->when($this->fromDate, fn($pq) => $pq->whereDate('received_at', '>=', $this->fromDate))
-                ->when($this->toDate, fn($pq) => $pq->whereDate('received_at', '<=', $this->toDate))
+        if ($isReceptionist) {
+            $today = now()->toDateString();
+
+            // Dynamic stats for Bills (Today's figures for Reception)
+            $todayBillsQuery = Bill::whereDate('created_at', $today);
+            $statsRaw = (clone $todayBillsQuery)->selectRaw('
+                COUNT(*) as total_count,
+                SUM(CASE WHEN payment_status IN ("Unpaid", "Partially Paid") THEN 1 ELSE 0 END) as unpaid_count,
+                SUM(total_amount) as total_billed,
+                SUM(paid_amount) as total_paid,
+                SUM(balance_amount) as total_due,
+                SUM(discount_amount) as total_discount
+            ')->first();
+
+            $todayPaid = BillPayment::whereDate('received_at', $today)
                 ->where('type', 'payment')
                 ->sum('amount');
-            $periodRefunded = BillPayment::query()
-                ->when($this->fromDate, fn($pq) => $pq->whereDate('received_at', '>=', $this->fromDate))
-                ->when($this->toDate, fn($pq) => $pq->whereDate('received_at', '<=', $this->toDate))
+            $todayRefunded = BillPayment::whereDate('received_at', $today)
                 ->where('type', 'refund')
                 ->sum('amount');
-            $totalPaidCollections = (float) ($periodReceived - $periodRefunded);
+            $totalPaidCollections = (float) ($todayPaid - $todayRefunded);
+            if ($totalPaidCollections == 0 && ($statsRaw->total_paid ?? 0) > 0) {
+                $totalPaidCollections = (float) ($statsRaw->total_paid ?? 0);
+            }
+
+            $stats = [
+                'total_count'   => (int) ($statsRaw->total_count ?? 0),
+                'total_billed'  => (float) ($statsRaw->total_billed ?? 0),
+                'total_paid'    => $totalPaidCollections,
+                'total_due'     => (float) ($statsRaw->total_due ?? 0),
+                'total_discount'=> (float) ($statsRaw->total_discount ?? 0),
+                'total_unpaid'  => (int) ($statsRaw->unpaid_count ?? 0),
+            ];
+
+            // Specific OP Reports Stats (Today's figures for Reception)
+            $todayOpQuery = \App\Models\Consultation::whereDate('consultation_date', $today);
+            $opStatsRaw = (clone $todayOpQuery)->selectRaw('
+                COUNT(*) as total,
+                SUM(CASE WHEN visit_type IN ("Review", "Follow-up") THEN 1 ELSE 0 END) as review,
+                SUM(CASE WHEN payment_status = "Paid" AND fee > 0 THEN 1 ELSE 0 END) as paid,
+                SUM(fee) as revenue,
+                SUM(discount_amount) as discount
+            ')->first();
+
+            $opStats = [
+                'total' => (int) ($opStatsRaw->total ?? 0),
+                'review' => (int) ($opStatsRaw->review ?? 0),
+                'paid' => (int) ($opStatsRaw->paid ?? 0),
+                'revenue' => (float) ($opStatsRaw->revenue ?? 0),
+                'discount' => (float) ($opStatsRaw->discount ?? 0),
+            ];
+
+            // Specific IP Reports Stats (Today's figures for Reception)
+            $todayIpQuery = \App\Models\Admission::whereDate('admission_date', $today);
+            $todayDischarges = \App\Models\Admission::whereDate('discharge_date', $today)->count();
+            $currentlyAdmitted = \App\Models\Admission::where('status', 'Admitted')->count();
+
+            $todayIpBilled = \App\Models\Bill::whereNotNull('admission_id')
+                ->whereDate('created_at', $today)
+                ->sum('total_amount');
+
+            $ipStats = [
+                'total' => (int) ($todayIpQuery->count()),
+                'admitted' => (int) $currentlyAdmitted,
+                'discharged' => (int) $todayDischarges,
+                'total_billed' => (float) $todayIpBilled,
+            ];
+        } else {
+            // Dynamic stats for Bills (All/Filtered period for other roles)
+            $statsRaw = (clone $billsBase)->selectRaw('
+                COUNT(*) as total_count,
+                SUM(CASE WHEN payment_status IN ("Unpaid", "Partially Paid") THEN 1 ELSE 0 END) as unpaid_count,
+                SUM(total_amount) as total_billed,
+                SUM(paid_amount) as total_paid,
+                SUM(balance_amount) as total_due,
+                SUM(discount_amount) as total_discount
+            ')->first();
+
+            $totalPaidCollections = (float) ($statsRaw->total_paid ?? 0);
+            if ($this->dateType === 'payment' && ($this->fromDate || $this->toDate)) {
+                $periodReceived = BillPayment::query()
+                    ->when($this->fromDate, fn($pq) => $pq->whereDate('received_at', '>=', $this->fromDate))
+                    ->when($this->toDate, fn($pq) => $pq->whereDate('received_at', '<=', $this->toDate))
+                    ->where('type', 'payment')
+                    ->sum('amount');
+                $periodRefunded = BillPayment::query()
+                    ->when($this->fromDate, fn($pq) => $pq->whereDate('received_at', '>=', $this->fromDate))
+                    ->when($this->toDate, fn($pq) => $pq->whereDate('received_at', '<=', $this->toDate))
+                    ->where('type', 'refund')
+                    ->sum('amount');
+                $totalPaidCollections = (float) ($periodReceived - $periodRefunded);
+            }
+
+            $stats = [
+                'total_count'   => (int) ($statsRaw->total_count ?? 0),
+                'total_billed'  => (float) ($statsRaw->total_billed ?? 0),
+                'total_paid'    => $totalPaidCollections,
+                'total_due'     => (float) ($statsRaw->total_due ?? 0),
+                'total_discount'=> (float) ($statsRaw->total_discount ?? 0),
+                'total_unpaid'  => (int) ($statsRaw->unpaid_count ?? 0),
+            ];
+
+            // Specific OP Reports Stats
+            $opStatsRaw = (clone $opBase)->selectRaw('
+                COUNT(*) as total,
+                SUM(CASE WHEN visit_type IN ("Review", "Follow-up") THEN 1 ELSE 0 END) as review,
+                SUM(CASE WHEN payment_status = "Paid" AND fee > 0 THEN 1 ELSE 0 END) as paid,
+                SUM(fee) as revenue,
+                SUM(discount_amount) as discount
+            ')->first();
+
+            $opStats = [
+                'total' => (int) ($opStatsRaw->total ?? 0),
+                'review' => (int) ($opStatsRaw->review ?? 0),
+                'paid' => (int) ($opStatsRaw->paid ?? 0),
+                'revenue' => (float) ($opStatsRaw->revenue ?? 0),
+                'discount' => (float) ($opStatsRaw->discount ?? 0),
+            ];
+
+            // Specific IP Reports Stats
+            $ipStatsRaw = (clone $ipBase)->selectRaw('
+                COUNT(*) as total,
+                SUM(CASE WHEN status = "Admitted" THEN 1 ELSE 0 END) as admitted,
+                SUM(CASE WHEN status = "Discharged" THEN 1 ELSE 0 END) as discharged
+            ')->first();
+
+            $ipBilled = \App\Models\Bill::whereIn('admission_id', (clone $ipBase)->pluck('id'))->sum('total_amount');
+
+            $ipStats = [
+                'total' => (int) ($ipStatsRaw->total ?? 0),
+                'admitted' => (int) ($ipStatsRaw->admitted ?? 0),
+                'discharged' => (int) ($ipStatsRaw->discharged ?? 0),
+                'total_billed' => (float) ($ipBilled ?? 0),
+            ];
         }
-
-        $stats = [
-            'total_count'   => (int) ($statsRaw->total_count ?? 0),
-            'total_billed'  => (float) ($statsRaw->total_billed ?? 0),
-            'total_paid'    => $totalPaidCollections,
-            'total_due'     => (float) ($statsRaw->total_due ?? 0),
-            'total_discount'=> (float) ($statsRaw->total_discount ?? 0),
-            'total_unpaid'  => (int) ($statsRaw->unpaid_count ?? 0),
-        ];
-
-        // Specific OP Reports Stats
-        $opStatsRaw = (clone $opBase)->selectRaw('
-            COUNT(*) as total,
-            SUM(CASE WHEN visit_type IN ("Review", "Follow-up") THEN 1 ELSE 0 END) as review,
-            SUM(CASE WHEN payment_status = "Paid" AND fee > 0 THEN 1 ELSE 0 END) as paid,
-            SUM(fee) as revenue,
-            SUM(discount_amount) as discount
-        ')->first();
-
-        $opStats = [
-            'total' => (int) ($opStatsRaw->total ?? 0),
-            'review' => (int) ($opStatsRaw->review ?? 0),
-            'paid' => (int) ($opStatsRaw->paid ?? 0),
-            'revenue' => (float) ($opStatsRaw->revenue ?? 0),
-            'discount' => (float) ($opStatsRaw->discount ?? 0),
-        ];
-
-        // Specific IP Reports Stats
-        $ipStatsRaw = (clone $ipBase)->selectRaw('
-            COUNT(*) as total,
-            SUM(CASE WHEN status = "Admitted" THEN 1 ELSE 0 END) as admitted,
-            SUM(CASE WHEN status = "Discharged" THEN 1 ELSE 0 END) as discharged
-        ')->first();
-
-        $ipBilled = \App\Models\Bill::whereIn('admission_id', (clone $ipBase)->pluck('id'))->sum('total_amount');
-
-        $ipStats = [
-            'total' => (int) ($ipStatsRaw->total ?? 0),
-            'admitted' => (int) ($ipStatsRaw->admitted ?? 0),
-            'discharged' => (int) ($ipStatsRaw->discharged ?? 0),
-            'total_billed' => (float) ($ipBilled ?? 0),
-        ];
 
         $doctors = \App\Models\Doctor::all();
         $wards = \App\Models\Ward::all();
