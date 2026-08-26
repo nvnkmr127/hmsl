@@ -4,28 +4,31 @@
             <a href="{{ route('counter.ipd.index') }}" class="btn btn-secondary">
                 Back to Admissions
             </a>
-            @if($summary?->is_finalized)
-                <a href="{{ route('counter.discharge.summary.print', $admission->id) }}" target="_blank" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                    Print Summary
-                </a>
-            @endif
+            <a href="{{ route('discharge.summary', $admission->id) }}" class="btn btn-secondary flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                View Summary
+            </a>
+            <a href="{{ route('counter.discharge.summary.print', $admission->id) }}" target="_blank" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                Print Summary
+            </a>
         </x-slot>
     </x-page-header>
 
     @if($summary?->is_finalized)
-        <div class="mb-6 p-4 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl">
+        <div class="mb-6 p-4 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                 </div>
                 <div>
-                    <p class="font-bold text-emerald-900 dark:text-emerald-200">Summary Finalized</p>
+                    <p class="font-bold text-emerald-900 dark:text-emerald-200">Discharge Summary Finalized</p>
                     <p class="text-sm text-emerald-700 dark:text-emerald-300">
-                        Finalized on {{ $summary->finalized_at->format('d M Y, h:i A') }}
+                        Finalized on {{ $summary->finalized_at?->format('d M Y, h:i A') ?? '—' }} &mdash; You can still edit any section below to correct mistakes.
                     </p>
                 </div>
             </div>
+            <span class="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-xs font-bold rounded-lg">Editable</span>
         </div>
     @endif
 
@@ -81,6 +84,12 @@
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                 Discharge Patient
                             </button>
+                        @elseif($summary->is_finalized)
+                            <div class="space-y-2">
+                                <button wire:click="finalize" class="btn btn-secondary w-full text-xs">
+                                    Re-finalize Summary
+                                </button>
+                            </div>
                         @endif
                     </div>
                 </x-card>
@@ -122,14 +131,14 @@
                     @if($activeTab === 'diagnosis')
                         <div class="space-y-4">
                             <div>
-                                <label class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 block">Admission Diagnosis</label>
-                                <textarea wire:model.live="admission_diagnosis" rows="3" class="w-full rounded-xl border-gray-200 dark:border-gray-700" {{ $summary?->is_finalized ? 'readonly' : '' }}>{{ $admission_diagnosis }}</textarea>
+                                <label class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 block">Admission / Provisional Diagnosis</label>
+                                <textarea wire:model.live="admission_diagnosis" rows="3" class="w-full rounded-xl border-gray-200 dark:border-gray-700" placeholder="Enter admission / provisional diagnosis...">{{ $admission_diagnosis }}</textarea>
                             </div>
                             <div>
                                 <label class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 block">Final Diagnosis</label>
-                                <textarea wire:model.live="final_diagnosis" rows="3" class="w-full rounded-xl border-gray-200 dark:border-gray-700" {{ $summary?->is_finalized ? 'readonly' : '' }}>{{ $final_diagnosis }}</textarea>
+                                <textarea wire:model.live="final_diagnosis" rows="3" class="w-full rounded-xl border-gray-200 dark:border-gray-700" placeholder="Enter final diagnosis...">{{ $final_diagnosis }}</textarea>
                             </div>
-                            <button wire:click="saveSection('diagnosis')" class="btn btn-primary" @unless($summary?->is_finalized) @endunless>
+                            <button wire:click="saveSection('diagnosis')" class="btn btn-primary">
                                 Save Diagnosis
                             </button>
                         </div>
@@ -138,16 +147,16 @@
                     @if($activeTab === 'treatment')
                         <div class="space-y-4">
                             <div>
-                                <label class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 block">Treatment Summary</label>
-                                <textarea wire:model.live="treatment_summary" rows="4" class="w-full rounded-xl border-gray-200 dark:border-gray-700" {{ $summary?->is_finalized ? 'readonly' : '' }}>{{ $treatment_summary }}</textarea>
+                                <label class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 block">Treatment Summary / Course in Hospital</label>
+                                <textarea wire:model.live="treatment_summary" rows="4" class="w-full rounded-xl border-gray-200 dark:border-gray-700" placeholder="Enter course in hospital and treatment summary...">{{ $treatment_summary }}</textarea>
                             </div>
                             <div>
-                                <label class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 block">Procedures Done</label>
-                                <textarea wire:model.live="procedures_done" rows="3" class="w-full rounded-xl border-gray-200 dark:border-gray-700" {{ $summary?->is_finalized ? 'readonly' : '' }}>{{ $procedures_done }}</textarea>
+                                <label class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 block">Procedures Done / Surgeries</label>
+                                <textarea wire:model.live="procedures_done" rows="3" class="w-full rounded-xl border-gray-200 dark:border-gray-700" placeholder="Enter procedures or operations performed...">{{ $procedures_done }}</textarea>
                             </div>
                             <div>
                                 <label class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 block">Investigations Summary</label>
-                                <textarea wire:model.live="investigations_summary" rows="3" class="w-full rounded-xl border-gray-200 dark:border-gray-700" {{ $summary?->is_finalized ? 'readonly' : '' }}>{{ $investigations_summary }}</textarea>
+                                <textarea wire:model.live="investigations_summary" rows="3" class="w-full rounded-xl border-gray-200 dark:border-gray-700" placeholder="Enter summary of lab & imaging investigations...">{{ $investigations_summary }}</textarea>
                             </div>
                             <button wire:click="saveSection('treatment')" class="btn btn-primary">
                                 Save Treatment
@@ -159,24 +168,22 @@
                         <div class="space-y-4">
                             <div class="flex items-center justify-between">
                                 <h4 class="font-bold text-gray-900 dark:text-white">Medications on Discharge</h4>
-                                @unless($summary?->is_finalized)
-                                    <div class="flex gap-2">
-                                        <button wire:click="importFromMedicationChart" class="btn btn-secondary text-xs">
-                                            Import from Chart
-                                        </button>
-                                        <button wire:click="$toggle('showMedForm')" class="btn btn-primary text-xs">
-                                            Add Medication
-                                        </button>
-                                    </div>
-                                @endunless
+                                <div class="flex gap-2">
+                                    <button wire:click="importFromMedicationChart" class="btn btn-secondary text-xs">
+                                        Import from Chart
+                                    </button>
+                                    <button wire:click="$toggle('showMedForm')" class="btn btn-primary text-xs">
+                                        Add Medication
+                                    </button>
+                                </div>
                             </div>
 
-                            @if($showMedForm && !$summary?->is_finalized)
+                            @if($showMedForm)
                                 <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl space-y-3">
                                     <div class="grid grid-cols-2 gap-3">
                                         <div>
                                             <label class="text-xs font-bold text-gray-500 uppercase">Medicine Name</label>
-                                            <input type="text" wire:model="newMedName" class="w-full rounded-lg border-gray-200">
+                                            <input type="text" wire:model="newMedName" class="w-full rounded-lg border-gray-200" placeholder="e.g., Paracetamol">
                                         </div>
                                         <div>
                                             <label class="text-xs font-bold text-gray-500 uppercase">Dosage</label>
@@ -186,12 +193,9 @@
                                             <label class="text-xs font-bold text-gray-500 uppercase">Frequency</label>
                                             <select wire:model="newMedFrequency" class="w-full rounded-lg border-gray-200">
                                                 <option value="">Select</option>
-                                                <option>OD</option>
-                                                <option>BD</option>
-                                                <option>TDS</option>
-                                                <option>QID</option>
-                                                <option>SOS</option>
-                                                <option>PRN</option>
+                                                @foreach($frequencyOptions as $freq)
+                                                    <option value="{{ $freq }}">{{ $freq }}</option>
+                                                @endforeach
                                             </select>
                                         </div>
                                         <div>
@@ -201,18 +205,15 @@
                                         <div>
                                             <label class="text-xs font-bold text-gray-500 uppercase">Route</label>
                                             <select wire:model="newMedRoute" class="w-full rounded-lg border-gray-200">
-                                                <option>Oral</option>
-                                                <option>IV</option>
-                                                <option>IM</option>
-                                                <option>SC</option>
-                                                <option>Inhalation</option>
-                                                <option>Topical</option>
+                                                @foreach($routeOptions as $route)
+                                                    <option value="{{ $route }}">{{ $route }}</option>
+                                                @endforeach
                                             </select>
                                         </div>
                                     </div>
                                     <div>
                                         <label class="text-xs font-bold text-gray-500 uppercase">Instructions</label>
-                                        <input type="text" wire:model="newMedInstructions" class="w-full rounded-lg border-gray-200">
+                                        <input type="text" wire:model="newMedInstructions" class="w-full rounded-lg border-gray-200" placeholder="e.g., After food">
                                     </div>
                                     <div class="flex justify-end gap-2">
                                         <button wire:click="$toggle('showMedForm')" class="btn btn-secondary">Cancel</button>
@@ -230,9 +231,7 @@
                                             <th class="text-left py-2 font-bold text-gray-500 uppercase text-xs">Frequency</th>
                                             <th class="text-left py-2 font-bold text-gray-500 uppercase text-xs">Duration</th>
                                             <th class="text-left py-2 font-bold text-gray-500 uppercase text-xs">Route</th>
-                                            @unless($summary?->is_finalized)
-                                                <th class="text-right py-2"></th>
-                                            @endunless
+                                            <th class="text-right py-2"></th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -243,13 +242,11 @@
                                                 <td class="py-2">{{ $med->frequency ?? '-' }}</td>
                                                 <td class="py-2">{{ $med->duration ?? '-' }}</td>
                                                 <td class="py-2">{{ $med->route ?? '-' }}</td>
-                                                @unless($summary?->is_finalized)
-                                                    <td class="py-2 text-right">
-                                                        <button wire:click="removeMedication({{ $med->id }})" class="text-rose-500 hover:text-rose-700">
-                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                                        </button>
-                                                    </td>
-                                                @endunless
+                                                <td class="py-2 text-right">
+                                                    <button wire:click="removeMedication({{ $med->id }})" class="text-rose-500 hover:text-rose-700" title="Delete Medication">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                    </button>
+                                                </td>
                                             </tr>
                                         @endforeach
                                     </tbody>
@@ -264,16 +261,16 @@
                         <div class="space-y-4">
                             <div>
                                 <label class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 block">Condition at Discharge</label>
-                                <select wire:model.live="condition_at_discharge" class="w-full rounded-xl border-gray-200 dark:border-gray-700" {{ $summary?->is_finalized ? 'disabled' : '' }}>
+                                <select wire:model.live="condition_at_discharge" class="w-full rounded-xl border-gray-200 dark:border-gray-700">
                                     <option value="">Select Condition</option>
-                                    @foreach(['Stable', 'Improved', 'Critical', 'Referred', 'Expired', 'LAMA'] as $condition)
+                                    @foreach($conditionOptions as $condition)
                                         <option value="{{ $condition }}">{{ $condition }}</option>
                                     @endforeach
                                 </select>
                             </div>
                             <div>
                                 <label class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 block">Condition Notes</label>
-                                <textarea wire:model.live="condition_notes" rows="3" class="w-full rounded-xl border-gray-200 dark:border-gray-700" {{ $summary?->is_finalized ? 'readonly' : '' }}>{{ $condition_notes }}</textarea>
+                                <textarea wire:model.live="condition_notes" rows="3" class="w-full rounded-xl border-gray-200 dark:border-gray-700" placeholder="Enter condition notes...">{{ $condition_notes }}</textarea>
                             </div>
                             <button wire:click="saveSection('condition')" class="btn btn-primary">
                                 Save Condition
@@ -285,15 +282,15 @@
                         <div class="space-y-4">
                             <div>
                                 <label class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 block">General Advice</label>
-                                <textarea wire:model.live="general_advice" rows="3" class="w-full rounded-xl border-gray-200 dark:border-gray-700" {{ $summary?->is_finalized ? 'readonly' : '' }}>{{ $general_advice }}</textarea>
+                                <textarea wire:model.live="general_advice" rows="3" class="w-full rounded-xl border-gray-200 dark:border-gray-700" placeholder="Enter general advice...">{{ $general_advice }}</textarea>
                             </div>
                             <div>
                                 <label class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 block">Diet Advice</label>
-                                <textarea wire:model.live="diet_advice" rows="3" class="w-full rounded-xl border-gray-200 dark:border-gray-700" {{ $summary?->is_finalized ? 'readonly' : '' }}>{{ $diet_advice }}</textarea>
+                                <textarea wire:model.live="diet_advice" rows="3" class="w-full rounded-xl border-gray-200 dark:border-gray-700" placeholder="Enter dietary advice...">{{ $diet_advice }}</textarea>
                             </div>
                             <div>
                                 <label class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 block">Activity Advice</label>
-                                <textarea wire:model.live="activity_advice" rows="3" class="w-full rounded-xl border-gray-200 dark:border-gray-700" {{ $summary?->is_finalized ? 'readonly' : '' }}>{{ $activity_advice }}</textarea>
+                                <textarea wire:model.live="activity_advice" rows="3" class="w-full rounded-xl border-gray-200 dark:border-gray-700" placeholder="Enter activity and rest advice...">{{ $activity_advice }}</textarea>
                             </div>
                             <button wire:click="saveSection('advice')" class="btn btn-primary">
                                 Save Advice
@@ -305,11 +302,11 @@
                         <div class="space-y-4">
                             <div>
                                 <label class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 block">Follow-up Date</label>
-                                <input type="date" wire:model.live="follow_up_date" class="w-full rounded-xl border-gray-200 dark:border-gray-700" {{ $summary?->is_finalized ? 'readonly' : '' }}>
+                                <input type="date" wire:model.live="follow_up_date" class="w-full rounded-xl border-gray-200 dark:border-gray-700">
                             </div>
                             <div>
-                                <label class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 block">Follow-up Notes</label>
-                                <textarea wire:model.live="follow_up_notes" rows="3" class="w-full rounded-xl border-gray-200 dark:border-gray-700" {{ $summary?->is_finalized ? 'readonly' : '' }}>{{ $follow_up_notes }}</textarea>
+                                <label class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 block">Follow-up Notes & Emergency Warnings</label>
+                                <textarea wire:model.live="follow_up_notes" rows="3" class="w-full rounded-xl border-gray-200 dark:border-gray-700" placeholder="Enter follow-up instructions and warning symptoms...">{{ $follow_up_notes }}</textarea>
                             </div>
                             <button wire:click="saveSection('followup')" class="btn btn-primary">
                                 Save Follow Up

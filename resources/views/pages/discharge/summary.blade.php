@@ -8,6 +8,10 @@
         @if(\Illuminate\Support\Facades\Schema::hasColumn('bills', 'admission_id') && $admission->finalBill)
             <a class="btn btn-secondary" target="_blank" href="{{ route('billing.bills.print', ['bill' => $admission->finalBill->id]) }}">Final Bill</a>
         @endif
+        <a class="btn btn-secondary flex items-center gap-1.5" href="{{ route('counter.ipd.discharge', $admission->id) }}">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+            Edit Summary
+        </a>
         <a class="btn btn-primary" target="_blank" href="{{ route('discharge.print', $admission->id) }}">Print</a>
     </x-slot>
 </x-page-header>
@@ -83,11 +87,15 @@
     <!-- 2. Clinical Summary (Dynamic based on DischargeSummary model) -->
     @if($admission->dischargeSummary)
         <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
+            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 flex justify-between items-center">
                 <h3 class="text-lg font-black text-slate-800 dark:text-white flex items-center gap-2">
                     <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                     Clinical Discharge Summary
                 </h3>
+                <a href="{{ route('counter.ipd.discharge', $admission->id) }}" class="text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 dark:bg-indigo-900/40 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                    Edit Clinical Details
+                </a>
             </div>
             <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div class="space-y-6">
@@ -162,8 +170,11 @@
     @else
         <!-- Fallback if no formal discharge summary exists -->
         <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700">
+            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
                 <h3 class="text-lg font-black text-slate-800 dark:text-white">Admission Notes & Reason</h3>
+                <a href="{{ route('counter.ipd.discharge', $admission->id) }}" class="text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 dark:bg-indigo-900/40 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5">
+                    Create Discharge Summary
+                </a>
             </div>
             <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div>

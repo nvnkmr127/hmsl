@@ -78,7 +78,7 @@ class DischargeSummary extends Model
 
     public function isEditable(): bool
     {
-        return !$this->is_finalized && $this->status !== 'Finalized';
+        return true;
     }
 
     public function canFinalize(): bool

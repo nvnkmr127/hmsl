@@ -71,10 +71,6 @@ class DischargeSummaryService
 
     public function update(DischargeSummary $summary, array $data): DischargeSummary
     {
-        if ($summary->is_finalized) {
-            throw new \RuntimeException('Cannot update a finalized discharge summary.');
-        }
-
         $summary->update($data);
 
         return $summary->fresh();
@@ -82,10 +78,6 @@ class DischargeSummaryService
 
     public function addMedication(DischargeSummary $summary, array $medicationData): DischargeMedication
     {
-        if ($summary->is_finalized) {
-            throw new \RuntimeException('Cannot add medication to a finalized discharge summary.');
-        }
-
         return DischargeMedication::create(array_merge($medicationData, [
             'discharge_summary_id' => $summary->id,
         ]));
@@ -93,10 +85,6 @@ class DischargeSummaryService
 
     public function removeMedication(DischargeMedication $medication): void
     {
-        if ($medication->dischargeSummary->is_finalized) {
-            throw new \RuntimeException('Cannot remove medication from a finalized discharge summary.');
-        }
-
         $medication->delete();
     }
 
@@ -113,21 +101,13 @@ class DischargeSummaryService
 
     public function returnToDraft(DischargeSummary $summary): DischargeSummary
     {
-        if ($summary->status !== 'Review') {
-            throw new \RuntimeException('Only review summaries can be returned to draft.');
-        }
-
-        $summary->update(['status' => 'Draft']);
+        $summary->update(['status' => 'Draft', 'is_finalized' => false]);
 
         return $summary;
     }
 
     public function finalize(DischargeSummary $summary, User $user): DischargeSummary
     {
-        if ($summary->is_finalized) {
-             throw new \RuntimeException('This summary is already finalized.');
-        }
-
         $missing = [];
         if (empty($summary->final_diagnosis)) $missing[] = 'Final Diagnosis';
         if (empty($summary->treatment_summary)) $missing[] = 'Treatment Summary';

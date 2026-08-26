@@ -603,7 +603,116 @@ class DischargeFinalBillTest extends TestCase
         $response->assertDontSee('Advice & Instructions');
         $response->assertDontSee('Follow Up Details');
     }
+
+    public function test_discharge_summary_can_be_edited_after_discharge_and_prints_corrected_data(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+
+        $user = User::factory()->create();
+        $user->assignRole('doctor_owner');
+
+        $department = Department::create(['name' => 'General']);
+        $doctor = Doctor::create([
+            'user_id' => $user->id,
+            'department_id' => $department->id,
+            'full_name' => 'Dr Owner',
+            'specialization' => 'General',
+            'consultation_fee' => 500,
+            'is_active' => true,
+        ]);
+        HospitalOwner::setOwnerDoctor($doctor);
+
+        $patient = Patient::create([
+            'uhid' => 'UHID-IPD-EDIT-0001',
+            'first_name' => 'Michael',
+            'last_name' => 'Scott',
+            'gender' => 'male',
+            'date_of_birth' => '1980-03-15',
+            'phone' => '9888877773',
+            'is_active' => true,
+        ]);
+
+        $ward = Ward::create([
+            'name' => 'General Ward',
+            'type' => 'General',
+            'daily_charge' => 1000,
+            'capacity' => 10,
+            'is_active' => true,
+        ]);
+        $bed = Bed::create(['ward_id' => $ward->id, 'bed_number' => 'G-3', 'is_available' => false]);
+
+        $admission = Admission::create([
+            'admission_number' => 'ADM-EDIT-0001',
+            'patient_id' => $patient->id,
+            'bed_id' => $bed->id,
+            'doctor_id' => $doctor->id,
+            'admission_date' => now()->subDays(2),
+            'discharge_date' => now(),
+            'reason_for_admission' => 'Cough',
+            'status' => 'Discharged',
+            'created_by' => $user->id,
+        ]);
+
+        $summary = \App\Models\DischargeSummary::create([
+            'admission_id' => $admission->id,
+            'admission_number' => $admission->admission_number,
+            'patient_id' => $patient->id,
+            'uhid' => $patient->uhid,
+            'doctor_id' => $doctor->id,
+            'admission_date' => $admission->admission_date,
+            'discharge_date' => $admission->discharge_date,
+            'admission_diagnosis' => 'Initial Cough',
+            'final_diagnosis' => 'Initial Diagnosis Typo',
+            'treatment_summary' => 'Initial Treatment',
+            'condition_at_discharge' => 'Stable',
+            'status' => 'Finalized',
+            'is_finalized' => true,
+            'finalized_at' => now(),
+            'finalized_by' => $user->id,
+            'created_by' => $user->id,
+        ]);
+
+        // 1. Verify View Summary screen contains "Edit Summary" link
+        $viewResponse = $this->actingAs($user)->get(route('discharge.summary', $admission->id));
+        $viewResponse->assertOk();
+        $viewResponse->assertSee('Edit Summary');
+        $viewResponse->assertSee('Initial Diagnosis Typo');
+
+        // 2. Perform live edit of finalized summary using Livewire component
+        $component = \Livewire\Livewire::actingAs($user)
+            ->test(\App\Livewire\Discharge\DischargeSummaryForm::class, ['admission' => $admission]);
+
+        $component->set('final_diagnosis', 'Corrected Acute Bronchitis')
+            ->call('saveSection', 'diagnosis');
+
+        $component->set('treatment_summary', 'Corrected Nebulization and antibiotics')
+            ->call('saveSection', 'treatment');
+
+        $component->set('newMedName', 'Azithromycin 500mg')
+            ->set('newMedDosage', '500mg')
+            ->set('newMedFrequency', 'OD')
+            ->set('newMedDuration', '3 days')
+            ->set('newMedRoute', 'Oral')
+            ->set('newMedInstructions', 'After lunch')
+            ->call('addMedication');
+
+        // 3. Verify changes in database
+        $summary->refresh();
+        $this->assertSame('Corrected Acute Bronchitis', $summary->final_diagnosis);
+        $this->assertSame('Corrected Nebulization and antibiotics', $summary->treatment_summary);
+        $this->assertCount(1, $summary->medications);
+        $this->assertSame('Azithromycin 500mg', $summary->medications->first()->medicine_name);
+
+        // 4. Verify Discharge Summary print renders the newly corrected data
+        $printResponse = $this->actingAs($user)->get(route('discharge.print', $admission->id));
+        $printResponse->assertOk();
+        $printResponse->assertSee('Corrected Acute Bronchitis');
+        $printResponse->assertSee('Corrected Nebulization and antibiotics');
+        $printResponse->assertSee('Azithromycin 500mg');
+        $printResponse->assertDontSee('Initial Diagnosis Typo');
+    }
 }
+
 
 
 
