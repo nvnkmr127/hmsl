@@ -39,7 +39,7 @@
                                 
                                 <div class="col-span-6 md:col-span-3">
                                     <label class="text-[10px] uppercase font-bold text-gray-500">End Date</label>
-                                    <input type="datetime-local" wire:model.live="bedCharges.{{ $index }}.end_date" class="w-full text-sm rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-900 mt-1">
+                                    <input type="datetime-local" wire:model.live="bedCharges.{{ $index }}.end_date" min="{{ $charge['start_date'] ?? '' }}" class="w-full text-sm rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-900 mt-1">
                                 </div>
 
                                 <div class="col-span-12 md:col-span-2 flex justify-between items-end pb-1 md:justify-end">

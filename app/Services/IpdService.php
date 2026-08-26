@@ -101,7 +101,7 @@ class IpdService
             \App\Models\AdmissionBedHistory::create([
                 'admission_id' => $admission->id,
                 'bed_id' => $admission->bed_id,
-                'start_time' => now(),
+                'start_time' => $admission->admission_date ?? $data['admission_date'] ?? now(),
                 'daily_charge' => $data['daily_charge_override'] ?? $bed->per_day_charge ?? $bed->ward?->daily_charge ?? 0,
             ]);
 
@@ -291,8 +291,10 @@ class IpdService
                 ];
             }
         } else {
-            foreach ($bedHistories as $history) {
-                $start = Carbon::parse($history->start_time);
+            foreach ($bedHistories as $idx => $history) {
+                $start = ($idx === 0 && $admission->admission_date)
+                    ? Carbon::parse($admission->admission_date)
+                    : Carbon::parse($history->start_time);
                 $end = $history->end_time ? Carbon::parse($history->end_time) : now();
                 
                 $stayHours = max(0, $start->diffInHours($end));
