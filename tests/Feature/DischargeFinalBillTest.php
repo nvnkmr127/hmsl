@@ -377,7 +377,235 @@ class DischargeFinalBillTest extends TestCase
             \Illuminate\Support\Carbon::parse($bedCharges[1]['end_date'])->greaterThanOrEqualTo(\Illuminate\Support\Carbon::parse($bedCharges[1]['start_date']))
         );
     }
+
+    public function test_discharge_summary_print_renders_all_entered_sections(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+
+        $user = User::factory()->create();
+        $user->assignRole('doctor_owner');
+
+        $department = Department::create(['name' => 'General']);
+        $doctor = Doctor::create([
+            'user_id' => $user->id,
+            'department_id' => $department->id,
+            'full_name' => 'Dr Owner',
+            'specialization' => 'General',
+            'consultation_fee' => 500,
+            'is_active' => true,
+        ]);
+        HospitalOwner::setOwnerDoctor($doctor);
+
+        $patient = Patient::create([
+            'uhid' => 'UHID-IPD-PRINT-0001',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'gender' => 'male',
+            'date_of_birth' => '1990-01-01',
+            'phone' => '9888877771',
+            'is_active' => true,
+        ]);
+
+        $ward = Ward::create([
+            'name' => 'General Ward',
+            'type' => 'General',
+            'daily_charge' => 1000,
+            'capacity' => 10,
+            'is_active' => true,
+        ]);
+        $bed = Bed::create(['ward_id' => $ward->id, 'bed_number' => 'G-1', 'is_available' => false]);
+
+        $admission = Admission::create([
+            'admission_number' => 'ADM-PRINT-0001',
+            'patient_id' => $patient->id,
+            'bed_id' => $bed->id,
+            'doctor_id' => $doctor->id,
+            'admission_date' => now()->subDays(3),
+            'discharge_date' => now(),
+            'reason_for_admission' => 'Acute gastroenteritis',
+            'status' => 'Discharged',
+            'created_by' => $user->id,
+        ]);
+
+        $summary = \App\Models\DischargeSummary::create([
+            'admission_id' => $admission->id,
+            'admission_number' => $admission->admission_number,
+            'patient_id' => $patient->id,
+            'uhid' => $patient->uhid,
+            'doctor_id' => $doctor->id,
+            'admission_date' => $admission->admission_date,
+            'discharge_date' => $admission->discharge_date,
+            'admission_diagnosis' => 'Provisional Acute Gastroenteritis',
+            'final_diagnosis' => 'Severe Viral Gastroenteritis with Dehydration',
+            'treatment_summary' => 'IV fluids given, electrolytes corrected, symptomatic treatment provided',
+            'procedures_done' => 'IV Cannulation, USG Abdomen',
+            'investigations_summary' => 'CBC: Normal, Serum Electrolytes: Na 136, K 3.8',
+            'condition_at_discharge' => 'Improved',
+            'condition_notes' => 'Patient hemodynamically stable, afebrile, taking oral feeds well',
+            'general_advice' => 'Drink plenty of boiled and cooled water. Avoid street food.',
+            'diet_advice' => 'Light bland diet, low fat, high fluids',
+            'activity_advice' => 'Adequate bed rest for 3 days',
+            'follow_up_date' => now()->addDays(5)->format('Y-m-d'),
+            'follow_up_notes' => 'Review in OPD if fever, vomiting or severe diarrhea recurs',
+            'status' => 'Finalized',
+            'is_finalized' => true,
+            'finalized_at' => now(),
+            'finalized_by' => $user->id,
+            'created_by' => $user->id,
+        ]);
+
+        \App\Models\DischargeMedication::create([
+            'discharge_summary_id' => $summary->id,
+            'medicine_name' => 'Tab Oflox-OZ',
+            'dosage' => '200/500 mg',
+            'frequency' => 'BD',
+            'duration' => '5 Days',
+            'route' => 'Oral',
+            'instructions' => 'After food',
+            'is_continued' => true,
+        ]);
+
+        \App\Models\DischargeMedication::create([
+            'discharge_summary_id' => $summary->id,
+            'medicine_name' => 'ORS Sachet',
+            'dosage' => '1 Sachet in 1L water',
+            'frequency' => 'SOS',
+            'duration' => '3 Days',
+            'route' => 'Oral',
+            'instructions' => 'Drink frequently',
+            'is_continued' => true,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('discharge.print', $admission->id));
+
+        $response->assertOk();
+
+        // 1. Diagnosis
+        $response->assertSee('Provisional Acute Gastroenteritis');
+        $response->assertSee('Severe Viral Gastroenteritis with Dehydration');
+
+        // 2. Treatment
+        $response->assertSee('IV fluids given, electrolytes corrected, symptomatic treatment provided');
+        $response->assertSee('IV Cannulation, USG Abdomen');
+        $response->assertSee('CBC: Normal, Serum Electrolytes: Na 136, K 3.8');
+
+        // 3. Condition
+        $response->assertSee('Improved');
+        $response->assertSee('Patient hemodynamically stable, afebrile, taking oral feeds well');
+
+        // 4. Medications
+        $response->assertSee('Tab Oflox-OZ');
+        $response->assertSee('200/500 mg');
+        $response->assertSee('ORS Sachet');
+
+        // 5. Advice
+        $response->assertSee('Drink plenty of boiled and cooled water. Avoid street food.');
+        $response->assertSee('Light bland diet, low fat, high fluids');
+        $response->assertSee('Adequate bed rest for 3 days');
+
+        // 6. Follow Up
+        $response->assertSee(now()->addDays(5)->format('d-m-Y'));
+        $response->assertSee('Review in OPD if fever, vomiting or severe diarrhea recurs');
+    }
+
+    public function test_discharge_summary_print_hides_unentered_fields(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+
+        $user = User::factory()->create();
+        $user->assignRole('doctor_owner');
+
+        $department = Department::create(['name' => 'General']);
+        $doctor = Doctor::create([
+            'user_id' => $user->id,
+            'department_id' => $department->id,
+            'full_name' => 'Dr Owner',
+            'specialization' => 'General',
+            'consultation_fee' => 500,
+            'is_active' => true,
+        ]);
+        HospitalOwner::setOwnerDoctor($doctor);
+
+        $patient = Patient::create([
+            'uhid' => 'UHID-IPD-PRINT-0002',
+            'first_name' => 'Jane',
+            'last_name' => 'Doe',
+            'gender' => 'female',
+            'date_of_birth' => '1992-02-02',
+            'phone' => '9888877772',
+            'is_active' => true,
+        ]);
+
+        $ward = Ward::create([
+            'name' => 'General Ward',
+            'type' => 'General',
+            'daily_charge' => 1000,
+            'capacity' => 10,
+            'is_active' => true,
+        ]);
+        $bed = Bed::create(['ward_id' => $ward->id, 'bed_number' => 'G-2', 'is_available' => false]);
+
+        $admission = Admission::create([
+            'admission_number' => 'ADM-PRINT-0002',
+            'patient_id' => $patient->id,
+            'bed_id' => $bed->id,
+            'doctor_id' => $doctor->id,
+            'admission_date' => now()->subDays(1),
+            'discharge_date' => now(),
+            'reason_for_admission' => null,
+            'status' => 'Discharged',
+            'created_by' => $user->id,
+        ]);
+
+        // Create a summary with ONLY final diagnosis and treatment, no meds, no advice, no procedures, no followup
+        \App\Models\DischargeSummary::create([
+            'admission_id' => $admission->id,
+            'admission_number' => $admission->admission_number,
+            'patient_id' => $patient->id,
+            'uhid' => $patient->uhid,
+            'doctor_id' => $doctor->id,
+            'admission_date' => $admission->admission_date,
+            'discharge_date' => $admission->discharge_date,
+            'admission_diagnosis' => null,
+            'final_diagnosis' => 'Simple Fracture Left Radius',
+            'treatment_summary' => 'Cast applied',
+            'procedures_done' => null,
+            'investigations_summary' => null,
+            'condition_at_discharge' => 'Stable',
+            'condition_notes' => null,
+            'general_advice' => null,
+            'diet_advice' => null,
+            'activity_advice' => null,
+            'follow_up_date' => null,
+            'follow_up_notes' => null,
+            'status' => 'Finalized',
+            'is_finalized' => true,
+            'finalized_at' => now(),
+            'finalized_by' => $user->id,
+            'created_by' => $user->id,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('discharge.print', $admission->id));
+
+        $response->assertOk();
+
+        // Entered fields MUST be visible
+        $response->assertSee('Simple Fracture Left Radius');
+        $response->assertSee('Cast applied');
+        $response->assertSee('Stable');
+
+        // Unentered sections MUST NOT be visible
+        $response->assertDontSee('Admission / Provisional Diagnosis:');
+        $response->assertDontSee('Procedures / Surgeries Done:');
+        $response->assertDontSee('Investigations Summary:');
+        $response->assertDontSee('Condition Notes:');
+        $response->assertDontSee('Discharge Medications');
+        $response->assertDontSee('Advice & Instructions');
+        $response->assertDontSee('Follow Up Details');
+    }
 }
+
+
 
 
 

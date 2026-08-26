@@ -38,59 +38,208 @@
         </tr>
     </table>
 
-    <!-- CLINICAL DETAILS -->
-    <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; margin-bottom: 15px;">
-        <tr>
-            <td style="padding: 8px; border: 1px solid #000; width: 20%;"><strong>Reason for Admission</strong></td>
-            <td style="padding: 8px; border: 1px solid #000;">{{ $admission->reason_for_admission ?: '—' }}</td>
-        </tr>
-        <tr>
-            <td style="padding: 8px; border: 1px solid #000;"><strong>Discharge Notes</strong></td>
-            <td style="padding: 8px; border: 1px solid #000; white-space: pre-line;">{{ $admission->notes ?: '—' }}</td>
-        </tr>
-    </table>
+    @php
+        $summary = $admission->dischargeSummary;
+        $admissionDiag = $summary?->admission_diagnosis ?: $admission->reason_for_admission;
+        $finalDiag = $summary?->final_diagnosis;
+        $treatmentSummary = $summary?->treatment_summary ?: $admission->notes;
+        $proceduresDone = $summary?->procedures_done;
+        $investigationsSummary = $summary?->investigations_summary;
+        $conditionAtDischarge = $summary?->condition_at_discharge;
+        $conditionNotes = $summary?->condition_notes;
+        $latestVital = $admission->ipdVitals?->sortByDesc('recorded_at')->first();
+        $hasVitals = $latestVital && ($latestVital->temperature || $latestVital->bp_systolic || $latestVital->pulse || $latestVital->spo2);
+        $meds = $summary ? $summary->medications : collect();
+        $generalAdvice = $summary?->general_advice;
+        $dietAdvice = $summary?->diet_advice;
+        $activityAdvice = $summary?->activity_advice;
+        $followUpDate = $summary?->follow_up_date;
+        $followUpNotes = $summary?->follow_up_notes;
+    @endphp
 
-    <!-- VITALS & MEDS -->
-    @php $latestVital = $admission->ipdVitals?->sortByDesc('recorded_at')->first(); @endphp
-    @if($latestVital)
-    <div style="margin-bottom: 15px;">
-        <strong>Vitals at Discharge:</strong> 
-        Temp: {{ $latestVital->temperature ?? '—' }} | 
-        BP: {{ $latestVital->bp_systolic ?? '—' }}{{ $latestVital->bp_diastolic ? '/' . $latestVital->bp_diastolic : '' }} | 
-        SpO2: {{ $latestVital->spo2 ?? '—' }}
+    <!-- 1. DIAGNOSIS -->
+    @if(!empty($admissionDiag) || !empty($finalDiag))
+    <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; margin-bottom: 12px;">
+        <tr style="background-color: #f8fafc;">
+            <th colspan="2" style="padding: 6px 8px; border: 1px solid #000; text-align: left; font-size: 11pt; font-weight: bold; text-transform: uppercase;">
+                Diagnosis
+            </th>
+        </tr>
+        @if(!empty($admissionDiag))
+        <tr>
+            <td style="padding: 6px 8px; border: 1px solid #000; width: 25%; vertical-align: top;"><strong>Admission / Provisional Diagnosis:</strong></td>
+            <td style="padding: 6px 8px; border: 1px solid #000; white-space: pre-line;">{{ $admissionDiag }}</td>
+        </tr>
+        @endif
+        @if(!empty($finalDiag))
+        <tr>
+            <td style="padding: 6px 8px; border: 1px solid #000; width: 25%; vertical-align: top;"><strong>Final Diagnosis:</strong></td>
+            <td style="padding: 6px 8px; border: 1px solid #000; font-weight: bold; white-space: pre-line;">{{ $finalDiag }}</td>
+        </tr>
+        @endif
+    </table>
+    @endif
+
+    <!-- 2. TREATMENT & HOSPITAL COURSE -->
+    @if(!empty($treatmentSummary) || !empty($proceduresDone) || !empty($investigationsSummary))
+    <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; margin-bottom: 12px;">
+        <tr style="background-color: #f8fafc;">
+            <th colspan="2" style="padding: 6px 8px; border: 1px solid #000; text-align: left; font-size: 11pt; font-weight: bold; text-transform: uppercase;">
+                Treatment & Hospital Course
+            </th>
+        </tr>
+        @if(!empty($treatmentSummary))
+        <tr>
+            <td style="padding: 6px 8px; border: 1px solid #000; width: 25%; vertical-align: top;"><strong>Treatment Given / Summary:</strong></td>
+            <td style="padding: 6px 8px; border: 1px solid #000; white-space: pre-line;">{{ $treatmentSummary }}</td>
+        </tr>
+        @endif
+        @if(!empty($proceduresDone))
+        <tr>
+            <td style="padding: 6px 8px; border: 1px solid #000; width: 25%; vertical-align: top;"><strong>Procedures / Surgeries Done:</strong></td>
+            <td style="padding: 6px 8px; border: 1px solid #000; white-space: pre-line;">{{ $proceduresDone }}</td>
+        </tr>
+        @endif
+        @if(!empty($investigationsSummary))
+        <tr>
+            <td style="padding: 6px 8px; border: 1px solid #000; width: 25%; vertical-align: top;"><strong>Investigations Summary:</strong></td>
+            <td style="padding: 6px 8px; border: 1px solid #000; white-space: pre-line;">{{ $investigationsSummary }}</td>
+        </tr>
+        @endif
+    </table>
+    @endif
+
+    <!-- 3. CONDITION AT DISCHARGE -->
+    @if(!empty($conditionAtDischarge) || !empty($conditionNotes) || $hasVitals)
+    <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; margin-bottom: 12px;">
+        <tr style="background-color: #f8fafc;">
+            <th colspan="2" style="padding: 6px 8px; border: 1px solid #000; text-align: left; font-size: 11pt; font-weight: bold; text-transform: uppercase;">
+                Condition at Discharge
+            </th>
+        </tr>
+        @if(!empty($conditionAtDischarge))
+        <tr>
+            <td style="padding: 6px 8px; border: 1px solid #000; width: 25%;"><strong>Condition:</strong></td>
+            <td style="padding: 6px 8px; border: 1px solid #000; font-weight: bold;">{{ $conditionAtDischarge }}</td>
+        </tr>
+        @endif
+        @if(!empty($conditionNotes))
+        <tr>
+            <td style="padding: 6px 8px; border: 1px solid #000; width: 25%; vertical-align: top;"><strong>Condition Notes:</strong></td>
+            <td style="padding: 6px 8px; border: 1px solid #000; white-space: pre-line;">{{ $conditionNotes }}</td>
+        </tr>
+        @endif
+        @if($hasVitals)
+        <tr>
+            <td style="padding: 6px 8px; border: 1px solid #000; width: 25%;"><strong>Vitals at Discharge:</strong></td>
+            <td style="padding: 6px 8px; border: 1px solid #000;">
+                @php
+                    $vitalsParts = [];
+                    if (!empty($latestVital->temperature)) $vitalsParts[] = 'Temp: ' . $latestVital->temperature . ' °F';
+                    if (!empty($latestVital->bp_systolic)) $vitalsParts[] = 'BP: ' . $latestVital->bp_systolic . ($latestVital->bp_diastolic ? '/' . $latestVital->bp_diastolic : '') . ' mmHg';
+                    if (!empty($latestVital->pulse)) $vitalsParts[] = 'Pulse: ' . $latestVital->pulse . ' bpm';
+                    if (!empty($latestVital->spo2)) $vitalsParts[] = 'SpO2: ' . $latestVital->spo2 . '%';
+                @endphp
+                {{ implode(' | ', $vitalsParts) }}
+            </td>
+        </tr>
+        @endif
+    </table>
+    @endif
+
+    <!-- 4. DISCHARGE MEDICATIONS -->
+    @if($meds->count() > 0)
+    <div style="margin-bottom: 12px;">
+        <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 10pt;">
+            <tr style="background-color: #f8fafc;">
+                <th colspan="6" style="padding: 6px 8px; border: 1px solid #000; text-align: left; font-size: 11pt; font-weight: bold; text-transform: uppercase;">
+                    Discharge Medications
+                </th>
+            </tr>
+            <thead>
+                <tr style="background-color: #f1f5f9;">
+                    <th style="padding: 6px; border: 1px solid #000; text-align: center; width: 5%;">#</th>
+                    <th style="padding: 6px; border: 1px solid #000; text-align: left; width: 30%;">Medicine Name</th>
+                    <th style="padding: 6px; border: 1px solid #000; text-align: left; width: 15%;">Dosage</th>
+                    <th style="padding: 6px; border: 1px solid #000; text-align: left; width: 15%;">Frequency</th>
+                    <th style="padding: 6px; border: 1px solid #000; text-align: left; width: 15%;">Duration</th>
+                    <th style="padding: 6px; border: 1px solid #000; text-align: left; width: 20%;">Instructions / Route</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($meds as $index => $rx)
+                    <tr>
+                        <td style="padding: 6px; border: 1px solid #000; text-align: center;">{{ $index + 1 }}</td>
+                        <td style="padding: 6px; border: 1px solid #000; font-weight: bold;">{{ $rx->medicine_name }}</td>
+                        <td style="padding: 6px; border: 1px solid #000;">{{ $rx->dosage ?? '—' }}</td>
+                        <td style="padding: 6px; border: 1px solid #000;">{{ $rx->frequency ?? '—' }}</td>
+                        <td style="padding: 6px; border: 1px solid #000;">{{ $rx->duration ?? '—' }}</td>
+                        <td style="padding: 6px; border: 1px solid #000;">
+                            {{ $rx->instructions ?? '—' }}
+                            @if($rx->route && $rx->route !== 'Oral')
+                                <span style="font-size: 8pt; color: #555;">({{ $rx->route }})</span>
+                            @endif
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
     </div>
     @endif
 
-    <div style="margin-bottom: 20px;">
-        <h3 style="margin: 0 0 5px; font-size: 12pt; text-decoration: underline;">Discharge Medications</h3>
-        @php $meds = $admission->dischargeSummary ? $admission->dischargeSummary->medications : collect(); @endphp
-        @if($meds->count())
-            <table style="width:100%; border: 1px solid #000; border-collapse: collapse; font-size: 10pt;">
-                <thead>
-                    <tr>
-                        <th style="padding: 6px; border: 1px solid #000; text-align: left;">Medicine</th>
-                        <th style="padding: 6px; border: 1px solid #000; text-align: left;">Dosage</th>
-                        <th style="padding: 6px; border: 1px solid #000; text-align: left;">Frequency</th>
-                        <th style="padding: 6px; border: 1px solid #000; text-align: left;">Duration</th>
-                        <th style="padding: 6px; border: 1px solid #000; text-align: left;">Instructions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($meds as $rx)
-                        <tr>
-                            <td style="padding: 6px; border: 1px solid #000;">{{ $rx->medicine_name }}</td>
-                            <td style="padding: 6px; border: 1px solid #000;">{{ $rx->dosage ?? '—' }}</td>
-                            <td style="padding: 6px; border: 1px solid #000;">{{ $rx->frequency ?? '—' }}</td>
-                            <td style="padding: 6px; border: 1px solid #000;">{{ $rx->duration ?? '—' }}</td>
-                            <td style="padding: 6px; border: 1px solid #000;">{{ $rx->instructions ?? '—' }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        @else
-            <p style="margin: 0;">No medications prescribed.</p>
+    <!-- 5. ADVICE & DISCHARGE INSTRUCTIONS -->
+    @if(!empty($generalAdvice) || !empty($dietAdvice) || !empty($activityAdvice))
+    <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; margin-bottom: 12px;">
+        <tr style="background-color: #f8fafc;">
+            <th colspan="2" style="padding: 6px 8px; border: 1px solid #000; text-align: left; font-size: 11pt; font-weight: bold; text-transform: uppercase;">
+                Advice & Instructions
+            </th>
+        </tr>
+        @if(!empty($generalAdvice))
+        <tr>
+            <td style="padding: 6px 8px; border: 1px solid #000; width: 25%; vertical-align: top;"><strong>General Advice:</strong></td>
+            <td style="padding: 6px 8px; border: 1px solid #000; white-space: pre-line;">{{ $generalAdvice }}</td>
+        </tr>
         @endif
-    </div>
+        @if(!empty($dietAdvice))
+        <tr>
+            <td style="padding: 6px 8px; border: 1px solid #000; width: 25%; vertical-align: top;"><strong>Dietary Advice:</strong></td>
+            <td style="padding: 6px 8px; border: 1px solid #000; white-space: pre-line;">{{ $dietAdvice }}</td>
+        </tr>
+        @endif
+        @if(!empty($activityAdvice))
+        <tr>
+            <td style="padding: 6px 8px; border: 1px solid #000; width: 25%; vertical-align: top;"><strong>Activity / Rest Advice:</strong></td>
+            <td style="padding: 6px 8px; border: 1px solid #000; white-space: pre-line;">{{ $activityAdvice }}</td>
+        </tr>
+        @endif
+    </table>
+    @endif
+
+    <!-- 6. FOLLOW UP -->
+    @if(!empty($followUpDate) || !empty($followUpNotes))
+    <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; margin-bottom: 15px;">
+        <tr style="background-color: #f8fafc;">
+            <th colspan="2" style="padding: 6px 8px; border: 1px solid #000; text-align: left; font-size: 11pt; font-weight: bold; text-transform: uppercase;">
+                Follow Up Details
+            </th>
+        </tr>
+        @if(!empty($followUpDate))
+        <tr>
+            <td style="padding: 6px 8px; border: 1px solid #000; width: 25%;"><strong>Follow Up Date:</strong></td>
+            <td style="padding: 6px 8px; border: 1px solid #000; font-weight: bold; color: #1e40af;">
+                {{ $followUpDate->format('d-m-Y') }}
+            </td>
+        </tr>
+        @endif
+        @if(!empty($followUpNotes))
+        <tr>
+            <td style="padding: 6px 8px; border: 1px solid #000; width: 25%; vertical-align: top;"><strong>Follow Up Instructions:</strong></td>
+            <td style="padding: 6px 8px; border: 1px solid #000; white-space: pre-line;">{{ $followUpNotes }}</td>
+        </tr>
+        @endif
+    </table>
+    @endif
 
     <!-- FINAL BILL -->
     @if(\Illuminate\Support\Facades\Schema::hasColumn('bills', 'admission_id') && $admission->finalBill)
