@@ -125,9 +125,11 @@
                     </td>
                     <td align="right">
                         <span class="uhid-text">UHID : {{ $consultation->patient->uhid }}</span>
+                        @if(\App\Models\Setting::get('enable_barcodes', false))
                         <div class="barcode-container">
                             {!! \App\Helpers\BarcodeHelper::generateHtml($consultation->patient->uhid, 'TYPE_CODE_128', 1.1, 18) !!}
                         </div>
+                        @endif
                     </td>
                 </tr>
             </table>

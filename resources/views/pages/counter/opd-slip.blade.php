@@ -164,9 +164,11 @@
                     </div>
                     <div class="box-uhid-barcode">
                         <span class="uhid-text">UHID : {{ $consultation->patient->uhid }}</span>
+                        @if(\App\Models\Setting::get('enable_barcodes', false))
                         <div class="barcode-container">
                             {!! \App\Helpers\BarcodeHelper::generate($consultation->patient->uhid, 'TYPE_CODE_128', 1.1, 20) !!}
                         </div>
+                        @endif
                     </div>
                 </div>
 
