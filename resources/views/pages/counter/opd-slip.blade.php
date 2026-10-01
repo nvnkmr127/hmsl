@@ -4,83 +4,142 @@
 
 @section('content')
     <style>
-        /* Ensure the container has no padding for exact positioning */
+        /* Exact A4 Sheet Page Setup */
+        @page {
+            size: A4 portrait;
+            margin: 0;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            color: #0f172a;
+            background: transparent;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
         .print-container {
             padding: 0 !important;
             margin: 0 !important;
             width: 210mm !important;
             height: 297mm !important;
-        }
-
-        .letterhead-data {
+            box-sizing: border-box;
             position: relative;
-            width: 100%;
-            height: 100%;
-            font-family: 'Outfit', sans-serif;
-            color: #000;
         }
 
-        .field {
+        /* Container leaving margin for preprinted header and left side filing holes */
+        .opd-slip-wrapper {
             position: absolute;
-            font-size: 12pt;
-            font-weight: 600;
+            top: 5.2cm;            /* Vertical space below pre-printed hospital logo & header */
+            left: 2.2cm;           /* Margin on left side for binder/file holes */
+            right: 1.5cm;          /* Right side margin */
+            box-sizing: border-box;
+        }
+
+        /* Main Details Box */
+        .details-box {
+            border: 1.5px solid #1e293b;
+            border-radius: 10px;
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.85);
+            box-sizing: border-box;
+        }
+
+        /* Header Row inside the Box */
+        .box-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 6px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #cbd5e1;
+        }
+
+        .box-title {
+            font-size: 11.5pt;
+            font-weight: 900;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #0f172a;
+        }
+
+        .box-uhid-barcode {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .uhid-text {
+            font-size: 10.5pt;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            color: #0f172a;
+        }
+
+        .barcode-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .barcode-container svg {
+            height: 20px !important;
+            max-width: 140px;
+        }
+
+        /* Two Column Layout */
+        .columns-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .details-column {
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* Table based data alignment */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table td {
+            padding: 2.5px 0;
+            font-size: 10pt;
+            vertical-align: top;
+            line-height: 1.35;
+        }
+
+        .col-label {
+            font-weight: 700;
+            color: #334155;
+            white-space: nowrap;
+            width: 1%;
+            padding-right: 4px;
+        }
+
+        .col-colon {
+            font-weight: 700;
+            color: #334155;
+            width: 12px;
+            text-align: center;
+            padding: 0 4px;
             white-space: nowrap;
         }
 
-        /* LINE 1: Name and Date */
-        /* Adjust 'top' to move both Name and Date up/down */
-        .pos-name {
-            top: 4.3cm;
-            left: 2.5cm;
-            font-size: 13pt;
+        .col-val {
+            font-weight: 600;
+            color: #000;
+            white-space: nowrap;
         }
 
-        .pos-date {
-            top: 4.3cm;
-            left: 16.5cm;
-        }
-
-        /* LINE 2: Vitals and Validity */
-        /* Adjust 'top' to move the entire second row up/down */
-        .pos-age {
-            top: 5.5cm;
-            left: 1.8cm;
-        }
-
-        .pos-gender {
-            top: 5.5cm;
-            left: 5.3cm;
-        }
-
-        .pos-weight {
-            top: 5.5cm;
-            left: 9.3cm;
-        }
-
-        .pos-temp {
-            top: 5.5cm;
-            left: 12.5cm;
-        }
-
-        .pos-valid {
-            top: 5.5cm;
-            left: 18.0cm;
-        }
-
-        /* LINE 3: Financials */
-        .pos-fee {
-            top: 6.2cm;
-            left: 17.0cm;
-            font-size: 10pt;
-            color: #333;
-        }
-
-        /* UHID styling beside name */
-        .uhid-label {
-            font-size: 10pt;
-            font-weight: 400;
-            margin-left: 12px;
-            color: #444;
+        .col-val-wrap {
+            font-weight: 600;
+            color: #000;
+            word-break: break-word;
         }
 
         @media print {
@@ -95,54 +154,86 @@
         }
     </style>
 
-    <div class="letterhead-data">
-        {{-- LINE 1 --}}
-        <div class="field pos-name" style="display: flex; align-items: center; gap: 15px;">
-            <div>
-                {{ trim($consultation->patient->first_name . ' ' . $consultation->patient->last_name) ?: 'NAME NOT FOUND' }}
-                <span class="uhid-label">(UHID: {{ $consultation->patient->uhid }})</span>
+    <div class="print-container">
+        <div class="opd-slip-wrapper">
+            <div class="details-box">
+                {{-- Header Row: Left Title & Right UHID + Barcode --}}
+                <div class="box-header-row">
+                    <div class="box-title">
+                        OUT PATIENT DETAILS
+                    </div>
+                    <div class="box-uhid-barcode">
+                        <span class="uhid-text">UHID : {{ $consultation->patient->uhid }}</span>
+                        <div class="barcode-container">
+                            {!! \App\Helpers\BarcodeHelper::generate($consultation->patient->uhid, 'TYPE_CODE_128', 1.1, 20) !!}
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Two Columns of Details --}}
+                <div class="columns-container">
+                    {{-- Left Column: Patient Info & Vitals --}}
+                    <div class="details-column">
+                        <table class="data-table">
+                            <tr>
+                                <td class="col-label">Patient Name</td>
+                                <td class="col-colon">:</td>
+                                <td class="col-val">{{ trim($consultation->patient->first_name . ' ' . ($consultation->patient->last_name ?? '')) ?: 'NAME NOT FOUND' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="col-label">Age & Gender</td>
+                                <td class="col-colon">:</td>
+                                <td class="col-val">{{ $consultation->patient->age ?: '--' }} / {{ $consultation->patient->gender ?: '--' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="col-label">Weight</td>
+                                <td class="col-colon">:</td>
+                                <td class="col-val">{{ $consultation->weight ? $consultation->weight . ' kg' : '--' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="col-label">Temperature</td>
+                                <td class="col-colon">:</td>
+                                <td class="col-val">{{ $consultation->temperature ? $consultation->temperature . ' °F' : '--' }}</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    {{-- Right Column: Appointment, Doctor & Payment Details --}}
+                    <div class="details-column">
+                        <table class="data-table">
+                            <tr>
+                                <td class="col-label">APP. Date & time</td>
+                                <td class="col-colon">:</td>
+                                <td class="col-val">
+                                    {{ $consultation->consultation_date ? $consultation->consultation_date->format('d/m/Y') : $consultation->created_at->format('d/m/Y') }}
+                                    <span style="font-weight: 500; font-size: 9pt; color: #475569;">{{ $consultation->created_at->format('h:i A') }}</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="col-label">Doctor Name</td>
+                                <td class="col-colon">:</td>
+                                <td class="col-val">{{ $consultation->doctor ? $consultation->doctor->full_name : 'Dr. L. Avinash Rao' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="col-label">Valid Upto</td>
+                                <td class="col-colon">:</td>
+                                <td class="col-val">{{ $consultation->valid_upto ? $consultation->valid_upto->format('d/m/Y') : '--' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="col-label">Paid</td>
+                                <td class="col-colon">:</td>
+                                <td class="col-val">
+                                    @if($consultation->visit_type === 'Review' || $consultation->fee <= 0)
+                                        Review visit (₹0)
+                                    @else
+                                        ₹{{ number_format($consultation->fee, 0) }} ({{ strtoupper($consultation->payment_method ?? 'Cash') }})
+                                    @endif
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
             </div>
-            @if(\App\Models\Setting::get('enable_barcodes', false))
-            <div style="margin-top: -5px;">
-                {!! \App\Helpers\BarcodeHelper::generate($consultation->patient->uhid, 'TYPE_CODE_128', 1, 25) !!}
-            </div>
-            @endif
-        </div>
-
-        <div class="field pos-date">
-            {{ $consultation->consultation_date->format('d/m/Y') }} <span
-                style="font-size: 9pt; font-weight: 400; color: #666; margin-left: 5px;">{{ $consultation->created_at->format('h:i A') }}</span>
-        </div>
-
-        {{-- LINE 2 --}}
-        <div class="field pos-age">
-            {{ $consultation->patient->age }}
-        </div>
-
-        <div class="field pos-gender">
-            {{ $consultation->patient->gender }}
-        </div>
-
-        <div class="field pos-weight">
-            {{ $consultation->weight ? $consultation->weight . ' kg' : '--' }}
-        </div>
-
-        <div class="field pos-temp">
-            {{ $consultation->temperature ? $consultation->temperature . ' °F' : '--' }}
-        </div>
-
-        <div class="field pos-valid">
-            {{ $consultation->valid_upto?->format('d/m/Y') ?? '--' }}
-        </div>
-
-        {{-- LINE 3 --}}
-        <div class="field pos-fee">
-            @if($consultation->visit_type === 'Review' || $consultation->fee <= 0)
-                Review visit
-            @else
-                Paid: ₹{{ number_format($consultation->fee, 0) }} ({{ strtoupper($consultation->payment_method) }})
-            @endif
         </div>
     </div>
-
 @endsection
