@@ -3,7 +3,7 @@
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
         <div class="flex-1 flex flex-col sm:flex-row items-center gap-3 w-full">
             <div class="relative flex-1 w-full">
-                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500 dark:text-slate-400">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
@@ -12,12 +12,12 @@
             </div>
             <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-xl px-3 h-[42px] border border-slate-200 dark:border-slate-700">
                 <div class="flex items-center gap-1.5">
-                    <span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">From</span>
+                    <span class="text-[9px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-widest">From</span>
                     <input type="date" wire:model.live="fromDate" class="bg-transparent border-none text-xs font-bold text-slate-700 dark:text-slate-200 focus:ring-0 p-0 h-4">
                 </div>
                 <div class="w-px h-5 bg-slate-300 dark:bg-slate-600"></div>
                 <div class="flex items-center gap-1.5">
-                    <span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">To</span>
+                    <span class="text-[9px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-widest">To</span>
                     <input type="date" wire:model.live="toDate" class="bg-transparent border-none text-xs font-bold text-slate-700 dark:text-slate-200 focus:ring-0 p-0 h-4">
                 </div>
             </div>
@@ -51,11 +51,11 @@
                 <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="text-sm font-bold text-slate-900 dark:text-white">{{ $due->bill_number }}</div>
-                        <div class="text-[10px] text-slate-500 uppercase">{{ $due->created_at->format('d M, Y') }}</div>
+                        <div class="text-[10px] text-slate-600 dark:text-slate-400 uppercase">{{ $due->created_at->format('d M, Y') }}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="text-sm font-semibold text-slate-900 dark:text-white">{{ $due->patient?->full_name }}</div>
-                        <div class="text-[10px] text-slate-500">{{ $due->patient?->uhid }}</div>
+                        <div class="text-[10px] text-slate-600 dark:text-slate-400">{{ $due->patient?->uhid }}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900 dark:text-white">
                         ₹{{ number_format($due->total_amount, 2) }}
@@ -75,7 +75,7 @@
                 @empty
                 <tr>
                     <td colspan="6" class="px-6 py-12 text-center">
-                        <div class="flex flex-col items-center justify-center text-slate-400">
+                        <div class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400">
                             <svg class="w-12 h-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             <p class="text-sm font-medium">No outstanding dues found.</p>
                         </div>

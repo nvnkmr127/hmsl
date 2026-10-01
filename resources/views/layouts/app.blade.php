@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}"
       x-data="{
-          darkMode: localStorage.getItem('darkMode') === 'true',
+          darkMode: localStorage.getItem('darkMode') === 'true' || (localStorage.getItem('darkMode') === null && window.matchMedia('(prefers-color-scheme: dark)').matches),
           sidebarOpen: window.innerWidth >= 1024,
           resizeTicking: false,
           handleResize() {
@@ -28,6 +28,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Dashboard') — {{ config('app.name', 'HMS') }}</title>
+
+    <script>
+        if (localStorage.getItem('darkMode') === 'true' || (localStorage.getItem('darkMode') === null && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
 
     <link rel="icon" href="{{ asset('images/Logo.png') }}">
     <link rel="stylesheet" href="/fonts/inter.css">
